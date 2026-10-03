@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">Kisan Kendra</string>
+    <string name="app_tagline">Empowered Farmers • Strong Nation</string>
+    <string name="facebook_app_id">1210447024293563</string>
+    <string name="facebook_client_token">af7cba9eb03638b0fe61a600ee885ae3</string>
+
+    <!-- Bottom Navigation Labels -->
+    <string name="nav_home">Tools</string>
+    <string name="nav_mandi">Mandi</string>
+    <string name="nav_news">News</string>
+    <string name="nav_weather">Weather</string>
+    <string name="nav_forum">Forum</string>
+
+    <!-- News Categories -->
+    <string name="cat_all">📰 All News</string>
+    <string name="cat_yojana">🏛 Sarkari Yojana</string>
+    <string name="cat_gyan">💡 Krishi Gyan</string>
+    <string name="cat_mandi">🌾 Market Updates</string>
+
+    <!-- Mandi Rate Labels -->
+    <string name="mandi_min_price">Min Price</string>
+    <string name="mandi_modal_price">Modal Price</string>
+    <string name="mandi_max_price">Max Price</string>
+    <string name="mandi_per_quintal" translatable="false">per quintal</string>
+    <string name="chart_label" translatable="false">Chart</string>
+    <string name="btn_share" translatable="false">Share</string>
+    <string name="scroll_to_top" translatable="false">Scroll to top</string>
+
+    <!-- Settings Labels -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_lang_title">App Language</string>
+    <string name="settings_account_title">Account</string>
+    <string name="settings_display_title">Display &amp; Theme</string>
+    <string name="settings_help_title">Help &amp; Support</string>
+    <string name="settings_logout">Logout</string>
+    <string name="settings_name_hint">Your Name</string>
+    <string name="settings_save_name" translatable="false">Save Name</string>
+    <string name="settings_delete_account">Delete Account &amp; Saved Data</string>
+    <string name="settings_delete_account_short" translatable="false">Delete Account</string>
+    <string name="settings_edit_name" translatable="false">Edit</string>
+    <string name="settings_cancel" translatable="false">Cancel</string>
+    <string name="settings_save" translatable="false">Save</string>
+    <string name="settings_guest_account" translatable="false">Guest Account</string>
+    <string name="settings_guest_subtitle" translatable="false">Sign in to backup &amp; sync your data across devices</string>
+    <string name="settings_sign_in_up" translatable="false">Sign In / Sign Up</string>
+    <string name="settings_google_sign_in" translatable="false">Sign in with Google</string>
+    <string name="settings_about_app">About Kisan Kendra</string>
+    <string name="settings_share_app" translatable="false">Share App with Farmers</string>
+
+    <!-- Feedback Strings -->
+    <string name="settings_feedback" translatable="false">Give Feedback / Report Issue</string>
+    <string name="feedback_title" translatable="false">Help Us Improve</string>
+    <string name="feedback_subtitle" translatable="false">Suggest a new feature or report an issue with the app.</string>
+    <string name="feedback_category_label" translatable="false">Select Category</string>
+    <string name="feedback_feature_request" translatable="false">💡 Feature Request</string>
+    <string name="feedback_report_bug" translatable="false">🐛 Report Issue</string>
+    <string name="feedback_general" translatable="false">💬 General</string>
+    <string name="feedback_hint" translatable="false">Describe your suggestion or problem in detail...</string>
+    <string name="feedback_submit" translatable="false">Submit Feedback</string>
+    <string name="feedback_login_required" translatable="false">Please sign in to submit feedback.</string>
+    <string name="feedback_success" translatable="false">Thank you! Your feedback has been submitted. 🙏</string>
+
+    <!-- Native Info Titles -->
+    <string name="about_title">About Us</string>
+    <string name="contact_title">Contact Us</string>
+    <string name="privacy_title">Privacy Policy</string>
+    <!-- Google Web Client ID -->
+    <string name="default_web_client_id" translatable="false">425108111333-4aokaf8qrmhhei03li3gt49n1f1oe1t4.apps.googleusercontent.com</string>
+</resources>

@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">కిసాన్ కేంద్ర</string>
+    <string name="app_tagline">సమృద్ధ రైతు • బలమైన భారత్</string>
+
+    <string name="nav_home">Tools</string>
+    <string name="nav_mandi">Mandi</string>
+    <string name="nav_news">News</string>
+    <string name="nav_weather">Weather</string>
+    <string name="nav_forum">Forum</string>
+
+    <string name="cat_all">📰 అన్ని వార్తలు</string>
+    <string name="cat_yojana">🏛 ప్రభుత్వ పథకాలు</string>
+    <string name="cat_gyan">💡 వ్యవసాయ విజ్ఞానం</string>
+    <string name="cat_mandi">🌾 మార్కెట్ నవీకరణలు</string>
+
+    <string name="mandi_min_price">కనిష్ట ధర</string>
+    <string name="mandi_modal_price">మోడల్ ధర</string>
+    <string name="mandi_max_price">గరిష్ట ధర</string>
+    <string name="btn_share" translatable="false">Share</string>
+
+    <string name="settings_title">సెట్టింగ్‌లు</string>
+    <string name="settings_lang_title">యాప్ భాష</string>
+    <string name="settings_account_title">ఖాతా</string>
+    <string name="settings_display_title">డిస్‌ప్లే &amp; థీమ్</string>
+    <string name="settings_help_title">సహాయం &amp; మద్దతు</string>
+    <string name="settings_logout">లాగ్ అవుట్</string>
+    <string name="settings_name_hint">మీ పేరు</string>
+    <string name="settings_save_name">పేరును సేవ్ చేయండి</string>
+    <string name="settings_delete_account">ఖాతా మరియు డేటాను తొలగించండి</string>
+    <string name="settings_about_app">కిసాన్ కేంద్రం గురించి</string>
+    <string name="settings_share_app" translatable="false">Share App with Farmers</string>
+
+    <string name="about_title">మా గురించి</string>
+    <string name="contact_title">సంప్రదించండి</string>
+    <string name="privacy_title">గోప్యతా విధానం</string>
+</resources>

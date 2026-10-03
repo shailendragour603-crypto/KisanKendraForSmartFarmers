@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+  <!-- Background grid / axes -->
+  <path
+      android:fillColor="@android:color/transparent"
+      android:strokeColor="#BDBDBD"
+      android:strokeWidth="1.2"
+      android:strokeLineCap="round"
+      android:pathData="M3,21 H21 M3,3 V21" />
+
+  <!-- Bar 1 (Green - Agriculture / Growth) -->
+  <path
+      android:fillColor="#2E7D32"
+      android:pathData="M5,15 h3 v6 h-3 z" />
+
+  <!-- Bar 2 (Harvest Gold - Yield / Income) -->
+  <path
+      android:fillColor="#FF8F00"
+      android:pathData="M9.5,10 h3 v11 h-3 z" />
+
+  <!-- Bar 3 (Blue - Market / Analysis) -->
+  <path
+      android:fillColor="#0288D1"
+      android:pathData="M14,6 h3 v15 h-3 z" />
+
+  <!-- Bar 4 (Purple/Indigo - Insights) -->
+  <path
+      android:fillColor="#7B1FA2"
+      android:pathData="M18.5,12 h3 v9 h-3 z" />
+
+  <!-- Trend Line connecting peaks (Coral / Pink Accent) -->
+  <path
+      android:fillColor="@android:color/transparent"
+      android:strokeColor="#E91E63"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M6.5,14 L11,9 L15.5,5 L20,11" />
+
+  <!-- Nodes on trend line -->
+  <path
+      android:fillColor="#E91E63"
+      android:pathData="M6.5,14 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0" />
+  <path
+      android:fillColor="#E91E63"
+      android:pathData="M11,9 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0" />
+  <path
+      android:fillColor="#E91E63"
+      android:pathData="M15.5,5 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0" />
+  <path
+      android:fillColor="#E91E63"
+      android:pathData="M20,11 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0" />
+
+</vector>

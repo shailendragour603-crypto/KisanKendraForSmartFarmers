@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="shop.sabjiwala.kisankendra">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- Required for AdMob on Android 12+ (API 31+) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:node="remove" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:hardwareAccelerated="true"
+        android:theme="@style/Theme.App.Starting">
+
+        <!-- 🔹 FACEBOOK SDK METADATA -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+
+        <!-- 🔹 GOOGLE MOBILE ADS METADATA -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3054731531860427~5885915368" />
+
+        <!-- Required for Privacy Sandbox / AdMob on Target SDK 33+ -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource" />
+
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="true"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="LockedOrientationActivity">
+
+            <!-- App Links / Deep Linking -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="sabjiwala.shop" />
+                <data android:scheme="http" android:host="sabjiwala.shop" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".AdminCreateNewsActivity"
+            android:exported="false"
+            android:label="Admin - Create News"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".AdminFeedbackActivity"
+            android:exported="false"
+            android:label="Admin - User Feedback"
+            android:parentActivityName=".SettingsActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".SignInActivity"
+            android:exported="false"
+            android:label="Sign In"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="false"
+            android:label="Admin Dashboard"
+            android:parentActivityName=".SettingsActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".AdminManageAlertsActivity"
+            android:exported="false"
+            android:label="Admin - Manage Screen Alerts"
+            android:parentActivityName=".AdminDashboardActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".NativeInfoActivity"
+            android:exported="false"
+            android:label="Information"
+            android:parentActivityName=".SettingsActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".NewsDetailActivity"
+            android:exported="false"
+            android:label="News Article"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".KisanDiaryDashboardActivity"
+            android:exported="false"
+            android:label="Farming Visual Analytics"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".KisanDiaryHistoryActivity"
+            android:exported="false"
+            android:label="Kisan Diary History"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- FileProvider for camera capture -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+</manifest>

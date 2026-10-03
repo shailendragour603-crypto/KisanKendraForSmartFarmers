@@ -1,0 +1,1909 @@
+package shop.sabjiwala.kisankendra
+
+import android.content.Context
+import android.content.Intent
+import android.content.res.ColorStateList
+import android.content.res.Configuration
+import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.RippleDrawable
+import android.net.Uri
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import android.widget.FrameLayout
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import shop.sabjiwala.kisankendra.databinding.FragmentHomeBinding
+import shop.sabjiwala.kisankendra.model.CropCycle
+import shop.sabjiwala.kisankendra.model.KhataItem
+import shop.sabjiwala.kisankendra.utils.ShimmerHelper
+import shop.sabjiwala.kisankendra.model.NewsItem
+import shop.sabjiwala.kisankendra.repository.KhataRepository
+import shop.sabjiwala.kisankendra.utils.DiseaseGuideUtils
+import shop.sabjiwala.kisankendra.utils.FarmingCalculatorUtils
+import shop.sabjiwala.kisankendra.utils.FarmerScheme
+import shop.sabjiwala.kisankendra.utils.FertilizerUtils
+import shop.sabjiwala.kisankendra.utils.KhataHelper
+import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.MediaUtils
+import shop.sabjiwala.kisankendra.utils.SchemeUtils
+import shop.sabjiwala.kisankendra.utils.ScreenAlertHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+class HomeFragment : Fragment() {
+
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+
+    private val khataRepo by lazy { KhataRepository() }
+    private val firestore by lazy { FirebaseFirestore.getInstance() }
+
+    private var khataAdapter: KhataAdapter? = null
+    private var cropAnalyticsAdapter: CropAnalyticsAdapter? = null
+
+    private var bannerRefreshJob: Job? = null
+    private var internalToolSwitchCount = 0
+    private var activeChipId: Int = R.id.chipToolKhata
+
+    private var khataItems = mutableListOf<KhataItem>()
+    private var cropCycles = mutableListOf<CropCycle>()
+    private var selectedCropCycleId: String = "ALL_CROPS"
+    private var publishedArticles = mutableListOf<NewsItem>()
+
+    private var cropCyclesListener: ListenerRegistration? = null
+    private var khataItemsListener: ListenerRegistration? = null
+    private var alertListenerRegistration: ListenerRegistration? = null
+
+    private val numberFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply {
+        maximumFractionDigits = 0
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        alertListenerRegistration = ScreenAlertHelper.setupScreenAlert(requireContext(), "home_screen", binding.alertBanner)
+
+        setupSwipeToRefresh()
+        setupWelcomeBanner()
+        setupToolTabs()
+        setupKhataSection()
+        setupCalculatorSection()
+        setupDiseaseGuideSection()
+        setupSchemesSection()
+        fetchPublishedNewsArticles()
+        loadToolAds()
+    }
+
+    private fun setupSwipeToRefresh() {
+        if (_binding == null) return
+        ShimmerHelper.setupSwipeRefresh(binding.swipeRefreshHome)
+        binding.swipeRefreshHome.setOnRefreshListener {
+            performHomePullRefresh()
+        }
+    }
+
+    private fun performHomePullRefresh() {
+        if (_binding == null) return
+        val shimmerViews = listOfNotNull(
+            binding.cardWelcomeBanner,
+            binding.btnOpenVisualDashboard,
+            binding.btnAddKhataEntry,
+            binding.containerDiseaseItems,
+            binding.containerSchemeItems
+        )
+        ShimmerHelper.applyShimmerToGroup(shimmerViews)
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            try {
+                setupKhataSection()
+                setupSchemesSection()
+                fetchPublishedNewsArticles()
+                delay(800)
+            } finally {
+                if (_binding != null) {
+                    ShimmerHelper.stopShimmerFromGroup(shimmerViews)
+                    binding.swipeRefreshHome.isRefreshing = false
+                }
+            }
+        }
+    }
+
+    private fun loadToolAds() {
+        loadAdForActiveChip(activeChipId)
+    }
+
+    private fun loadAdForActiveChip(checkedId: Int) {
+        bannerRefreshJob?.cancel()
+
+        val targetContainer = when (checkedId) {
+            R.id.chipToolKhata -> binding.adContainerKhata
+            R.id.chipToolCalculator -> binding.adContainerCalculator
+            R.id.chipToolDiseases -> binding.adContainerDiseases
+            R.id.chipToolSchemes -> binding.adContainerSchemes
+            else -> binding.adContainerKhata
+        }
+
+        loadToolAd(targetContainer)
+
+        // Gentle 2-minute (120s) auto-refresh for banner ads to protect UX & user retention
+        bannerRefreshJob = viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                delay(120_000L)
+                if (_binding != null && isAdded) {
+                    loadToolAd(targetContainer)
+                }
+            }
+        }
+    }
+
+    private fun loadToolAd(container: FrameLayout) {
+        val ctx = context ?: return
+        container.post {
+            try {
+                val adView = AdView(ctx).apply {
+                    adUnitId = "ca-app-pub-3054731531860427/9592937417"
+                    val displayMetrics = ctx.resources.displayMetrics
+                    val density = displayMetrics.density
+                    val adWidth = (displayMetrics.widthPixels / density).toInt()
+                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, adWidth))
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            container.visibility = View.VISIBLE
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            container.visibility = View.GONE
+                        }
+                    }
+                }
+                container.removeAllViews()
+                container.addView(adView)
+                adView.loadAd(AdRequest.Builder().build())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    companion object {
+        private const val PREFS_HOME = "home_prefs"
+        private const val KEY_WELCOME_DISMISSED = "welcome_banner_dismissed"
+        private var isWelcomeDismissedSession = false
+    }
+
+    private fun setupWelcomeBanner() {
+        if (_binding == null) return
+        val ctx = context ?: return
+
+        val prefs = ctx.getSharedPreferences(PREFS_HOME, Context.MODE_PRIVATE)
+        val isDismissed = isWelcomeDismissedSession || prefs.getBoolean(KEY_WELCOME_DISMISSED, false)
+
+        if (isDismissed) {
+            binding.cardWelcomeBanner.visibility = View.GONE
+            return
+        }
+
+        binding.cardWelcomeBanner.visibility = View.VISIBLE
+        val user = FirebaseAuth.getInstance().currentUser
+        val name = user?.displayName?.ifBlank { null } ?: user?.phoneNumber ?: "Farmer Friend"
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        binding.tvHomeWelcome.text = "👋 Welcome, $name!"
+
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val safeCtx = context ?: return@launch
+                if (!isAdded || _binding == null) return@launch
+                val transWelcome = TranslationHelper.translateText(safeCtx, "Welcome, $name!", activeLang)
+                if (_binding != null && isAdded) {
+                    binding.tvHomeWelcome.text = "👋 $transWelcome"
+                }
+            }
+        }
+
+        binding.btnDismissWelcome.setOnClickListener {
+            isWelcomeDismissedSession = true
+            prefs.edit().putBoolean(KEY_WELCOME_DISMISSED, true).apply()
+            binding.cardWelcomeBanner.visibility = View.GONE
+        }
+    }
+
+    private fun setupToolTabs() {
+        val ctx = context ?: return
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val safeCtx = context ?: return@launch
+                if (!isAdded || _binding == null) return@launch
+                val transKhata = TranslationHelper.translateText(safeCtx, "Kisan Diary", activeLang)
+                val transCalc = TranslationHelper.translateText(safeCtx, "Calculator", activeLang)
+                val transDisease = TranslationHelper.translateText(safeCtx, "Crop Care", activeLang)
+                val transSchemes = TranslationHelper.translateText(safeCtx, "Govt Schemes", activeLang)
+
+                if (_binding != null && isAdded) {
+                    binding.chipToolKhata.text = transKhata
+                    binding.chipToolCalculator.text = transCalc
+                    binding.chipToolDiseases.text = transDisease
+                    binding.chipToolSchemes.text = transSchemes
+                }
+
+                val transBestHeader = TranslationHelper.translateText(safeCtx, "Most Profitable Crop", activeLang)
+                val transCostlyHeader = TranslationHelper.translateText(safeCtx, "Highest Expense Crop", activeLang)
+                val transComparisonHeader = TranslationHelper.translateText(safeCtx, "Crop Performance Comparison:", activeLang)
+
+                if (_binding != null && isAdded) {
+                    binding.tvHeaderMostProfitable.text = "🚀 $transBestHeader"
+                    binding.tvHeaderHighestExpense.text = "💸 $transCostlyHeader"
+                    binding.tvHeaderCropComparison.text = transComparisonHeader
+                    binding.tvHeaderCropComparison.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
+                    binding.tvHeaderCropComparison.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
+                }
+            }
+        }
+
+        binding.chipGroupTools.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (_binding == null) return@setOnCheckedStateChangeListener
+            val checkedId = checkedIds.firstOrNull() ?: R.id.chipToolKhata
+            if (checkedId == activeChipId) return@setOnCheckedStateChangeListener
+
+            activeChipId = checkedId
+            internalToolSwitchCount++
+
+            binding.containerKhata.visibility = if (checkedId == R.id.chipToolKhata) View.VISIBLE else View.GONE
+            binding.containerCalculator.visibility = if (checkedId == R.id.chipToolCalculator) View.VISIBLE else View.GONE
+            binding.containerDiseases.visibility = if (checkedId == R.id.chipToolDiseases) View.VISIBLE else View.GONE
+            binding.containerSchemes.visibility = if (checkedId == R.id.chipToolSchemes) View.VISIBLE else View.GONE
+
+            // User retention friendly: require 5 tool switches before checking for an interstitial ad
+            if (internalToolSwitchCount >= 5) {
+                internalToolSwitchCount = 0
+                (activity as? MainActivity)?.tryShowInterstitialAd {
+                    loadAdForActiveChip(checkedId)
+                }
+            } else {
+                loadAdForActiveChip(checkedId)
+            }
+        }
+    }
+
+    private fun setupKhataSection() {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        binding.rvKhata.layoutManager = LinearLayoutManager(ctx)
+        khataAdapter = KhataAdapter(
+            emptyList(),
+            onEditClick = { item -> showAddKhataDialog(item) },
+            onDeleteClick = { item -> deleteKhataEntry(item) }
+        )
+        binding.rvKhata.adapter = khataAdapter
+
+        binding.rvCropAnalytics.layoutManager = LinearLayoutManager(ctx)
+        cropAnalyticsAdapter = CropAnalyticsAdapter(
+            cycles = emptyList(),
+            khataItems = emptyList(),
+            onToggleStatusClick = { cycle -> toggleCropCycleStatus(cycle) },
+            onDeleteCropClick = { cycle -> confirmAndDeleteCropCycle(cycle) }
+        )
+        binding.rvCropAnalytics.adapter = cropAnalyticsAdapter
+
+        binding.btnOpenVisualDashboard.setOnClickListener {
+            (activity as? MainActivity)?.tryShowInterstitialAd {
+                startActivity(Intent(ctx, KisanDiaryDashboardActivity::class.java))
+            }
+        }
+        val isNight = (ctx.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        val dashboardBgColor = Color.parseColor(if (isNight) "#A5B4FC" else "#4F46E5")
+        val dashboardTextColor = Color.parseColor(if (isNight) "#1E1B4B" else "#FFFFFF")
+        val rippleColor = Color.parseColor(if (isNight) "#C7D2FE" else "#3730A3")
+
+        binding.tvBtnFullDashboard.setTextColor(dashboardTextColor)
+        MediaUtils.applyShimmerAnimation(binding.btnOpenVisualDashboard, 12f, dashboardBgColor)
+
+        val rippleDrawable = RippleDrawable(
+            ColorStateList.valueOf(rippleColor),
+            null,
+            ColorDrawable(Color.WHITE)
+        )
+        binding.btnOpenVisualDashboard.foreground = rippleDrawable
+
+        val addEntryBgColor = Color.parseColor(if (isNight) "#FBBF24" else "#D97706")
+        val addEntryTextColor = Color.parseColor(if (isNight) "#451A03" else "#FFFFFF")
+
+        binding.btnAddKhataEntry.setTextColor(addEntryTextColor)
+        MediaUtils.applyShimmerAnimation(binding.btnAddKhataEntry, 16f, addEntryBgColor)
+        MediaUtils.startPulseAnimation(binding.btnAddKhataEntry)
+
+        setupKisanDiarySync()
+
+        binding.btnAddKhataEntry.setOnClickListener { showAddKhataDialog() }
+        binding.btnViewAllHistory.setOnClickListener {
+            (activity as? MainActivity)?.tryShowInterstitialAd {
+                startActivity(Intent(ctx, KisanDiaryHistoryActivity::class.java))
+            }
+        }
+    }
+
+    private var authStateListener: FirebaseAuth.AuthStateListener? = null
+
+    override fun onStart() {
+        super.onStart()
+        if (authStateListener == null) {
+            authStateListener = FirebaseAuth.AuthStateListener {
+                if (isAdded && _binding != null) {
+                    setupKisanDiarySync()
+                }
+            }
+            FirebaseAuth.getInstance().addAuthStateListener(authStateListener!!)
+        }
+        setupKisanDiarySync()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        authStateListener?.let { FirebaseAuth.getInstance().removeAuthStateListener(it) }
+        authStateListener = null
+        cropCyclesListener?.remove()
+        cropCyclesListener = null
+        khataItemsListener?.remove()
+        khataItemsListener = null
+    }
+
+    override fun onPause() {
+        super.onPause()
+        bannerRefreshJob?.cancel()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (_binding != null && isAdded) {
+            loadAdForActiveChip(activeChipId)
+        }
+    }
+
+    private fun setupKisanDiarySync() {
+        val safeCtx = context ?: return
+        if (!isAdded || _binding == null) return
+
+        KhataHelper.migrateGuestDataToCurrentUser(safeCtx, khataRepo)
+        khataItems = KhataHelper.getLocalKhataItems(safeCtx).toMutableList()
+        cropCycles = KhataHelper.getLocalCropCycles(safeCtx).toMutableList()
+
+        KhataHelper.reconcileOrphanedKhataItems(safeCtx, khataRepo, cropCycles, khataItems)
+
+        setupCropCycleSelector()
+        updateKhataUi()
+
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null || user.isAnonymous) return
+
+        // ⚡ Smart Local-First Cloud Restore:
+        // ONLY query Firestore if local device cache is empty (e.g., fresh install or app data cleared).
+        // If local entries exist, rely 100% on local storage to maintain 0 Firebase Reads during daily app usage.
+        if (cropCycles.isEmpty()) {
+            khataRepo.fetchCropCycles { remoteCycles ->
+                val ctx = context ?: return@fetchCropCycles
+                if (!isAdded || _binding == null) return@fetchCropCycles
+                if (remoteCycles.isNotEmpty()) {
+                    cropCycles = remoteCycles.sortedByDescending { it.timestamp }.toMutableList()
+                    KhataHelper.saveLocalCropCycles(ctx, cropCycles)
+                    KhataHelper.reconcileOrphanedKhataItems(ctx, khataRepo, cropCycles, khataItems)
+                    setupCropCycleSelector()
+                    updateKhataUi()
+                }
+            }
+        }
+
+        if (khataItems.isEmpty()) {
+            khataRepo.fetchKhataItems { remoteItems ->
+                val ctx = context ?: return@fetchKhataItems
+                if (!isAdded || _binding == null) return@fetchKhataItems
+                if (remoteItems.isNotEmpty()) {
+                    khataItems = remoteItems.sortedByDescending { it.timestamp }.toMutableList()
+                    KhataHelper.saveLocalKhataItems(ctx, khataItems)
+                    KhataHelper.reconcileOrphanedKhataItems(ctx, khataRepo, cropCycles, khataItems)
+                    setupCropCycleSelector()
+                    updateKhataUi()
+                }
+            }
+        }
+    }
+
+    private fun setupCropCycleSelector() {
+        val ctx = context ?: return
+        if (!isAdded || _binding == null) return
+
+        val options = mutableListOf<String>()
+        options.add("All Crops")
+        options.add("➕ New Season")
+
+        for (cycle in cropCycles) {
+            val statusTag = if (cycle.isCompleted) "✓" else "•"
+            options.add("🌾 ${cycle.cropName} (${cycle.seasonName}) $statusTag")
+        }
+
+        val adapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, options)
+        binding.actvCropCycleSelector.setAdapter(adapter)
+
+        val currentSelection = when {
+            selectedCropCycleId == "ALL_CROPS" -> options[0]
+            else -> {
+                val match = cropCycles.firstOrNull { it.id == selectedCropCycleId }
+                if (match != null) {
+                    val statusTag = if (match.isCompleted) "✓" else "•"
+                    "🌾 ${match.cropName} (${match.seasonName}) $statusTag"
+                } else options[0]
+            }
+        }
+        binding.actvCropCycleSelector.setText(currentSelection, false)
+
+        binding.actvCropCycleSelector.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            if (position == 0) {
+                selectedCropCycleId = "ALL_CROPS"
+                updateKhataUi()
+            } else if (position == 1) {
+                showAddCropCycleDialog()
+            } else {
+                val chosenCycle = cropCycles.getOrNull(position - 2)
+                if (chosenCycle != null) {
+                    selectedCropCycleId = chosenCycle.id
+                    updateKhataUi()
+                }
+            }
+        }
+    }
+
+    private fun updateKhataUi() {
+        val ctx = context ?: return
+        if (!isAdded || _binding == null) return
+
+        if (selectedCropCycleId == "ALL_CROPS") {
+            binding.containerDashboardAnalytics.visibility = View.VISIBLE
+            updateAnalyticsDashboard()
+
+            val filteredItems = khataItems
+            khataAdapter?.updateData(filteredItems.take(3))
+        } else {
+            binding.containerDashboardAnalytics.visibility = View.GONE
+
+            val filteredItems = khataItems.filter { it.cropCycleId == selectedCropCycleId }
+            khataAdapter?.updateData(filteredItems.take(3))
+        }
+    }
+
+    private fun updateAnalyticsDashboard() {
+        if (!isAdded || _binding == null) return
+        cropAnalyticsAdapter?.updateData(cropCycles, khataItems)
+
+        if (cropCycles.isEmpty()) {
+            binding.tvDashboardBestCrop.text = "N/A"
+            binding.tvDashboardCostlyCrop.text = "N/A"
+            return
+        }
+
+        // Calculate Net Profit and Expense per cycle
+        val cycleProfits = cropCycles.map { cycle ->
+            val items = khataItems.filter { it.cropCycleId == cycle.id || (it.cropCycleId.isBlank() && it.cropName.equals(cycle.cropName, ignoreCase = true)) }
+            val exp = items.filter { !it.isIncome }.sumOf { it.amount }
+            val inc = items.filter { it.isIncome }.sumOf { it.amount }
+            val net = inc - exp
+            Triple(cycle, exp, net)
+        }
+
+        val best = cycleProfits.maxByOrNull { it.third }
+        val costly = cycleProfits.maxByOrNull { it.second }
+
+        if (best != null && best.third > 0) {
+            binding.tvDashboardBestCrop.text = "${best.first.cropName} (+${numberFormat.format(best.third)})"
+        } else {
+            binding.tvDashboardBestCrop.text = "No Profit Recorded"
+        }
+
+        if (costly != null && costly.second > 0) {
+            binding.tvDashboardCostlyCrop.text = "${costly.first.cropName} (-${numberFormat.format(costly.second)})"
+        } else {
+            binding.tvDashboardCostlyCrop.text = "No Expense Recorded"
+        }
+    }
+
+    private fun showAddCropCycleDialog() {
+        val ctx = context ?: return
+        val dialogView = LayoutInflater.from(ctx).inflate(R.layout.dialog_add_crop_cycle, null)
+        val actvCrop = dialogView.findViewById<AutoCompleteTextView>(R.id.actvCycleCrop)
+        val actvSeason = dialogView.findViewById<AutoCompleteTextView>(R.id.actvCycleSeason)
+        val etArea = dialogView.findViewById<EditText>(R.id.etCycleArea)
+        val actvUnit = dialogView.findViewById<AutoCompleteTextView>(R.id.actvCycleUnit)
+        val btnSave = dialogView.findViewById<MaterialButton>(R.id.btnCycleSave)
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCycleCancel)
+
+        val currYear = Calendar.getInstance().get(Calendar.YEAR)
+        val seasons = listOf(
+            "Kharif $currYear",
+            "Rabi $currYear",
+            "Zaid $currYear",
+            "Kharif ${currYear + 1}",
+            "Rabi ${currYear + 1}",
+            "Zaid ${currYear + 1}"
+        )
+
+        val basicCrops = listOf(
+            "✍️ Type Custom Crop...",
+            "Wheat",
+            "Paddy / Rice",
+            "Soybean",
+            "Cotton",
+            "Mustard",
+            "Gram / Chickpea",
+            "Maize",
+            "Sugarcane",
+            "Onion",
+            "Potato",
+            "Garlic",
+            "Tomato",
+            "Chilli",
+            "Brinjal",
+            "Okra / Bhindi",
+            "Cauliflower",
+            "Cabbage"
+        )
+
+        val cropAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, basicCrops)
+        actvCrop.setAdapter(cropAdapter)
+
+        actvCrop.setOnItemClickListener { _, _, position, _ ->
+            val itemText = actvCrop.adapter.getItem(position).toString()
+            if (itemText.contains("Type Custom") || itemText.contains("Custom")) {
+                actvCrop.setText("")
+                actvCrop.requestFocus()
+                val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.showSoftInput(actvCrop, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+
+        val seasonAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, seasons)
+        actvSeason.setAdapter(seasonAdapter)
+
+        actvUnit.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, FertilizerUtils.units))
+        actvUnit.setText(FertilizerUtils.units[0], false)
+
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val tvTitle = dialogView.findViewById<TextView>(R.id.tvCycleDialogTitle)
+                val tilCrop = dialogView.findViewById<TextInputLayout>(R.id.tilCycleCrop)
+                val tilSeason = dialogView.findViewById<TextInputLayout>(R.id.tilCycleSeason)
+                val tilArea = dialogView.findViewById<TextInputLayout>(R.id.tilCycleArea)
+                val tilUnit = dialogView.findViewById<TextInputLayout>(R.id.tilCycleUnit)
+
+                val transTitle = TranslationHelper.translateText(ctx, "Start New Crop Season", activeLang)
+                tvTitle?.text = "🌾 $transTitle"
+
+                val transCropHint = TranslationHelper.translateText(ctx, "Select or type crop", activeLang)
+                val transSeasonHint = TranslationHelper.translateText(ctx, "Select or type season", activeLang)
+                val transAreaHint = TranslationHelper.translateText(ctx, "Land Area", activeLang)
+                val transUnitHint = TranslationHelper.translateText(ctx, "Unit", activeLang)
+
+                tilCrop?.hint = transCropHint
+                tilSeason?.hint = transSeasonHint
+                tilArea?.hint = transAreaHint
+                tilUnit?.hint = transUnitHint
+
+                btnCancel.text = TranslationHelper.translateText(ctx, "Cancel", activeLang)
+                btnSave.text = TranslationHelper.translateText(ctx, "Start Season", activeLang)
+
+                val transUnits = FertilizerUtils.units.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                val translatedUnitAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, transUnits)
+                actvUnit.setAdapter(translatedUnitAdapter)
+                if (transUnits.isNotEmpty()) {
+                    actvUnit.setText(transUnits[0], false)
+                }
+
+                val transTypeOption = TranslationHelper.translateText(ctx, "Type Custom Crop", activeLang)
+                val translatedCrops = basicCrops.map { crop ->
+                    if (crop.contains("Type Custom")) "✍️ $transTypeOption..."
+                    else TranslationHelper.translateText(ctx, crop, activeLang)
+                }
+                actvCrop.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, translatedCrops))
+            }
+        }
+
+        val dialog = MaterialAlertDialogBuilder(ctx)
+            .setView(dialogView)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val safeCtx = context ?: return@setOnClickListener
+            val rawCropText = actvCrop.text.toString().trim()
+            val crop = if (rawCropText.contains("Type Custom")) "Wheat" else rawCropText.ifBlank { "Wheat" }
+            val season = actvSeason.text.toString().trim().ifBlank { "Kharif $currYear" }
+            val areaVal = etArea.text.toString().toDoubleOrNull() ?: 1.0
+
+            val rawUnitText = actvUnit.text.toString().trim()
+            val unitIdx = FertilizerUtils.units.indexOfFirst {
+                it.equals(rawUnitText, ignoreCase = true) || rawUnitText.contains(it, ignoreCase = true)
+            }.coerceAtLeast(0)
+
+            val areaAcres = when (unitIdx) {
+                1 -> areaVal / 2.5
+                2 -> areaVal * 2.47
+                else -> areaVal
+            }
+
+            val dateFormat = SimpleDateFormat("dd MMM", Locale.ENGLISH)
+            val todayStr = dateFormat.format(Date())
+
+            val newCycle = CropCycle(
+                id = "cycle_${System.currentTimeMillis()}",
+                cropName = crop,
+                seasonName = season,
+                areaAcres = Math.round(areaAcres * 10.0) / 10.0,
+                startDateStr = todayStr,
+                isCompleted = false,
+                timestamp = System.currentTimeMillis()
+            )
+
+            cropCycles.add(0, newCycle)
+            KhataHelper.saveLocalCropCycles(safeCtx, cropCycles)
+            selectedCropCycleId = newCycle.id
+
+            khataRepo.addCropCycle(newCycle) { success ->
+                val cbCtx = context ?: return@addCropCycle
+                if (success && isAdded) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        val transMsg = TranslationHelper.translateText(cbCtx, "Crop Season Started!", activeLang)
+                        Toast.makeText(cbCtx, transMsg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            setupCropCycleSelector()
+            updateKhataUi()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun toggleCropCycleStatus(cycle: CropCycle) {
+        val ctx = context ?: return
+        cycle.isCompleted = !cycle.isCompleted
+        KhataHelper.saveLocalCropCycles(ctx, cropCycles)
+        setupCropCycleSelector()
+        updateKhataUi()
+
+        khataRepo.updateCropCycle(cycle) { _ -> }
+        val msg = if (cycle.isCompleted) "Crop Season Harvested & Completed!" else "Crop Season Re-activated!"
+        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun confirmAndDeleteCropCycle(cycle: CropCycle) {
+        val ctx = context ?: return
+        MaterialAlertDialogBuilder(ctx)
+            .setIcon(R.drawable.ic_delete)
+            .setTitle("Delete Crop Season")
+            .setMessage("Are you sure you want to delete '${cycle.cropName} (${cycle.seasonName})'?\n\nWarning: This will permanently remove this crop season and all associated Khata expense/income entries.")
+            .setPositiveButton("Delete Season") { _, _ ->
+                val safeCtx = context ?: return@setPositiveButton
+                cropCycles.remove(cycle)
+                KhataHelper.saveLocalCropCycles(safeCtx, cropCycles)
+                khataRepo.deleteCropCycle(cycle.id) { _ -> }
+
+                val itemsToRemove = khataItems.filter { it.cropCycleId == cycle.id || (it.cropCycleId.isBlank() && it.cropName.equals(cycle.cropName, ignoreCase = true)) }
+                for (item in itemsToRemove) {
+                    khataItems.remove(item)
+                    khataRepo.deleteKhataItem(item.id) { _ -> }
+                }
+                KhataHelper.saveLocalKhataItems(safeCtx, khataItems)
+
+                if (selectedCropCycleId == cycle.id) {
+                    selectedCropCycleId = "ALL_CROPS"
+                }
+
+                setupCropCycleSelector()
+                updateKhataUi()
+                if (isAdded) {
+                    Toast.makeText(safeCtx, "Crop season and entries deleted!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showAddKhataDialog(existingItem: KhataItem? = null) {
+        val ctx = context ?: return
+        val dialogView = LayoutInflater.from(ctx).inflate(R.layout.dialog_add_khata_entry, null)
+        val toggleType = dialogView.findViewById<MaterialButtonToggleGroup>(R.id.toggleKhataType)
+        val etAmount = dialogView.findViewById<EditText>(R.id.etKhataAmount)
+        val actvCrop = dialogView.findViewById<AutoCompleteTextView>(R.id.actvKhataCrop)
+        val actvCategory = dialogView.findViewById<AutoCompleteTextView>(R.id.actvKhataCategory)
+        val actvStage = dialogView.findViewById<AutoCompleteTextView>(R.id.actvKhataStage)
+        val etNote = dialogView.findViewById<EditText>(R.id.etKhataNote)
+        val btnSave = dialogView.findViewById<MaterialButton>(R.id.btnKhataSave)
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnKhataCancel)
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvKhataDialogTitle)
+
+        val isEdit = existingItem != null
+        if (isEdit) {
+            tvTitle?.text = "Edit Entry"
+            btnSave.text = "Update Entry"
+            etAmount.setText(existingItem.amount.toInt().toString())
+            etNote.setText(existingItem.note)
+            if (existingItem.isIncome) {
+                toggleType.check(R.id.btnTypeIncome)
+            } else {
+                toggleType.check(R.id.btnTypeExpense)
+            }
+        }
+
+        val categories = listOf("Seeds", "Fertilizer", "Pesticides", "Labor", "Diesel & Irrigation", "Machinery & Tractor", "Electricity & Water", "Miscellaneous", "Mandi Sale")
+        val stages = listOf("Sowing", "Irrigation", "Spray", "Harvesting", "Sale")
+
+        var currentTransCategories = categories
+        var currentTransStages = stages
+
+        val allAvailableCrops = (cropCycles.map { "${it.cropName} (${it.seasonName})" } + FertilizerUtils.crops).distinct()
+        val activeCropNames = if (allAvailableCrops.isNotEmpty()) allAvailableCrops else listOf("Wheat", "Rice", "Soybean", "Cotton", "Mustard")
+        actvCrop.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, activeCropNames))
+
+        val currentSelectedCycle = cropCycles.firstOrNull { it.id == selectedCropCycleId }
+        val defaultCropText = if (isEdit && !existingItem.cropName.isNullOrBlank()) {
+            val matchingCycleObj = cropCycles.firstOrNull { it.cropName.equals(existingItem.cropName, ignoreCase = true) }
+            if (matchingCycleObj != null) "${matchingCycleObj.cropName} (${matchingCycleObj.seasonName})" else existingItem.cropName
+        } else if (currentSelectedCycle != null) {
+            "${currentSelectedCycle.cropName} (${currentSelectedCycle.seasonName})"
+        } else if (activeCropNames.isNotEmpty()) {
+            activeCropNames[0]
+        } else {
+            "Wheat"
+        }
+        actvCrop.setText(defaultCropText, false)
+
+        val defaultCat = if (isEdit) existingItem.category else categories[0]
+        val catInitIndex = categories.indexOf(defaultCat).let { if (it != -1) it else 0 }
+
+        val defaultStage = if (isEdit) existingItem.stage else stages[0]
+        val stageInitIndex = stages.indexOf(defaultStage).let { if (it != -1) it else 0 }
+
+        actvCategory.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, categories))
+        actvCategory.setText(categories[catInitIndex], false)
+
+        actvStage.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, stages))
+        actvStage.setText(stages[stageInitIndex], false)
+
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val btnExpense = dialogView.findViewById<MaterialButton>(R.id.btnTypeExpense)
+                val btnIncome = dialogView.findViewById<MaterialButton>(R.id.btnTypeIncome)
+                val tilAmount = dialogView.findViewById<TextInputLayout>(R.id.tilKhataAmount)
+                val tilCrop = dialogView.findViewById<TextInputLayout>(R.id.tilKhataCrop)
+                val tilCategory = dialogView.findViewById<TextInputLayout>(R.id.tilKhataCategory)
+                val tilStage = dialogView.findViewById<TextInputLayout>(R.id.tilKhataStage)
+                val tilNote = dialogView.findViewById<TextInputLayout>(R.id.tilKhataNote)
+
+                val transTitle = TranslationHelper.translateText(ctx, if (isEdit) "Edit Entry" else "Add New Entry", activeLang)
+                tvTitle?.text = "📖 $transTitle"
+
+                val transExpense = TranslationHelper.translateText(ctx, "Expense", activeLang)
+                val transIncome = TranslationHelper.translateText(ctx, "Income", activeLang)
+                btnExpense?.text = "💸 $transExpense (-)"
+                btnIncome?.text = "💰 $transIncome (+)"
+
+                val transAmountHint = TranslationHelper.translateText(ctx, "Amount", activeLang)
+                val transCropHint = TranslationHelper.translateText(ctx, "Select Crop Season", activeLang)
+                val transCatHint = TranslationHelper.translateText(ctx, "Category", activeLang)
+                val transStageHint = TranslationHelper.translateText(ctx, "Crop Stage", activeLang)
+                val transNoteHint = TranslationHelper.translateText(ctx, "Note / Details", activeLang)
+
+                tilAmount?.hint = transAmountHint
+                tilCrop?.hint = transCropHint
+                tilCategory?.hint = transCatHint
+                tilStage?.hint = transStageHint
+                tilNote?.hint = transNoteHint
+
+                btnCancel.text = TranslationHelper.translateText(ctx, "Cancel", activeLang)
+                btnSave.text = TranslationHelper.translateText(ctx, if (isEdit) "Update Entry" else "Save Entry", activeLang)
+
+                currentTransCategories = categories
+                val catAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, categories)
+                actvCategory.setAdapter(catAdapter)
+                val transCatIndex = if (catInitIndex in categories.indices) catInitIndex else 0
+                if (categories.isNotEmpty()) actvCategory.setText(categories[transCatIndex], false)
+
+                val transStages = stages.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                currentTransStages = transStages
+                val stageAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, transStages)
+                actvStage.setAdapter(stageAdapter)
+                val transStageIndex = if (stageInitIndex in transStages.indices) stageInitIndex else 0
+                if (transStages.isNotEmpty()) actvStage.setText(transStages[transStageIndex], false)
+            }
+        }
+
+        var isIncome = isEdit && existingItem.isIncome
+        toggleType.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                isIncome = (checkedId == R.id.btnTypeIncome)
+            }
+        }
+
+        val dialog = MaterialAlertDialogBuilder(ctx)
+            .setView(dialogView)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val safeCtx = context ?: return@setOnClickListener
+            val amountStr = etAmount.text.toString().trim()
+            val amount = amountStr.toDoubleOrNull() ?: 0.0
+
+            if (amount <= 0.0) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val transErr = TranslationHelper.translateText(safeCtx, "Please enter valid amount", activeLang)
+                    Toast.makeText(safeCtx, transErr, Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
+
+            val dateFormat = SimpleDateFormat("dd MMM", Locale.ENGLISH)
+            val todayStr = dateFormat.format(Date())
+
+            val rawCropSelection = actvCrop.text.toString()
+            val matchingCycle = KhataHelper.getOrCreateCropCycle(safeCtx, khataRepo, cropCycles, rawCropSelection)
+
+            val rawCategoryText = actvCategory.text.toString()
+            val catIndex = currentTransCategories.indexOfFirst { it.equals(rawCategoryText, ignoreCase = true) || rawCategoryText.contains(it, ignoreCase = true) }
+            val savedCategory = if (catIndex in categories.indices) categories[catIndex] else (categories.firstOrNull { it.equals(rawCategoryText, ignoreCase = true) } ?: categories[0])
+
+            val rawStageText = actvStage.text.toString()
+            val stageIndex = currentTransStages.indexOfFirst { it.equals(rawStageText, ignoreCase = true) || rawStageText.contains(it, ignoreCase = true) }
+            val savedStage = if (stageIndex in stages.indices) stages[stageIndex] else (stages.firstOrNull { it.equals(rawStageText, ignoreCase = true) } ?: stages[0])
+
+            selectedCropCycleId = matchingCycle.id
+
+            if (isEdit && existingItem != null) {
+                existingItem.cropCycleId = matchingCycle.id
+                existingItem.cropName = matchingCycle.cropName
+                existingItem.category = savedCategory
+                existingItem.stage = savedStage
+                existingItem.amount = amount
+                existingItem.isIncome = isIncome
+                existingItem.note = etNote.text.toString().trim()
+
+                val index = khataItems.indexOfFirst { it.id == existingItem.id }
+                if (index != -1) {
+                    khataItems[index] = existingItem
+                }
+                KhataHelper.saveLocalKhataItems(safeCtx, khataItems)
+                setupCropCycleSelector()
+                updateKhataUi()
+
+                khataRepo.addKhataItem(existingItem) { success ->
+                    val cbCtx = context ?: return@addKhataItem
+                    if (success && isAdded) {
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            val transMsg = TranslationHelper.translateText(cbCtx, "Updated Kisan Diary Entry!", activeLang)
+                            Toast.makeText(cbCtx, transMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } else {
+                val newItem = KhataItem(
+                    id = "item_${System.currentTimeMillis()}",
+                    userId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    cropCycleId = matchingCycle.id,
+                    cropName = matchingCycle.cropName,
+                    category = savedCategory,
+                    stage = savedStage,
+                    amount = amount,
+                    isIncome = isIncome,
+                    dateStr = todayStr,
+                    timestamp = System.currentTimeMillis(),
+                    note = etNote.text.toString().trim()
+                )
+
+                khataItems.add(0, newItem)
+                KhataHelper.saveLocalKhataItems(safeCtx, khataItems)
+                setupCropCycleSelector()
+                updateKhataUi()
+
+                khataRepo.addKhataItem(newItem) { success ->
+                    val cbCtx = context ?: return@addKhataItem
+                    if (success && isAdded) {
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            val transMsg = TranslationHelper.translateText(cbCtx, "Saved to Kisan Diary Cloud!", activeLang)
+                            Toast.makeText(cbCtx, transMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+
+            dialog.dismiss()
+            (activity as? MainActivity)?.tryShowInterstitialAd { }
+        }
+
+        dialog.show()
+    }
+
+    private fun deleteKhataEntry(item: KhataItem) {
+        val ctx = context ?: return
+        MaterialAlertDialogBuilder(ctx)
+            .setIcon(R.drawable.ic_delete)
+            .setTitle("Delete Entry")
+            .setMessage("Are you sure you want to delete this Kisan Diary entry?")
+            .setPositiveButton("Delete") { _, _ ->
+                val safeCtx = context ?: return@setPositiveButton
+                khataItems.remove(item)
+                KhataHelper.saveLocalKhataItems(safeCtx, khataItems)
+                updateKhataUi()
+                khataRepo.deleteKhataItem(item.id) { _ -> }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private var lastCalculatedItem: KhataItem? = null
+
+    private fun registerViewForKeyboardScroll(view: View) {
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                registerViewForKeyboardScroll(view.getChildAt(i))
+            }
+        } else if (view is EditText) {
+            view.setOnFocusChangeListener { v, hasFocus ->
+                if (hasFocus) {
+                    v.post {
+                        val scrollView = binding.scrollViewHome
+                        val rect = Rect()
+                        v.getDrawingRect(rect)
+                        scrollView.offsetDescendantRectToMyCoords(v, rect)
+                        scrollView.smoothScrollTo(0, maxOf(0, rect.top - 200))
+                    }
+                }
+            }
+            view.setOnClickListener { v ->
+                v.post {
+                    val scrollView = binding.scrollViewHome
+                    val rect = Rect()
+                    v.getDrawingRect(rect)
+                    scrollView.offsetDescendantRectToMyCoords(v, rect)
+                    scrollView.smoothScrollTo(0, maxOf(0, rect.top - 200))
+                }
+            }
+        }
+    }
+
+    private fun setupCalculatorSection() {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        // Auto-scroll when any calculator input gets focus or is clicked
+        registerViewForKeyboardScroll(binding.containerCalculator)
+
+        // Populate Common Dropdowns
+        val adapterCrop = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, FarmingCalculatorUtils.crops)
+        binding.actvCalcCrop.setAdapter(adapterCrop)
+        binding.actvCalcCrop.setText(FarmingCalculatorUtils.crops[0], false)
+
+        val adapterUnit = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, FarmingCalculatorUtils.units)
+        binding.actvCalcUnit.setAdapter(adapterUnit)
+        binding.actvCalcUnit.setText(FarmingCalculatorUtils.units[0], false)
+
+        // Sub-dropdown options
+        val ops = listOf("Ploughing", "Cultivator", "Rotavator", "Harrowing", "Levelling", "Custom Machinery Work")
+        binding.actvFieldPrepOperation.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, ops))
+        binding.actvFieldPrepOperation.setText(ops[0], false)
+
+        val machines = listOf("Tractor", "Rotavator", "Cultivator", "Leveller", "Harvester")
+        binding.actvFieldPrepMachine.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, machines))
+        binding.actvFieldPrepMachine.setText(machines[0], false)
+
+        val pricingTypes = listOf("₹/Acre", "₹/Hour")
+        binding.actvFieldPrepPricingType.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, pricingTypes))
+        binding.actvFieldPrepPricingType.setText(pricingTypes[0], false)
+
+        val methods = listOf("Line Sowing", "Broadcasting", "Dibbling", "Transplanting")
+        binding.actvSowingMethod.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, methods))
+        binding.actvSowingMethod.setText(methods[0], false)
+
+        val irrMethods = listOf("Flood Irrigation", "Drip Irrigation", "Sprinkler System")
+        binding.actvIrrigationMethod.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, irrMethods))
+        binding.actvIrrigationMethod.setText(irrMethods[0], false)
+
+        val pumps = listOf("Electric Pump", "Diesel Pump", "Canal Water")
+        binding.actvIrrigationPump.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, pumps))
+        binding.actvIrrigationPump.setText(pumps[0], false)
+
+        val sprayProblems = listOf("Disease / Fungus", "Insect Pest", "Weeds")
+        binding.actvSprayProblem.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, sprayProblems))
+        binding.actvSprayProblem.setText(sprayProblems[0], false)
+
+        val workTypes = listOf("Land Preparation", "Sowing", "Weeding", "Fertilizer Application", "Spraying", "Irrigation", "Harvesting", "Other")
+        binding.actvLabourWorkType.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, workTypes))
+        binding.actvLabourWorkType.setText(workTypes[0], false)
+
+        val harvestMethods = listOf("Combine Harvester / Machine", "Manual Labour")
+        binding.actvHarvestMethod.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, harvestMethods))
+        binding.actvHarvestMethod.setText(harvestMethods[0], false)
+
+        // Setup Stage & Calculator Selector lists
+        val productionCalcs = listOf(
+            "1. 🚜 Farm Machinery & Field Preparation",
+            "2. 🌱 Sowing & Seed Calculator",
+            "3. 🧪 Fertilizer & Nutrient Calculator",
+            "4. 💧 Irrigation & Water Calculator",
+            "5. 💊 Crop Protection & Spray Calculator",
+            "6. 👨‍🌾 Labour & Worker Cost Calculator",
+            "7. 🌾 Harvesting Calculator"
+        )
+        val postHarvestCalcs = listOf(
+            "8. 📦 Transport & Storage Calculator",
+            "9. 🏪 Crop Sale & Mandi Calculator"
+        )
+        val financialCalcs = listOf(
+            "10. Complete Crop Profit & ROI Calculator"
+        )
+
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        fun updateCalculatorSelector(stage: Int) {
+            val calcList = when (stage) {
+                1 -> postHarvestCalcs
+                2 -> financialCalcs
+                else -> productionCalcs
+            }
+            val adapterCalc = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, calcList)
+            binding.actvCalculatorSelector.setAdapter(adapterCalc)
+            binding.actvCalculatorSelector.setText(calcList[0], false)
+            showFormForCalculator(calcList[0])
+        }
+
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                if (_binding == null || !isAdded) return@launch
+                val transHeader = TranslationHelper.translateText(ctx, "Kisan Kendra — Farming Calculator System", activeLang)
+                val transProd = TranslationHelper.translateText(ctx, "🌱 1. Production Stage", activeLang)
+                val transPost = TranslationHelper.translateText(ctx, "📦 2. Post-Harvest Stage", activeLang)
+                val transFin = TranslationHelper.translateText(ctx, "3. Financial Stage", activeLang)
+                val transSelectCalc = TranslationHelper.translateText(ctx, "Select Calculator", activeLang)
+
+                if (_binding != null && isAdded) {
+                    binding.tvHeaderCalc.text = "🌾 $transHeader"
+                    binding.chipStageProduction.text = transProd
+                    binding.chipStagePostHarvest.text = transPost
+                    binding.chipStageFinancial.text = transFin
+                    binding.tilCalculatorSelector.hint = transSelectCalc
+
+                    val transProdCalcs = productionCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                    val transPostCalcs = postHarvestCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                    val transFinCalcs = financialCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+
+                    val activeCheckedId = binding.chipGroupCalcStages.checkedChipId
+                    val currentList = when (activeCheckedId) {
+                        R.id.chipStagePostHarvest -> transPostCalcs
+                        R.id.chipStageFinancial -> transFinCalcs
+                        else -> transProdCalcs
+                    }
+                    val adapterCalc = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, currentList)
+                    binding.actvCalculatorSelector.setAdapter(adapterCalc)
+                    binding.actvCalculatorSelector.setText(currentList[0], false)
+                    showFormForCalculator(currentList[0])
+
+                    binding.chipGroupCalcStages.setOnCheckedStateChangeListener { _, checkedIds ->
+                        val checkedId = checkedIds.firstOrNull() ?: R.id.chipStageProduction
+                        val list = when (checkedId) {
+                            R.id.chipStagePostHarvest -> transPostCalcs
+                            R.id.chipStageFinancial -> transFinCalcs
+                            else -> transProdCalcs
+                        }
+                        val adapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, list)
+                        binding.actvCalculatorSelector.setAdapter(adapter)
+                        binding.actvCalculatorSelector.setText(list[0], false)
+                        showFormForCalculator(list[0])
+                    }
+                }
+            }
+        } else {
+            binding.chipGroupCalcStages.setOnCheckedStateChangeListener { _, checkedIds ->
+                val checkedId = checkedIds.firstOrNull() ?: R.id.chipStageProduction
+                when (checkedId) {
+                    R.id.chipStagePostHarvest -> updateCalculatorSelector(1)
+                    R.id.chipStageFinancial -> updateCalculatorSelector(2)
+                    else -> updateCalculatorSelector(0)
+                }
+            }
+            updateCalculatorSelector(0)
+        }
+
+        binding.actvCalculatorSelector.setOnItemClickListener { parent, _, position, _ ->
+            val selectedCalc = parent.getItemAtPosition(position).toString()
+            showFormForCalculator(selectedCalc)
+        }
+
+        // Calculate Button Action
+        binding.btnCalculateFertilizer.setOnClickListener {
+            if (_binding == null) return@setOnClickListener
+            performSelectedCalculation()
+        }
+
+        // Save to Kisan Diary Action
+        binding.btnSaveCalcToKisanDiary.setOnClickListener {
+            val itemToSave = lastCalculatedItem
+            if (itemToSave != null) {
+                val safeCtx = context ?: return@setOnClickListener
+
+                val matchingCycle = KhataHelper.getOrCreateCropCycle(safeCtx, khataRepo, cropCycles, itemToSave.cropName)
+
+                itemToSave.cropCycleId = matchingCycle.id
+                itemToSave.cropName = matchingCycle.cropName
+
+                val existing = KhataHelper.getLocalKhataItems(safeCtx).toMutableList()
+                existing.add(0, itemToSave)
+                KhataHelper.saveLocalKhataItems(safeCtx, existing)
+                khataItems = existing
+
+                // Refresh Crop Season dropdown and update UI so user immediately sees entry in Kisan Diary
+                selectedCropCycleId = matchingCycle.id
+                setupCropCycleSelector()
+                updateKhataUi()
+
+                khataRepo.addKhataItem(itemToSave) { _ -> }
+
+                (activity as? MainActivity)?.tryShowInterstitialAd {
+                    val safeCtxCb = context ?: return@tryShowInterstitialAd
+                    if (_binding != null && isAdded) {
+                        Toast.makeText(safeCtxCb, "✅ Saved estimate to Kisan Diary (${matchingCycle.cropName})!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(ctx, "Please perform a calculation first.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showFormForCalculator(calcTitle: String) {
+        if (_binding == null) return
+
+        // Hide all specific forms first
+        binding.layoutCalcFieldPrep.visibility = View.GONE
+        binding.layoutCalcSowing.visibility = View.GONE
+        binding.layoutCalcFertilizer.visibility = View.GONE
+        binding.layoutCalcIrrigation.visibility = View.GONE
+        binding.layoutCalcSpray.visibility = View.GONE
+        binding.layoutCalcLabour.visibility = View.GONE
+        binding.layoutCalcHarvesting.visibility = View.GONE
+        binding.layoutCalcTransport.visibility = View.GONE
+        binding.layoutCalcSale.visibility = View.GONE
+        binding.layoutCalcProfit.visibility = View.GONE
+
+        // Common layout visible for almost all
+        binding.layoutCalcCommon.visibility = if (calcTitle.contains("8. 📦") || calcTitle.contains("9. 🏪")) View.GONE else View.VISIBLE
+
+        when {
+            calcTitle.contains("1. 🚜") -> binding.layoutCalcFieldPrep.visibility = View.VISIBLE
+            calcTitle.contains("2. 🌱") -> binding.layoutCalcSowing.visibility = View.VISIBLE
+            calcTitle.contains("3. 🧪") -> binding.layoutCalcFertilizer.visibility = View.VISIBLE
+            calcTitle.contains("4. 💧") -> binding.layoutCalcIrrigation.visibility = View.VISIBLE
+            calcTitle.contains("5. 💊") -> binding.layoutCalcSpray.visibility = View.VISIBLE
+            calcTitle.contains("6. 👨‍🌾") -> binding.layoutCalcLabour.visibility = View.VISIBLE
+            calcTitle.contains("7. 🌾") -> binding.layoutCalcHarvesting.visibility = View.VISIBLE
+            calcTitle.contains("8. 📦") -> binding.layoutCalcTransport.visibility = View.VISIBLE
+            calcTitle.contains("9. 🏪") -> binding.layoutCalcSale.visibility = View.VISIBLE
+            calcTitle.contains("10. 📊") -> binding.layoutCalcProfit.visibility = View.VISIBLE
+            else -> binding.layoutCalcFertilizer.visibility = View.VISIBLE
+        }
+
+        binding.cardCalcResult.visibility = View.GONE
+    }
+
+    private fun performSelectedCalculation() {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        val calcTitle = binding.actvCalculatorSelector.text.toString()
+        val area = binding.etCalcArea.text.toString().toDoubleOrNull() ?: 5.0
+        val crop = binding.actvCalcCrop.text.toString().ifBlank { "Wheat" }
+        val cropIndex = FarmingCalculatorUtils.crops.indexOfFirst {
+            it.equals(crop, ignoreCase = true) || crop.contains(it, ignoreCase = true)
+        }.coerceAtLeast(0)
+
+        val rawUnitText = binding.actvCalcUnit.text.toString().trim()
+        val unitIdx = FarmingCalculatorUtils.units.indexOfFirst {
+            it.equals(rawUnitText, ignoreCase = true) || rawUnitText.contains(it, ignoreCase = true)
+        }.coerceAtLeast(0)
+
+        val todayStr = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
+
+        when {
+            // 1. Farm Machinery & Field Prep
+            calcTitle.contains("1. 🚜") -> {
+                val operation = binding.actvFieldPrepOperation.text.toString().ifBlank { "Ploughing" }
+                val machine = binding.actvFieldPrepMachine.text.toString().ifBlank { "Tractor" }
+                val rate = binding.etFieldPrepRate.text.toString().toDoubleOrNull() ?: 1200.0
+                val pricingType = binding.actvFieldPrepPricingType.text.toString()
+                val isHourly = pricingType.contains("Hour", ignoreCase = true)
+
+                val res = FarmingCalculatorUtils.calculateFieldPrep(
+                    cropName = crop,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    operation = operation,
+                    machine = machine,
+                    rate = rate,
+                    isHourly = isHourly,
+                    hoursPerAcre = 1.5,
+                    fuelSeparate = false,
+                    fuelConsLPerAcre = 0.0,
+                    fuelPrice = 0.0
+                )
+
+                binding.tvCalcResultSeed.text = "🚜 Field Prep Operation: ${res.operationName} (${res.machineName})"
+                binding.tvCalcResultUrea.text = "📐 Land Area: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} Acres"
+                binding.tvCalcResultDap.text = "💵 Pricing: ${res.rateText}"
+                binding.tvCalcResultZinc.text = "💰 Total Machinery Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/Acre)"
+                binding.tvCalcResultNote.text = "💡 Field preparation estimate for $crop season."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Machinery & Fuel",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Field Prep: ${res.operationName} (${res.machineName}) for $crop",
+                    stage = "Land Preparation"
+                )
+            }
+
+            // 2. Sowing & Seed Calculator
+            calcTitle.contains("2. 🌱") -> {
+                val variety = binding.etSowingVariety.text.toString().trim().ifBlank { "High Yield Variety" }
+                val method = binding.actvSowingMethod.text.toString().ifBlank { "Line Sowing" }
+                val price = binding.etSowingPrice.text.toString().toDoubleOrNull() ?: 35.0
+
+                val res = FarmingCalculatorUtils.calculateSowing(
+                    cropIndex = cropIndex,
+                    variety = variety,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    sowingMethod = method,
+                    customSeedRateKg = null,
+                    seedPricePerKg = price
+                )
+
+                binding.tvCalcResultSeed.text = "🌱 Sowing Plan: ${res.cropName} (${res.variety}) — ${res.sowingMethod}"
+                binding.tvCalcResultUrea.text = "📐 Recommended Seed Rate: ${String.format(Locale.ENGLISH, "%.1f", res.seedRatePerAcre)} kg/Acre"
+                binding.tvCalcResultDap.text = "📦 Total Seed Required: ${String.format(Locale.ENGLISH, "%.1f", res.totalSeedKg)} kg"
+                binding.tvCalcResultZinc.text = "💰 Estimated Seed Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalSeedCost)} (@ ₹${String.format(Locale.ENGLISH, "%.0f", res.seedPricePerKg)}/kg)"
+                binding.tvCalcResultNote.text = "💡 Recommended seed rate and cost for optimal plant population."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Seeds",
+                    amount = res.totalSeedCost,
+                    dateStr = todayStr,
+                    note = "Seed Purchase: ${res.totalSeedKg}kg ${res.cropName} (${res.variety})",
+                    stage = "Sowing"
+                )
+            }
+
+            // 3. Fertilizer & Nutrient Calculator
+            calcTitle.contains("3. 🧪") -> {
+                val ureaP = binding.etFertUreaPrice.text.toString().toDoubleOrNull() ?: 266.0
+                val dapP = binding.etFertDapPrice.text.toString().toDoubleOrNull() ?: 1350.0
+                val mopP = binding.etFertMopPrice.text.toString().toDoubleOrNull() ?: 1700.0
+                val zincP = binding.etFertZincPrice.text.toString().toDoubleOrNull() ?: 80.0
+
+                val res = FarmingCalculatorUtils.calculateFertilizer(
+                    cropIndex = cropIndex,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    ureaPriceBag = ureaP,
+                    dapPriceBag = dapP,
+                    mopPriceBag = mopP,
+                    zincPriceKg = zincP
+                )
+
+                binding.tvCalcResultSeed.text = "🧪 Urea: ${String.format(Locale.ENGLISH, "%.1f", res.ureaKg)} kg (${String.format(Locale.ENGLISH, "%.1f", res.ureaBags)} Bags)"
+                binding.tvCalcResultUrea.text = "🧪 DAP: ${String.format(Locale.ENGLISH, "%.1f", res.dapKg)} kg (${String.format(Locale.ENGLISH, "%.1f", res.dapBags)} Bags)"
+                binding.tvCalcResultDap.text = "🧪 MOP: ${String.format(Locale.ENGLISH, "%.1f", res.mopKg)} kg (${String.format(Locale.ENGLISH, "%.1f", res.mopBags)} Bags) | Zinc: ${String.format(Locale.ENGLISH, "%.1f", res.zincKg)} kg"
+                binding.tvCalcResultZinc.text = "💰 Estimated Fertilizer Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
+                binding.tvCalcResultNote.text = "🗓️ Application Schedule:\n${res.applicationSchedule}"
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Fertiliser",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Fertilizer Requirement for $crop (${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} Acres)",
+                    stage = "Sowing"
+                )
+            }
+
+            // 4. Irrigation & Water Calculator
+            calcTitle.contains("4. 💧") -> {
+                val method = binding.actvIrrigationMethod.text.toString().ifBlank { "Flood Irrigation" }
+                val count = binding.etIrrigationCount.text.toString().toIntOrNull() ?: 5
+                val pump = binding.actvIrrigationPump.text.toString().ifBlank { "Electric Pump" }
+                val hours = binding.etIrrigationHours.text.toString().toDoubleOrNull() ?: 4.0
+
+                val res = FarmingCalculatorUtils.calculateIrrigation(
+                    cropIndex = cropIndex,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    stageName = "Seasonal",
+                    method = method,
+                    numIrrigations = count,
+                    pumpType = pump,
+                    hp = 7.5,
+                    hoursPerIrrigation = hours,
+                    electricityRate = 7.0,
+                    fuelConsLHr = 2.5,
+                    fuelPrice = 90.0,
+                    directCanalCost = 1500.0
+                )
+
+                binding.tvCalcResultSeed.text = "💧 Method: ${res.method} (${res.numIrrigations} Irrigations)"
+                binding.tvCalcResultUrea.text = "🌊 Water per Irrigation: ${String.format(Locale.ENGLISH, "%,.0f", res.waterPerIrrigationLiters)} Liters"
+                binding.tvCalcResultDap.text = "🌊 Seasonal Water Volume: ${String.format(Locale.ENGLISH, "%,.0f", res.totalSeasonalWaterLiters)} Liters"
+                binding.tvCalcResultZinc.text = "💰 Estimated Irrigation Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/Acre)"
+                binding.tvCalcResultNote.text = "💡 Based on crop water requirement and pump energy consumption."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Irrigation",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Irrigation Cost: ${res.method} (${res.numIrrigations} times) for $crop",
+                    stage = "Irrigation"
+                )
+            }
+
+            // 5. Crop Protection & Spray Calculator
+            calcTitle.contains("5. 💊") -> {
+                val problem = binding.actvSprayProblem.text.toString().ifBlank { "Insect Pest" }
+                val product = binding.etSprayProduct.text.toString().trim().ifBlank { "Recommended Pesticide" }
+                val tankCap = binding.etSprayTankCap.text.toString().toDoubleOrNull() ?: 15.0
+                val dose = binding.etSprayDosePerL.text.toString().toDoubleOrNull() ?: 1.5
+
+                val res = FarmingCalculatorUtils.calculateSpray(
+                    cropIndex = cropIndex,
+                    problemCategory = problem,
+                    productName = product,
+                    dosePerLiterMl = dose,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    tankCapacityLiters = tankCap,
+                    waterPerAcreLiters = 150.0,
+                    productPricePerUnit = 600.0,
+                    packageSizeUnits = 500.0
+                )
+
+                binding.tvCalcResultSeed.text = "💊 Product: ${res.productName} (${res.problemCategory})"
+                binding.tvCalcResultUrea.text = "💧 Total Water Required: ${String.format(Locale.ENGLISH, "%.0f", res.waterRequirementLiters)} L | Tank Loads: ${res.tankLoads} Tanks (${String.format(Locale.ENGLISH, "%.0f", res.tankCapacityLiters)}L Tank)"
+                binding.tvCalcResultDap.text = "🧪 Product Needed: ${String.format(Locale.ENGLISH, "%.0f", res.totalProductRequired)} ml (${String.format(Locale.ENGLISH, "%.1f", res.productPerTank)} ml/Tank)"
+                binding.tvCalcResultZinc.text = "💰 Estimated Chemical Spray Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
+                binding.tvCalcResultNote.text = "💡 ${res.labelGuidance}"
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Pesticides",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Chemical Spray: ${res.productName} for $crop",
+                    stage = "Spray"
+                )
+            }
+
+            // 6. Labour & Worker Cost Calculator
+            calcTitle.contains("6. 👨‍🌾") -> {
+                val work = binding.actvLabourWorkType.text.toString().ifBlank { "Weeding" }
+                val workers = binding.etLabourWorkers.text.toString().toIntOrNull() ?: 8
+                val duration = binding.etLabourDuration.text.toString().toDoubleOrNull() ?: 2.0
+                val wage = binding.etLabourWage.text.toString().toDoubleOrNull() ?: 400.0
+
+                val res = FarmingCalculatorUtils.calculateLabour(
+                    workType = work,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    numWorkers = workers,
+                    duration = duration,
+                    isHourly = false,
+                    wageRate = wage
+                )
+
+                binding.tvCalcResultSeed.text = "👨‍🌾 Work Type: ${res.workType}"
+                binding.tvCalcResultUrea.text = "👥 Workers: ${res.numWorkers} Workers for ${String.format(Locale.ENGLISH, "%.1f", res.duration)} Days"
+                binding.tvCalcResultDap.text = "💵 Wage Rate: ₹${String.format(Locale.ENGLISH, "%.0f", res.wageRate)} / worker / day"
+                binding.tvCalcResultZinc.text = "💰 Total Labour Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalLabourCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/Acre)"
+                binding.tvCalcResultNote.text = "💡 Labour cost estimate across crop lifecycle."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Labour",
+                    amount = res.totalLabourCost,
+                    dateStr = todayStr,
+                    note = "Labour Cost: ${res.workType} (${res.numWorkers} workers)",
+                    stage = "Land Preparation"
+                )
+            }
+
+            // 7. Harvesting Calculator
+            calcTitle.contains("7. 🌾") -> {
+                val method = binding.actvHarvestMethod.text.toString().ifBlank { "Combine Harvester / Machine" }
+                val rate = binding.etHarvestRate.text.toString().toDoubleOrNull() ?: 1800.0
+                val count = binding.etHarvestCount.text.toString().toDoubleOrNull() ?: 1.0
+
+                val res = FarmingCalculatorUtils.calculateHarvesting(
+                    cropIndex = cropIndex,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    method = method,
+                    numWorkers = 10,
+                    durationDays = count,
+                    dailyWage = 400.0,
+                    machineRate = rate,
+                    isHourlyMachine = false,
+                    hoursPerAcre = 1.0
+                )
+
+                binding.tvCalcResultSeed.text = "🌾 Harvesting Method: ${res.method}"
+                binding.tvCalcResultUrea.text = "📋 Details: ${res.detailsText}"
+                binding.tvCalcResultDap.text = "📐 Land Area: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} Acres"
+                binding.tvCalcResultZinc.text = "💰 Total Harvesting Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/Acre)"
+                binding.tvCalcResultNote.text = "💡 Harvesting & crop cutting cost estimate."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Harvesting",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Harvesting Cost: ${res.cropName} (${res.method})",
+                    stage = "Harvesting"
+                )
+            }
+
+            // 8. Transport & Storage Calculator
+            calcTitle.contains("8. 📦") -> {
+                val qty = binding.etTransportQty.text.toString().toDoubleOrNull() ?: 35.0
+                val rate = binding.etTransportRate.text.toString().toDoubleOrNull() ?: 85.0
+                val loading = binding.etTransportLoading.text.toString().toDoubleOrNull() ?: 1300.0
+                val storage = binding.etTransportStorage.text.toString().toDoubleOrNull() ?: 1200.0
+
+                val res = FarmingCalculatorUtils.calculatePostHarvest(
+                    cropIndex = cropIndex,
+                    quantityQuintals = qty,
+                    distanceKm = 20.0,
+                    transportRatePerQ = rate,
+                    loadingCost = loading,
+                    unloadingCost = 0.0,
+                    storageMonths = 1.0,
+                    storageRatePerQPerMonth = if (qty > 0) storage / qty else 0.0
+                )
+
+                binding.tvCalcResultSeed.text = "📦 Production: ${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} Quintals"
+                binding.tvCalcResultUrea.text = "🚚 Transport Freight: ₹${String.format(Locale.ENGLISH, "%,.0f", res.transportCost)}"
+                binding.tvCalcResultDap.text = "🏗️ Loading & Handling: ₹${String.format(Locale.ENGLISH, "%,.0f", res.loadingCost)} | Storage: ₹${String.format(Locale.ENGLISH, "%,.0f", res.storageCost)}"
+                binding.tvCalcResultZinc.text = "💰 Total Post-Harvest Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
+                binding.tvCalcResultNote.text = "💡 Post-harvest, transportation, and warehousing costs."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = false,
+                    category = "Machinery & Fuel",
+                    amount = res.totalCost,
+                    dateStr = todayStr,
+                    note = "Post-Harvest & Transport: ${res.quantityQuintals} Q $crop",
+                    stage = "Harvesting"
+                )
+            }
+
+            // 9. Crop Sale & Mandi Calculator
+            calcTitle.contains("9. 🏪") -> {
+                val qty = binding.etSaleQty.text.toString().toDoubleOrNull() ?: 35.0
+                val price = binding.etSalePrice.text.toString().toDoubleOrNull() ?: 5000.0
+                val transport = binding.etSaleTransport.text.toString().toDoubleOrNull() ?: 3000.0
+                val deductions = binding.etSaleDeductions.text.toString().toDoubleOrNull() ?: 1500.0
+
+                val res = FarmingCalculatorUtils.calculateCropSale(
+                    cropIndex = cropIndex,
+                    quantityQuintals = qty,
+                    mandiPricePerQ = price,
+                    commissionPercent = 0.0,
+                    marketChargesPercent = 0.0,
+                    transportDeduction = transport,
+                    otherDeduction = deductions
+                )
+
+                binding.tvCalcResultSeed.text = "🏪 Crop Sale: ${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} Quintals @ ₹${String.format(Locale.ENGLISH, "%,.0f", res.mandiPricePerQ)}/Q)"
+                binding.tvCalcResultUrea.text = "💵 Gross Sale Income: ₹${String.format(Locale.ENGLISH, "%,.0f", res.grossSale)}"
+                binding.tvCalcResultDap.text = "➖ Deductions (Freight + Mandi Tax): - ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalDeductions)}"
+                binding.tvCalcResultZinc.text = "💰 Estimated Net Mandi Sale: ₹${String.format(Locale.ENGLISH, "%,.0f", res.netSale)}"
+                binding.tvCalcResultNote.text = "💡 Tap 'Save to Kisan Diary' below to record this Mandi Sale Income!"
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = true,
+                    category = "Mandi Sale",
+                    amount = res.netSale,
+                    dateStr = todayStr,
+                    note = "Mandi Sale Income: ${res.quantityQuintals} Q $crop @ ₹${res.mandiPricePerQ}/Q",
+                    stage = "Harvesting"
+                )
+            }
+
+            // 10. Complete Crop Profit & ROI Calculator
+            else -> {
+                val yieldPerAcre = binding.etProfitYieldPerAcre.text.toString().toDoubleOrNull() ?: 7.0
+                val pricePerQ = binding.etProfitPricePerQ.text.toString().toDoubleOrNull() ?: 5000.0
+
+                val acres = FarmingCalculatorUtils.toAcres(area, unitIdx)
+                val seedCost = 8000.0 * (acres / 5.0)
+                val machineryCost = 13500.0 * (acres / 5.0)
+                val fertCost = 12000.0 * (acres / 5.0)
+                val irrigCost = 5000.0 * (acres / 5.0)
+                val sprayCost = 7000.0 * (acres / 5.0)
+                val labourCost = 15100.0 * (acres / 5.0)
+                val harvestCost = 9000.0 * (acres / 5.0)
+                val postHarvestCost = 3000.0 * (acres / 5.0)
+
+                val res = FarmingCalculatorUtils.calculateCropProfit(
+                    cropIndex = cropIndex,
+                    rawArea = area,
+                    unitIndex = unitIdx,
+                    expectedYieldPerAcre = yieldPerAcre,
+                    expectedPricePerQuintal = pricePerQ,
+                    seedCost = seedCost,
+                    machineryCost = machineryCost,
+                    fertilizerCost = fertCost,
+                    irrigationCost = irrigCost,
+                    sprayCost = sprayCost,
+                    labourCost = labourCost,
+                    harvestingCost = harvestCost,
+                    postHarvestCost = postHarvestCost
+                )
+
+                binding.tvCalcResultSeed.text = "🌾 ${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} Acres) | Yield: ${String.format(Locale.ENGLISH, "%.1f", res.totalYieldQuintals)} Q"
+                binding.tvCalcResultUrea.text = "💵 Expected Gross Revenue: ₹${String.format(Locale.ENGLISH, "%,.0f", res.expectedRevenue)}"
+                binding.tvCalcResultDap.text = "Total Production Cost: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (Break-Even: ₹${String.format(Locale.ENGLISH, "%,.0f", res.breakEvenPricePerQuintal)}/Q)"
+                binding.tvCalcResultDap.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
+                binding.tvCalcResultDap.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
+                binding.tvCalcResultZinc.text = "🚀 ESTIMATED NET PROFIT: ₹${String.format(Locale.ENGLISH, "%,.0f", res.netProfit)} (Profit/Acre: ₹${String.format(Locale.ENGLISH, "%,.0f", res.profitPerAcre)} | ROI: ${String.format(Locale.ENGLISH, "%.0f", res.roiPercent)}%)"
+                binding.tvCalcResultNote.text = "💡 Full lifecycle cost breakdown: Seed, Machinery, Fertilizer, Irrigation, Spray, Labour, Harvesting & Transport."
+
+                lastCalculatedItem = KhataItem(
+                    id = "calc_${System.currentTimeMillis()}",
+                    cropName = crop,
+                    isIncome = true,
+                    category = "Mandi Sale",
+                    amount = res.netProfit,
+                    dateStr = todayStr,
+                    note = "Estimated Net Crop Profit for $crop (${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} Acres)",
+                    stage = "Harvesting"
+                )
+            }
+        }
+
+        binding.cardCalcResult.visibility = View.VISIBLE
+    }
+
+    private fun setupDiseaseGuideSection() {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        binding.containerDiseaseItems.removeAllViews()
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        for (disease in DiseaseGuideUtils.diseaseList) {
+            val cardView = MaterialCardView(ctx).apply {
+                radius = 12f * resources.displayMetrics.density
+                cardElevation = 1f * resources.displayMetrics.density
+                setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.card_surface_bg))
+                strokeColor = ContextCompat.getColor(ctx, R.color.card_stroke_color)
+                strokeWidth = (1 * resources.displayMetrics.density).toInt()
+                val layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                layoutParams.setMargins(0, 0, 0, (12 * resources.displayMetrics.density).toInt())
+                this.layoutParams = layoutParams
+            }
+
+            val container = LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(
+                    (12 * resources.displayMetrics.density).toInt(),
+                    (12 * resources.displayMetrics.density).toInt(),
+                    (12 * resources.displayMetrics.density).toInt(),
+                    (12 * resources.displayMetrics.density).toInt()
+                )
+            }
+
+            val tvTitle = TextView(ctx).apply {
+                text = "🐛 ${disease.name} (${disease.affectedCrops})"
+                setTextColor(ContextCompat.getColor(ctx, R.color.farmer_green_title))
+                textSize = 17f
+                paint.isFakeBoldText = true
+            }
+
+            val tvSymptoms = TextView(ctx).apply {
+                text = "⚠️ Symptoms: ${disease.symptoms}"
+                setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+                textSize = 15f
+                setPadding(0, (4 * resources.displayMetrics.density).toInt(), 0, 0)
+            }
+
+            val tvRemedy = TextView(ctx).apply {
+                text = "💊 Chemical Remedy: ${disease.remedyChemical}\n🧪 Dosage: ${disease.dosage}\n🌿 Organic Remedy: ${disease.organicRemedy}"
+                setTextColor(ContextCompat.getColor(ctx, R.color.farmer_green_primary))
+                textSize = 15f
+                setPadding(0, (6 * resources.displayMetrics.density).toInt(), 0, 0)
+            }
+
+            if (activeLang != "en") {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val safeCtx = context ?: return@launch
+                    if (!isAdded || _binding == null) return@launch
+                    val transSymptoms = TranslationHelper.translateText(safeCtx, disease.symptoms, activeLang)
+                    tvSymptoms.text = "⚠️ Symptoms: $transSymptoms"
+                }
+            }
+
+            container.addView(tvTitle)
+            container.addView(tvSymptoms)
+            container.addView(tvRemedy)
+            cardView.addView(container)
+
+            binding.containerDiseaseItems.addView(cardView)
+        }
+    }
+
+    private fun setupSchemesSection() {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        val statesAdapter = ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, SchemeUtils.statesList)
+        binding.actvSchemeStateFilter.setAdapter(statesAdapter)
+        binding.actvSchemeStateFilter.setText(SchemeUtils.statesList[0], false)
+
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                if (_binding == null || !isAdded) return@launch
+                val transHeader = TranslationHelper.translateText(ctx, "Government Schemes & Direct Subsidies", activeLang)
+                val transFilterHint = TranslationHelper.translateText(ctx, "Filter Schemes by State", activeLang)
+                if (_binding != null && isAdded) {
+                    binding.tvHeaderSchemes.text = "📜 $transHeader"
+                    binding.tilSchemeStateFilter.hint = transFilterHint
+                }
+            }
+        }
+
+        renderSchemeCards("All States")
+
+        binding.actvSchemeStateFilter.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            val selectedState = SchemeUtils.statesList.getOrNull(position) ?: "All States"
+            renderSchemeCards(selectedState)
+        }
+    }
+
+    private fun renderSchemeCards(selectedState: String) {
+        val ctx = context ?: return
+        if (_binding == null) return
+
+        binding.containerSchemeItems.removeAllViews()
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        val filteredSchemes = if (selectedState == "All States") {
+            SchemeUtils.schemesList
+        } else {
+            SchemeUtils.schemesList.filter { it.state.equals(selectedState, ignoreCase = true) || it.state == "Central (All India)" }
+        }
+
+        for (scheme in filteredSchemes) {
+            val cardView = LayoutInflater.from(ctx).inflate(R.layout.item_scheme_card, binding.containerSchemeItems, false)
+            val tvTitle = cardView.findViewById<TextView>(R.id.tvSchemeTitle)
+            val tvStateBadge = cardView.findViewById<TextView>(R.id.tvSchemeStateBadge)
+            val tvBenefit = cardView.findViewById<TextView>(R.id.tvSchemeBenefit)
+            val tvOverview = cardView.findViewById<TextView>(R.id.tvSchemeOverview)
+            val tvEligibility = cardView.findViewById<TextView>(R.id.tvSchemeEligibility)
+            val btnReadArticle = cardView.findViewById<MaterialButton>(R.id.btnReadSchemeArticle)
+            val btnOpenPortal = cardView.findViewById<MaterialButton>(R.id.btnOpenSchemePortal)
+
+            tvTitle.text = scheme.title
+            tvStateBadge.text = scheme.state
+            tvBenefit.text = "💰 Benefit: ${scheme.benefitAmount}"
+            tvOverview.text = scheme.overview
+            tvEligibility.text = "📋 Eligibility: ${scheme.eligibility}"
+
+            if (activeLang != "en") {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val safeCtx = context ?: return@launch
+                    if (!isAdded || _binding == null) return@launch
+
+                    val transTitle = TranslationHelper.translateText(safeCtx, scheme.title, activeLang)
+                    val transStateBadge = TranslationHelper.translateText(safeCtx, scheme.state, activeLang)
+                    val transBenefitLabel = TranslationHelper.translateText(safeCtx, "Benefit", activeLang)
+                    val transBenefitText = TranslationHelper.translateText(safeCtx, scheme.benefitAmount, activeLang)
+                    val transOverview = TranslationHelper.translateText(safeCtx, scheme.overview, activeLang)
+                    val transEligibilityLabel = TranslationHelper.translateText(safeCtx, "Eligibility", activeLang)
+                    val transEligibility = TranslationHelper.translateText(safeCtx, scheme.eligibility, activeLang)
+
+                    val transReadGuide = TranslationHelper.translateText(safeCtx, "Read Complete Guide & How to Apply", activeLang)
+                    val transPortal = TranslationHelper.translateText(safeCtx, "Official Government Portal", activeLang)
+
+                    tvTitle.text = transTitle
+                    tvStateBadge.text = transStateBadge
+                    tvBenefit.text = "💰 $transBenefitLabel: $transBenefitText"
+                    tvOverview.text = transOverview
+                    tvEligibility.text = "📋 $transEligibilityLabel: $transEligibility"
+                    btnReadArticle.text = "📖 $transReadGuide"
+                    btnOpenPortal.text = "🌐 $transPortal"
+                }
+            }
+
+            btnReadArticle.setOnClickListener {
+                openMatchingArticleForScheme(scheme)
+            }
+
+            btnOpenPortal.setOnClickListener {
+                val url = scheme.officialPortalUrl
+                if (url.isNotBlank()) {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(intent)
+                    } catch (_: Exception) {
+                        val safeCtx = context
+                        if (safeCtx != null && isAdded) {
+                            Toast.makeText(safeCtx, "Unable to open government portal link", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+
+            binding.containerSchemeItems.addView(cardView)
+        }
+    }
+
+    private fun fetchPublishedNewsArticles() {
+        firestore.collection("news")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!isAdded) return@addOnSuccessListener
+                if (!snapshot.isEmpty) {
+                    publishedArticles = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(NewsItem::class.java)?.copy(id = doc.id)
+                    }.toMutableList()
+                }
+            }
+    }
+
+    private fun openMatchingArticleForScheme(scheme: FarmerScheme) {
+        val ctx = context ?: return
+        val keyword = scheme.relatedArticleKeyword.lowercase()
+        val titleKeyword = scheme.title.lowercase()
+
+        // Match published articles from Firestore
+        val matchedArticle = publishedArticles.firstOrNull { article ->
+            val artTitle = article.title.lowercase()
+            val artDesc = article.description.lowercase()
+            artTitle.contains(keyword) || artTitle.contains(titleKeyword) || artDesc.contains(keyword)
+        }
+
+        if (matchedArticle != null) {
+            val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
+            val formattedDate = matchedArticle.timestamp?.toDate()?.let { dateFormat.format(it) } ?: ""
+
+            NewsDetailActivity.start(
+                context = ctx,
+                title = matchedArticle.title,
+                desc = matchedArticle.description,
+                category = matchedArticle.category.ifBlank { "Govt Scheme" },
+                imageUrl = matchedArticle.imageUrl,
+                date = formattedDate,
+                id = matchedArticle.id
+            )
+        } else {
+            // Open synthesized rich-text article guide for this scheme
+            val guideDesc = """
+                ### 📌 Overview & Scheme Details
+                ${scheme.overview}
+
+                ### 🎁 Key Financial Benefits
+                • **Benefit Amount:** ${scheme.benefitAmount}
+                • **Coverage Area / State:** ${scheme.state}
+
+                ### 📋 Eligibility Criteria
+                ${scheme.eligibility}
+
+                ### 📄 Required Documents
+                ${scheme.requiredDocuments}
+
+                ### 📝 How to Apply
+                1. Visit the official government portal: [${scheme.title} Portal](${scheme.officialPortalUrl})
+                2. Register using your Aadhaar Card and Land Records (Khatauni).
+                3. Enter your active bank account details for Direct Benefit Transfer (DBT).
+                4. Submit the online application or contact your local Jan Seva Kendra / Block Agriculture Office.
+            """.trimIndent()
+
+            NewsDetailActivity.start(
+                context = ctx,
+                title = "${scheme.title} - Official Application Guide",
+                desc = guideDesc,
+                category = "Govt Scheme",
+                imageUrl = "",
+                date = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault()).format(Date())
+            )
+        }
+    }
+
+    override fun onDestroyView() {
+        alertListenerRegistration?.remove()
+        alertListenerRegistration = null
+        super.onDestroyView()
+        cropCyclesListener?.remove()
+        cropCyclesListener = null
+        khataItemsListener?.remove()
+        khataItemsListener = null
+        _binding = null
+    }
+}

@@ -1,0 +1,121 @@
+<resources>
+
+    <!-- Default Material Colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_700">#FF3700B3</color>
+
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+
+    <!-- Base Colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Input Box Surface Background (Theme-Aware) -->
+    <color name="input_box_bg">#F1F3F5</color>
+
+    <!-- App Primary Colors (Farmer Green Theme) -->
+    <color name="green_primary">#2E7D32</color>
+    <color name="green_dark">#1B5E20</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="weather_hero_card_bg">#1B5E20</color>
+
+    <!-- Farmer Redesign Palette -->
+    <color name="farmer_green_dark">#1B5E20</color>
+    <color name="farmer_green_primary">#2E7D32</color>
+    <color name="farmer_green_light">#F0F4F0</color>
+
+    <!-- High-Contrast Title & Banner Colors (Theme-Aware) -->
+    <color name="farmer_green_title">#1B5E20</color>
+    <color name="farmer_green_banner_bg">#1B5E20</color>
+    <color name="farmer_green_banner_subtitle">#FFFFFF</color>
+
+    <color name="harvest_gold">#FF8F00</color>
+    <color name="harvest_gold_light">#FFF8E1</color>
+    <color name="bg_farmer_surface">#F8F9FA</color>
+
+    <!-- Mandi Price Pill Box Colors (Light Mode) -->
+    <color name="price_min_bg">#FFEBEE</color>
+    <color name="price_min_text">#C62828</color>
+    <color name="price_modal_bg">#EBF3FB</color>
+    <color name="price_modal_text">#0D47A1</color>
+    <color name="price_max_bg">#E8F5E9</color>
+    <color name="price_max_text">#1B5E20</color>
+
+    <!-- Mandi Rate Card Specific Colors (Light Mode) -->
+    <color name="mandi_price_min_bg">#FFEBEE</color>
+    <color name="mandi_price_min_text">#C62828</color>
+    <color name="mandi_price_modal_bg">#E8F5E9</color>
+    <color name="mandi_price_modal_text">#1B5E20</color>
+    <color name="mandi_price_max_bg">#E8F5E9</color>
+    <color name="mandi_price_max_text">#1B5E20</color>
+
+    <!-- Navigation Colors (Normal Mode: Black Background) -->
+    <color name="nav_bar_bg">#000000</color>
+    <color name="nav_bar_stroke">#333333</color>
+    <color name="nav_default">#B0B0B0</color>
+    <color name="nav_active_icon">#81C784</color>
+    <color name="nav_active_label">#FFFFFF</color>
+    <color name="nav_active_bg">#1E3A1E</color>
+    <color name="nav_item_selected">#81C784</color>
+    <color name="nav_item_unselected">#B0B0B0</color>
+
+    <!-- Global Surface & Text Palette (Light Mode) -->
+    <color name="card_surface_bg">#FFFFFF</color>
+    <color name="card_stroke_color">#C8E6C9</color>
+    <color name="text_primary">#1B1B1B</color>
+    <color name="text_secondary">#424242</color>
+    <color name="input_box_text">#1B1B1B</color>
+    <color name="input_box_hint">#757575</color>
+    <color name="advisory_card_bg">#FFFFFF</color>
+    <color name="advisory_text">#212121</color>
+
+    <!-- Chip Background Color (Dark Navy Blue) -->
+    <color name="dark_navy_blue">#1B263B</color>
+    <color name="dark_yellow">#F57F17</color>
+
+    <!-- Chip Active Colors -->
+    <color name="chip_active_bg">#2E7D32</color>
+    <color name="chip_active_text">#FFFFFF</color>
+
+    <!-- Kisan Diary View All Button Colors (Light Mode) -->
+    <color name="kisan_diary_view_all_bg">#475569</color>
+    <color name="kisan_diary_view_all_text">#FFFFFF</color>
+    <color name="kisan_diary_view_all_ripple">#334155</color>
+
+    <!-- Weather Palette: Clear / Sunny Day -->
+    <color name="weather_sunny_start">#38BDF8</color>
+    <color name="weather_sunny_end">#0284C7</color>
+    <color name="weather_sunny_text">#FFFFFF</color>
+
+    <!-- Weather Palette: Clear Night -->
+    <color name="weather_night_start">#0F172A</color>
+    <color name="weather_night_end">#1E1B4B</color>
+    <color name="weather_night_text">#F8FAFC</color>
+
+    <!-- Weather Palette: Partly Cloudy Day -->
+    <color name="weather_cloudy_start">#60A5FA</color>
+    <color name="weather_cloudy_end">#64748B</color>
+    <color name="weather_cloudy_text">#FFFFFF</color>
+
+    <!-- Weather Palette: Overcast / Gloomy -->
+    <color name="weather_overcast_start">#64748B</color>
+    <color name="weather_overcast_end">#475569</color>
+    <color name="weather_overcast_text">#FFFFFF</color>
+
+    <!-- Weather Palette: Rain / Drizzle -->
+    <color name="weather_rain_start">#334155</color>
+    <color name="weather_rain_end">#1E293B</color>
+    <color name="weather_rain_text">#E2E8F0</color>
+
+    <!-- Weather Palette: Thunderstorm -->
+    <color name="weather_thunder_start">#2E1065</color>
+    <color name="weather_thunder_end">#0F172A</color>
+    <color name="weather_thunder_text">#F8FAFC</color>
+
+    <!-- Weather Palette: Extreme Heat / Dry Alert -->
+    <color name="weather_heat_start">#F59E0B</color>
+    <color name="weather_heat_end">#D97706</color>
+    <color name="weather_heat_text">#FFFFFF</color>
+
+</resources>

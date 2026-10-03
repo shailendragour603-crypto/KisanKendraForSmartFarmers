@@ -1,0 +1,6 @@
+- `[ ]` Update light and dark color palettes (`colors.xml` and `values-night/colors.xml`) for optimal contrast and readability
+- `[ ]` Refactor Home Fragment (`fragment_home.xml`) and card backgrounds / text colors
+- `[ ]` Refactor Forum Fragment & Bottom Sheet (`fragment_forum.xml`, `bottom_sheet_create_forum_post.xml`, `dialog_create_forum_post.xml`)
+- `[ ]` Refactor Mandi, Weather, News fragments (`fragment_mandi.xml`, `fragment_weather.xml`, `fragment_news.xml`)
+- `[ ]` Refactor Activities & Dialogs (`activity_sign_in.xml`, `activity_settings.xml`, `bottom_sheet_price_chart.xml`, crop/khata dialogs)
+- `[ ]` Build and verify project compilation

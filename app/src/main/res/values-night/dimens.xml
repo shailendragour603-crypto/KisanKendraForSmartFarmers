@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark mode dimensions matching light mode for post card separation and stroke -->
+    <dimen name="forum_post_margin_horizontal">12dp</dimen>
+    <dimen name="forum_post_corner_radius">16dp</dimen>
+    <dimen name="forum_post_stroke_width">1dp</dimen>
+</resources>

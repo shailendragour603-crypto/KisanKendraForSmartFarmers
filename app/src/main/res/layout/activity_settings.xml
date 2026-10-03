@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface"
+    android:orientation="vertical"
+    tools:context=".SettingsActivity">
+
+    <!-- Top App Bar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarSettings"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#1B5E20"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="@android:color/white"
+        app:title="@string/settings_title"
+        app:titleTextAppearance="@style/ToolbarSecondaryTitleStyle"
+        app:titleTextColor="@android:color/white" />
+
+    <ScrollView
+        android:id="@+id/scrollViewSettings"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:isScrollContainer="true"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 🔹 CARD 1: Account Management -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_light"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
+                        android:text="@string/settings_account_title"
+                        android:textColor="@color/farmer_green_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_person" />
+
+                    <!-- 🔴 GUEST / SIGNED-OUT SECTION -->
+                    <LinearLayout
+                        android:id="@+id/layoutGuestSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical"
+                        android:visibility="visible">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:baselineAligned="false"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.imageview.ShapeableImageView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:src="@drawable/ic_default_avatar"
+                                app:shapeAppearanceOverlay="@style/CircleImageView"
+                                app:strokeColor="@color/farmer_green_primary"
+                                app:strokeWidth="1dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="14dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/settings_guest_account"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/settings_guest_subtitle"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:background="#E0E0E0" />
+
+                        <!-- Primary Sign In / Sign Up Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnGuestSignIn"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="46dp"
+                            android:backgroundTint="@color/farmer_green_primary"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/settings_sign_in_up"
+                            android:textColor="@android:color/white"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <!-- Official Material Google Sign-In Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnGoogleSignIn"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="10dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/settings_google_sign_in"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:icon="@drawable/ic_google_g"
+                            app:iconGravity="textStart"
+                            app:iconPadding="10dp"
+                            app:iconSize="20dp"
+                            app:iconTint="@null"
+                            app:strokeColor="#DADCE0"
+                            app:strokeWidth="1dp" />
+
+                        <ProgressBar
+                            android:id="@+id/pbGoogle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="8dp"
+                            android:indeterminateTint="@color/farmer_green_primary"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <!-- 🟢 SIGNED-IN PROFILE SECTION -->
+                    <LinearLayout
+                        android:id="@+id/layoutProfileSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:baselineAligned="false"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <FrameLayout
+                                android:layout_width="76dp"
+                                android:layout_height="76dp">
+
+                                <com.google.android.material.imageview.ShapeableImageView
+                                    android:id="@+id/ivProfilePicture"
+                                    android:layout_width="72dp"
+                                    android:layout_height="72dp"
+                                    android:layout_gravity="center"
+                                    android:background="@drawable/bg_badge_green"
+                                    android:contentDescription="Profile Picture"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_default_avatar"
+                                    app:shapeAppearanceOverlay="@style/CircleImageView"
+                                    app:strokeColor="@color/farmer_green_primary"
+                                    app:strokeWidth="2dp" />
+
+                                <ProgressBar
+                                    android:id="@+id/pbProfileUpload"
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    android:layout_gravity="center"
+                                    android:visibility="gone" />
+
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/fabEditProfilePhoto"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="bottom|end"
+                                    android:contentDescription="Edit Profile Photo"
+                                    app:backgroundTint="@color/farmer_green_primary"
+                                    app:fabCustomSize="28dp"
+                                    app:maxImageSize="14dp"
+                                    app:srcCompat="@android:drawable/ic_menu_camera"
+                                    app:tint="@android:color/white" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="14dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <!-- Display Mode: Name + Compact Edit Button -->
+                                <LinearLayout
+                                    android:id="@+id/layoutNameDisplay"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:id="@+id/tvDisplayName"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:ellipsize="end"
+                                        android:maxLines="1"
+                                        android:textColor="?android:attr/textColorPrimary"
+                                        android:textSize="17sp"
+                                        android:textStyle="bold"
+                                        tools:text="Shailendra Singh Gour" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnEditName"
+                                        style="@style/Widget.Material3.Button.TextButton"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="36dp"
+                                        android:insetTop="0dp"
+                                        android:insetBottom="0dp"
+                                        android:paddingHorizontal="8dp"
+                                        android:text="@string/settings_edit_name"
+                                        android:textColor="@color/farmer_green_primary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        app:icon="@drawable/ic_edit"
+                                        app:iconGravity="textStart"
+                                        app:iconPadding="4dp"
+                                        app:iconSize="16dp"
+                                        app:iconTint="@color/farmer_green_primary" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:id="@+id/tvUserIdentifier"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp"
+                                    tools:text="shailendragour603@gmail.com" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Edit Mode: Name Input + Save/Cancel Row -->
+                        <LinearLayout
+                            android:id="@+id/layoutNameEdit"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilDisplayName"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/settings_name_hint"
+                                app:boxStrokeColor="@color/farmer_green_primary"
+                                app:hintTextColor="@color/farmer_green_primary">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etDisplayName"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="textPersonName"
+                                    android:maxLines="1"
+                                    android:textSize="15sp" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:gravity="end"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnCancelEditName"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="38dp"
+                                    android:layout_marginEnd="8dp"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:paddingHorizontal="12dp"
+                                    android:text="@string/settings_cancel"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp"
+                                    app:strokeColor="#BDBDBD" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnSaveProfile"
+                                    style="@style/Widget.Material3.Button.TonalButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="38dp"
+                                    android:backgroundTint="@color/farmer_green_primary"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:paddingHorizontal="14dp"
+                                    android:text="@string/settings_save"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    app:icon="@drawable/ic_check"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="@android:color/white" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="14dp"
+                            android:layout_marginBottom="12dp"
+                            android:background="#E0E0E0" />
+
+                        <!-- Bottom Actions Row (Delete Account & Logout) -->
+                        <LinearLayout
+                            android:id="@+id/layoutAccountActions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/layoutDeleteAccount"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:gravity="start|center_vertical"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:paddingHorizontal="0dp"
+                                android:text="@string/settings_delete_account_short"
+                                android:textColor="#D32F2F"
+                                android:textSize="13sp"
+                                app:icon="@drawable/ic_delete"
+                                app:iconGravity="start"
+                                app:iconPadding="6dp"
+                                app:iconSize="18dp"
+                                app:iconTint="#D32F2F" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnLogout"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="40dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:paddingHorizontal="16dp"
+                                android:text="@string/settings_logout"
+                                android:textColor="#D32F2F"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:icon="@drawable/ic_logout"
+                                app:iconGravity="textStart"
+                                app:iconPadding="6dp"
+                                app:iconSize="18dp"
+                                app:iconTint="#D32F2F"
+                                app:strokeColor="#EF9A9A" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 🔹 CARD 3: Display Settings -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_light"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
+                        android:text="@string/settings_display_title"
+                        android:textColor="@color/farmer_green_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_dark_mode" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchDarkMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Enable Dark Theme"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 🔹 CARD 4: Help & Support -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_light"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
+                        android:text="@string/settings_help_title"
+                        android:textColor="@color/farmer_green_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_help" />
+
+                    <!-- About Us -->
+                    <TextView
+                        android:id="@+id/tvAboutUs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="@string/settings_about_app"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"
+                        app:drawableStartCompat="@drawable/ic_info" />
+
+                    <!-- Feedback / Report Bug -->
+                    <TextView
+                        android:id="@+id/tvFeedback"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="@string/settings_feedback"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"
+                        app:drawableStartCompat="@drawable/ic_feedback" />
+
+                    <!-- Contact Us -->
+                    <TextView
+                        android:id="@+id/tvContactUs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="@string/contact_title"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"
+                        app:drawableStartCompat="@drawable/ic_phone" />
+
+                    <!-- Privacy Policy -->
+                    <TextView
+                        android:id="@+id/tvPrivacyPolicy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="@string/privacy_title"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"
+                        app:drawableStartCompat="@drawable/ic_privacy" />
+
+                    <!-- Share App -->
+                    <TextView
+                        android:id="@+id/tvShareApp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="@string/settings_share_app"
+                        android:textColor="@color/farmer_green_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_feed_share" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 🔹 CARD 5: Admin Tools (Visible only for Admins) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAdminSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_primary"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
+                        android:text="🛡️ Admin Tools"
+                        android:textColor="@color/farmer_green_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <!-- View User Feedback -->
+                    <TextView
+                        android:id="@+id/tvAdminViewFeedback"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:drawablePadding="12dp"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:text="📋 View User Feedback &amp; Bugs"
+                        android:textColor="@color/farmer_green_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_feedback" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Modern Floating Card Bottom Navigation -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardBottomNavSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/nav_bar_bg"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
+        app:strokeColor="@color/nav_bar_stroke"
+        app:strokeWidth="1dp">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigationSettings"
+            style="@style/AppBottomNavigationStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

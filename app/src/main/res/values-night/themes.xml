@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- 🔹 Set Native Splash Screen Background to match Option B (Dark Mode) -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme_KisanKendra_NoActionBar</item>
+    </style>
+
+    <style name="Theme_KisanKendra_NoActionBar" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#121212</item>
+        <item name="android:navigationBarColor">#121212</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowBackground">#121212</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="chipStyle">@style/AppChipStyle</item>
+
+        <!-- Custom Compact Popup Container & Dropdown Styling -->
+        <item name="android:popupBackground">@drawable/bg_compact_popup</item>
+        <item name="popupMenuBackground">@drawable/bg_compact_popup</item>
+        <item name="android:itemBackground">#242428</item>
+        <item name="android:itemTextAppearance">@style/CompactPopupMenuTextAppearance</item>
+        <item name="autoCompleteTextViewStyle">@style/CompactAutoCompleteTextView</item>
+        <item name="dropDownListViewStyle">@style/CompactDropDownListView</item>
+
+        <!-- Disable Material 3 Dynamic Purple Elevation Surface Tint in Dark Mode -->
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorSurface">#212121</item>
+        <item name="colorSurfaceContainer">#212121</item>
+        <item name="colorSurfaceContainerLow">#212121</item>
+        <item name="colorSurfaceContainerHigh">#212121</item>
+        <item name="colorSurfaceContainerHighest">@color/card_surface_bg</item>
+    </style>
+</resources>

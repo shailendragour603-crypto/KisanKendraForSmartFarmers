@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardScreenAlertBanner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:visibility="gone"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="1dp"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:id="@+id/layoutAlertContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
+
+        <ImageView
+            android:id="@+id/imgAlertIcon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Alert Icon"
+            android:src="@android:drawable/ic_dialog_info" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvAlertTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Notice Title / सूचना" />
+
+            <TextView
+                android:id="@+id/tvAlertMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12.5sp"
+                tools:text="Notice message for users goes here explaining delayed data or feature updates." />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnAlertDismiss"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close Notice"
+            android:padding="4dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/farmer_green_dark" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

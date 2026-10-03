@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">કિસાન કેન્દ્ર</string>
+    <string name="app_tagline">સમૃદ્ધ ખેડૂત • સશક્ત ભારત</string>
+
+    <string name="nav_home">Tools</string>
+    <string name="nav_mandi">Mandi</string>
+    <string name="nav_news">News</string>
+    <string name="nav_weather">Weather</string>
+    <string name="nav_forum">Forum</string>
+
+    <string name="cat_all">📰 તમામ સમાચાર</string>
+    <string name="cat_yojana">🏛 સરકારી યોજનાઓ</string>
+    <string name="cat_gyan">💡 કૃષિ જ્ઞાન</string>
+    <string name="cat_mandi">🌾 માર્કેટ અપડેટ્સ</string>
+
+    <string name="mandi_min_price">ઓછામાં ઓછો ભાવ</string>
+    <string name="mandi_modal_price">મોડેલ ભાવ</string>
+    <string name="mandi_max_price">સૌથી વધુ ભાવ</string>
+    <string name="btn_share" translatable="false">Share</string>
+
+    <string name="settings_title">સેટિંગ્સ</string>
+    <string name="settings_lang_title">એપ ભાષા</string>
+    <string name="settings_account_title">ખાતું</string>
+    <string name="settings_display_title">ડિસ્પ્લે અને થીમ</string>
+    <string name="settings_help_title">મદદ અને સહાય</string>
+    <string name="settings_logout">લૉગ આઉટ</string>
+    <string name="settings_name_hint">તમારું નામ</string>
+    <string name="settings_save_name">નામ સાચવો</string>
+    <string name="settings_delete_account">ખાતું અને સાચવેલો ડેટા કાઢી નાખો</string>
+    <string name="settings_about_app">કિસાન કેન્દ્ર વિશે</string>
+    <string name="settings_share_app" translatable="false">Share App with Farmers</string>
+
+    <string name="about_title">અમારા વિશે</string>
+    <string name="contact_title">સંપર્ક કરો</string>
+    <string name="privacy_title">ગોપનીયતા નીતિ</string>
+</resources>

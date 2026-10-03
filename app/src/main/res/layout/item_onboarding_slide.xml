@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:background="@color/bg_farmer_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Rich Graphic Container Frame -->
+        <FrameLayout
+            android:id="@+id/flOnboardingGraphic"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Slide Title -->
+        <TextView
+            android:id="@+id/tvOnboardingTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:text="Real-Time Mandi Rates &amp; Trends"
+            android:textColor="@color/farmer_green_dark"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Slide Description -->
+        <TextView
+            android:id="@+id/tvOnboardingDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif"
+            android:gravity="center"
+            android:lineSpacingExtra="5dp"
+            android:text="Get live APMC Mandi commodity prices from 1000+ mandis across India with 7-day price forecasts to maximize your crop income."
+            android:textColor="#212121"
+            android:textSize="15sp" />
+
+        <!-- Feature Highlights / Badges Container -->
+        <LinearLayout
+            android:id="@+id/layoutFeatureBadges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

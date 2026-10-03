@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Screen Alert Banner -->
+        <include
+            android:id="@+id/alertBanner"
+            layout="@layout/layout_screen_alert_banner" />
+
+        <!-- Live Financial Market Ticker Banner -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardMarketTicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="#0F172A"
+            app:strokeColor="#1E293B"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="7dp">
+
+                <!-- Live Badge Label -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_live_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"
+                    android:layout_marginEnd="8dp">
+
+                    <View
+                        android:id="@+id/viewLiveDot"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="5dp"
+                        android:background="@drawable/bg_dot_live_red" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MARKETS"
+                        android:textColor="@android:color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05" />
+                </LinearLayout>
+
+                <!-- Marquee Scrolling Text -->
+                <TextView
+                    android:id="@+id/tvMarketTicker"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:textColor="@android:color/white"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Category Chips Filter Row -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCategories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:checkedChip="@+id/chipNews"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNews"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📰 समाचार"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipGovtScheme"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏛 सरकारी योजनाएं"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAgriMarket"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌾 मंडी अपडेट"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAgriGyan"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡 कृषि ज्ञान"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCropProtection"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛡 फसल सुरक्षा"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTechnology"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🚜 कृषि तकनीक"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSuccessStories"
+                    style="@style/AppChipStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⭐ सफलता की कहानियां"
+                    app:chipBackgroundColor="@color/chip_bg_color"
+                    android:textColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_color"
+                    app:chipStrokeWidth="1.5dp" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Swipe Refresh Layout -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewNews"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="80dp" />
+
+                <ProgressBar
+                    android:id="@+id/progressBarNews"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/farmer_green_primary"
+                    android:visibility="visible" />
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
+
+    <!-- Admin Create News FAB (Hidden by Default for Standard Users & Guests) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAddNews"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/farmer_green_dark"
+        android:contentDescription="Post News"
+        android:text="Post News"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        app:icon="@android:drawable/ic_menu_add"
+        app:iconTint="@android:color/white" />
+
+    <!-- Scroll to Top FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScrollTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/scroll_to_top"
+        android:visibility="gone"
+        app:backgroundTint="@color/farmer_green_primary"
+        app:fabCustomSize="32dp"
+        app:maxImageSize="16dp"
+        app:elevation="2dp"
+        app:srcCompat="@drawable/ic_scroll_top"
+        app:tint="@android:color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

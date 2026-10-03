@@ -1,0 +1,998 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootDashboardLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/bg_farmer_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+    <!-- Top App Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#1B5E20"
+        android:elevation="2dp"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="@android:color/white"
+        app:title="My Farming Dashboard"
+        app:subtitleTextColor="#E8F5E9"
+        app:titleTextColor="@android:color/white"
+        app:titleTextAppearance="@style/ToolbarSecondaryTitleStyle" />
+
+    <!-- Screen Alert Banner -->
+    <include
+        android:id="@+id/alertBanner"
+        layout="@layout/layout_screen_alert_banner" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshDiaryDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ScrollView
+                android:id="@+id/scrollViewDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:overScrollMode="never">
+
+            <LinearLayout
+                android:id="@+id/containerDashboardContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <!-- 🟢 SECTION 1: MY FARMING SUMMARY HEADER CARD -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <!-- Title Row -->
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp">
+
+                            <TextView
+                                android:id="@+id/tvFarmingHeaderTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🌱 FARM DASHBOARD"
+                                android:textColor="?android:attr/textColorPrimary"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                        </RelativeLayout>
+
+                        <!-- Season/Year Filter Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxStrokeColor="#1B5E20"
+                            app:hintTextColor="#1B5E20">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/actvDashboardSeasonFilter"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none"
+                                android:text="All-Time"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:hint="Select Season / Year" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- 4 KPI Cards Grid (2x2) -->
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="2"
+                            android:rowCount="2">
+
+                            <!-- KPI 1: Total Area -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                app:cardBackgroundColor="@color/card_surface_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:id="@+id/tvLabelTotalArea"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Total Area"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvKpiTotalArea"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="0 Acres"
+                                        android:textColor="?android:attr/textColorPrimary"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- KPI 2: Total Expenses -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                app:cardBackgroundColor="@color/card_surface_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:id="@+id/tvLabelTotalExpenses"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Total Expenses"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvKpiTotalExpenses"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="₹0"
+                                        android:textColor="@color/price_min_text"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- KPI 3: Total Income -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                app:cardBackgroundColor="@color/card_surface_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:id="@+id/tvLabelTotalIncome"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Total Income"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvKpiTotalIncome"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="₹0"
+                                        android:textColor="@color/price_modal_text"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- KPI 4: Estimated Profit -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                app:cardBackgroundColor="@color/card_surface_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:id="@+id/tvLabelEstimatedProfit"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Estimated Profit"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvKpiEstimatedProfit"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="₹0"
+                                        android:textColor="@color/price_modal_text"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                        </GridLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 SECTION 2: FINANCIAL SUMMARY -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <!-- Header Row -->
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp">
+
+                            <TextView
+                                android:id="@+id/tvSectionFinancialSummaryTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentStart="true"
+                                android:layout_toStartOf="@+id/cardProfitMarginBadge"
+                                android:text="📊 Financial Summary"
+                                android:textColor="?android:attr/textColorPrimary"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <!-- Profit Margin Badge -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardProfitMarginBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                app:cardBackgroundColor="@color/price_modal_bg"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <TextView
+                                    android:id="@+id/tvBadgeProfitMargin"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="6dp"
+                                    android:text="Profit Margin 0%"
+                                    android:textColor="@color/price_modal_text"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    app:drawableStartCompat="@drawable/ic_chart"
+                                    android:drawablePadding="6dp" />
+                            </com.google.android.material.card.MaterialCardView>
+                        </RelativeLayout>
+
+                        <!-- Donut Chart & Legend Section -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <shop.sabjiwala.kisankendra.views.FinancialDonutChartView
+                                android:id="@+id/donutChartView"
+                                android:layout_width="130dp"
+                                android:layout_height="130dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="16dp"
+                                android:orientation="vertical">
+
+                                <!-- Legend Item: Profit -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:layout_marginBottom="12dp">
+
+                                    <View
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:background="#81C784" />
+
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical"
+                                        android:layout_marginStart="10dp">
+
+                                        <TextView
+                                            android:id="@+id/tvLabelLegendProfit"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Profit"
+                                            android:textColor="?android:attr/textColorSecondary"
+                                            android:textSize="14sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:id="@+id/tvLegendProfit"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="₹0 (0%)"
+                                            android:textColor="?android:attr/textColorPrimary"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+                                    </LinearLayout>
+                                </LinearLayout>
+
+                                <!-- Legend Item: Expenses -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <View
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:background="#E53935" />
+
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical"
+                                        android:layout_marginStart="10dp">
+
+                                        <TextView
+                                            android:id="@+id/tvLabelLegendExpenses"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Expenses"
+                                            android:textColor="?android:attr/textColorSecondary"
+                                            android:textSize="14sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:id="@+id/tvLegendExpenses"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="₹0 (0%)"
+                                            android:textColor="?android:attr/textColorPrimary"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+                                    </LinearLayout>
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 CROP-WISE PROFITABILITY & YIELD SUMMARY -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvSectionCropPerformanceTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌾 Crop Profitability &amp; Yield"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp" />
+
+                        <!-- Graph Metric Toggle Group: Total Profit vs Profit / Acre -->
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/toggleGroupCropMetric"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            app:singleSelection="true"
+                            app:selectionRequired="true"
+                            app:checkedButton="@id/btnToggleTotalProfit">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnToggleTotalProfit"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Total Profit (₹)"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:paddingVertical="6dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnToggleProfitPerAcre"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Profit / Acre (₹/Acre)"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:paddingVertical="6dp" />
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                        <!-- Season Most Profitable Crops Bar Chart -->
+                        <shop.sabjiwala.kisankendra.views.CropProfitabilityChartView
+                            android:id="@+id/cropProfitabilityChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="14dp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/card_stroke_color"
+                            android:layout_marginBottom="12dp" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvCropPerformance"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                            tools:listitem="@layout/item_crop_performance_card" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 SECTION 3: MAJOR EXPENSES CATEGORY BREAKDOWN CHART -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <!-- Major Expenses Header -->
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp">
+
+                            <TextView
+                                android:id="@+id/tvHeaderMajorExpenses"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentStart="true"
+                                android:text="💸 Major Expenses Breakdown"
+                                android:textColor="?android:attr/textColorPrimary"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvMajorExpensesTotalAmount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:text="₹0"
+                                android:textColor="@color/price_min_text"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </RelativeLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/card_stroke_color"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- Expenses Category Bar Rows List -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvMajorExpenses"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            tools:listitem="@layout/item_expense_category_row" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 AD MOB CARD CONTAINER 1 (Mid-Dashboard) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAdMidDashboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <FrameLayout
+                        android:id="@+id/containerAdMidDashboard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp" />
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 SECTION 4: STAGE-WISE CROP EXPENSE LINE CHART -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvSectionStageExpenseTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📈 Stage-Wise Expense Trend"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp" />
+
+                        <!-- Stage Line Chart -->
+                        <shop.sabjiwala.kisankendra.views.CropStageExpenseChartView
+                            android:id="@+id/stageExpenseChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+
+
+
+
+
+                <!-- 🟢 SECTION 7: CROP EXPENSES & COST / ACRE CHART -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvSectionCropExpenseTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💸 Crop Expense &amp; Cost / Acre"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp" />
+
+                        <!-- Graph Metric Toggle Group: Total Expense vs Expense / Acre -->
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/toggleGroupCropExpenseMetric"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            app:singleSelection="true"
+                            app:selectionRequired="true"
+                            app:checkedButton="@id/btnToggleCropTotalExpense">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnToggleCropTotalExpense"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Total Expense (₹)"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:paddingVertical="6dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnToggleCropExpensePerAcre"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Expense / Acre (₹/Acre)"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:paddingVertical="6dp" />
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                        <!-- Crop Expense Bar Chart -->
+                        <shop.sabjiwala.kisankendra.views.CropExpenseChartView
+                            android:id="@+id/cropExpenseChartView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 KEY INSIGHTS -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvSectionKeyInsightsTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:text="💡 Key Insights"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <!-- Insight 1: Profit Margin -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardInsight1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:minHeight="120dp"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="4dp"
+                                app:cardBackgroundColor="@color/price_modal_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="10dp">
+
+                                    <TextView
+                                        android:id="@+id/tvInsight1Value"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="70% Margin"
+                                        android:textColor="@color/price_modal_text"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvInsight1Desc"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="You are keeping 70% of income as profit."
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="12sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Insight 2: Highest Cost Category -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardInsight2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:minHeight="120dp"
+                                android:layout_weight="1"
+                                android:layout_marginHorizontal="2dp"
+                                app:cardBackgroundColor="@color/price_max_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="10dp">
+
+                                    <TextView
+                                        android:id="@+id/tvInsight2Value"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Fertiliser"
+                                        android:textColor="@color/price_max_text"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvInsight2Desc"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="Fertiliser is your biggest expense."
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="12sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Insight 3: Cost Reduction Opportunity -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardInsight3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:minHeight="120dp"
+                                android:layout_weight="1"
+                                android:layout_marginStart="4dp"
+                                app:cardBackgroundColor="@color/card_surface_bg"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/card_stroke_color"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="10dp">
+
+                                    <TextView
+                                        android:id="@+id/tvInsight3Value"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Cost Reduction"
+                                        android:textColor="@color/price_modal_text"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvInsight3Desc"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="Reducing input costs increases profit."
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="12sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 AD MOB CARD CONTAINER 2 (Bottom-Dashboard) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAdBottomDashboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <FrameLayout
+                        android:id="@+id/containerAdBottomDashboard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp" />
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <!-- 🟢 SECTION 7: RECENT KISAN DIARY TRANSACTIONS LOG -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvSectionRecentLogTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📋 Recent Activity Log"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvRecentEntries"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            tools:listitem="@layout/item_recent_diary_entry" />
+
+                        <!-- Decorative Farm Landscape Footer Banner -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_farm_landscape" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+        </ScrollView>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    </FrameLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/btnShareDashboard"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="74dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Share Farming Dashboard">
+
+        <View
+            android:id="@+id/viewPulseRingDashboard"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_pulse_ring" />
+
+        <LinearLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_compact_circle"
+            android:gravity="center"
+            android:elevation="4dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_compact_share"
+                android:contentDescription="Share Icon" />
+        </LinearLayout>
+    </FrameLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,79 @@
+<resources>
+
+    <!-- Base Colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Input Box Surface Background (Dark Mode) -->
+    <color name="input_box_bg">#212121</color>
+
+    <!-- App Primary Colors (Dark Mode Green Theme) -->
+    <color name="green_primary">#81C784</color>
+    <color name="green_dark">#1B5E20</color>
+    <color name="green_light">#1E2A1E</color>
+    <color name="weather_hero_card_bg">#1A331A</color>
+
+    <!-- Farmer Redesign Palette (Dark Mode) -->
+    <color name="farmer_green_dark">#81C784</color>
+    <color name="farmer_green_primary">#81C784</color>
+    <color name="farmer_green_light">#1E2A1E</color>
+
+    <!-- High-Contrast Title & Banner Colors (Dark Mode) -->
+    <color name="farmer_green_title">#FFFFFF</color>
+    <color name="farmer_green_banner_bg">#212121</color>
+    <color name="farmer_green_banner_subtitle">#FFFFFF</color>
+
+    <color name="harvest_gold">#FFB74D</color>
+    <color name="harvest_gold_light">#2A2312</color>
+    <color name="bg_farmer_surface">#121212</color>
+
+    <!-- Mandi Price Pill Box Colors (Dark Mode) -->
+    <color name="price_min_bg">#35181C</color>
+    <color name="price_min_text">#FF7676</color>
+    <color name="price_modal_bg">#17293D</color>
+    <color name="price_modal_text">#64B5F6</color>
+    <color name="price_max_bg">#183320</color>
+    <color name="price_max_text">#81C784</color>
+
+    <!-- Mandi Rate Card Specific Colors (Dark Mode) -->
+    <color name="mandi_price_min_bg">#2A1A1C</color>
+    <color name="mandi_price_min_text">#FF8A80</color>
+    <color name="mandi_price_modal_bg">#1B3820</color>
+    <color name="mandi_price_modal_text">#81C784</color>
+    <color name="mandi_price_max_bg">#183320</color>
+    <color name="mandi_price_max_text">#81C784</color>
+
+    <!-- Navigation Colors (Dark Mode: White Background) -->
+    <color name="nav_bar_bg">#FFFFFF</color>
+    <color name="nav_bar_stroke">#C8E6C9</color>
+    <color name="nav_default">#616161</color>
+    <color name="nav_active_icon">#1B5E20</color>
+    <color name="nav_active_label">#1B5E20</color>
+    <color name="nav_active_bg">#E8F5E9</color>
+    <color name="nav_item_selected">#1B5E20</color>
+    <color name="nav_item_unselected">#616161</color>
+
+    <!-- Global Surface & Text Palette (Dark Mode) -->
+    <color name="card_surface_bg">#212121</color>
+    <color name="card_stroke_color">#333333</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#FFFFFF</color>
+    <color name="input_box_text">#FFFFFF</color>
+    <color name="input_box_hint">#B0B0B0</color>
+    <color name="advisory_card_bg">#212121</color>
+    <color name="advisory_text">#FFFFFF</color>
+
+    <!-- Chip Background Color (Dark Grey Surface) -->
+    <color name="dark_navy_blue">#212121</color>
+    <color name="dark_yellow">#FFB300</color>
+
+    <!-- Chip Active Colors -->
+    <color name="chip_active_bg">#2E7D32</color>
+    <color name="chip_active_text">#FFFFFF</color>
+
+    <!-- Kisan Diary View All Button Colors (Dark Mode) -->
+    <color name="kisan_diary_view_all_bg">#94A3B8</color>
+    <color name="kisan_diary_view_all_text">#0F172A</color>
+    <color name="kisan_diary_view_all_ripple">#CBD5E1</color>
+
+</resources>

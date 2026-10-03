@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface">
+
+    <LinearLayout
+        android:id="@+id/containerMandiContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="6dp">
+
+        <!-- TOP FIXED HEADER CONTAINER (Search Bar, Date Badge, Force Refresh & Screen Alert) -->
+        <LinearLayout
+            android:id="@+id/containerMandiFixedHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Screen Alert Banner -->
+            <include
+                android:id="@+id/alertBanner"
+                layout="@layout/layout_screen_alert_banner" />
+
+            <!-- ROW 1: Side-by-Side Search Bar, Mandi Rates Date Badge & Force Refresh Icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Search Bar (Theme Aware) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="8dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:contentDescription="Search Icon"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="?android:attr/textColorSecondary" />
+
+                        <EditText
+                            android:id="@+id/etSearch"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:hint="Search Crop or Market..."
+                            android:inputType="text"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textColorHint="?android:attr/textColorSecondary"
+                            android:textSize="13sp" />
+
+                        <ImageButton
+                            android:id="@+id/btnVoiceSearch"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Voice Search"
+                            android:src="@android:drawable/ic_btn_speak_now"
+                            app:tint="@color/farmer_green_primary" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Mandi Rates Date Badge -->
+                <TextView
+                    android:id="@+id/tvMandiRatesDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@android:color/transparent"
+                    android:gravity="center"
+                    android:paddingHorizontal="6dp"
+                    android:text="📅 Today"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <!-- Force Refresh Button -->
+                <ImageButton
+                    android:id="@+id/btnForceRefreshMandi"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="2dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Force Refresh Mandi Rates"
+                    android:src="@android:drawable/ic_popup_sync"
+                    app:tint="@color/farmer_green_primary" />
+
+                <!-- Hidden Location Badge to maintain binding compatibility -->
+                <TextView
+                    android:id="@+id/tvMandiLocationHeader"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- COORDINATOR LAYOUT FOR SCROLLABLE FILTERS + RECYCLERVIEW -->
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- Scroll-Aware Collapsing Header for Filters -->
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/appBarMandiFilters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/bg_farmer_surface"
+                app:elevation="0dp">
+
+                <LinearLayout
+                    android:id="@+id/containerMandiScrollableFilters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                    <!-- ROW 2: State Chips Bar -->
+                    <HorizontalScrollView
+                        android:id="@+id/scrollStateChips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="3dp"
+                        android:scrollbars="none">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupStates"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:chipSpacingHorizontal="4dp"
+                            app:singleLine="true"
+                            app:singleSelection="true" />
+                    </HorizontalScrollView>
+
+                    <!-- ROW 3: Compact District & Crop Dropdowns -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:orientation="horizontal">
+
+                        <!-- District Selector Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilState"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="3dp"
+                            android:layout_weight="1"
+                            app:boxBackgroundColor="@color/input_box_bg"
+                            app:boxCornerRadiusBottomEnd="8dp"
+                            app:boxCornerRadiusBottomStart="8dp"
+                            app:boxCornerRadiusTopEnd="8dp"
+                            app:boxCornerRadiusTopStart="8dp"
+                            app:boxStrokeColor="@color/farmer_green_primary"
+                            app:hintEnabled="false">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/spinnerState"
+                                android:layout_width="match_parent"
+                                android:layout_height="36dp"
+                                android:minHeight="36dp"
+                                android:hint="Select District"
+                                android:inputType="none"
+                                android:paddingStart="8dp"
+                                android:paddingTop="4dp"
+                                android:paddingEnd="8dp"
+                                android:paddingBottom="4dp"
+                                android:textColor="@color/input_box_text"
+                                android:textColorHint="@color/input_box_hint"
+                                android:textSize="12sp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Crop/Commodity Filter Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilCategory"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="3dp"
+                            android:layout_weight="1"
+                            app:boxBackgroundColor="@color/input_box_bg"
+                            app:boxCornerRadiusBottomEnd="8dp"
+                            app:boxCornerRadiusBottomStart="8dp"
+                            app:boxCornerRadiusTopEnd="8dp"
+                            app:boxCornerRadiusTopStart="8dp"
+                            app:boxStrokeColor="@color/farmer_green_primary"
+                            app:hintEnabled="false">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/spinnerCategory"
+                                android:layout_width="match_parent"
+                                android:layout_height="36dp"
+                                android:minHeight="36dp"
+                                android:hint="Select Item"
+                                android:inputType="none"
+                                android:paddingStart="8dp"
+                                android:paddingTop="4dp"
+                                android:paddingEnd="8dp"
+                                android:paddingBottom="4dp"
+                                android:textColor="@color/input_box_text"
+                                android:textColorHint="@color/input_box_hint"
+                                android:textSize="12sp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Hidden Legacy Market Dropdown to maintain binding compatibility -->
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerMarket"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+
+                    <!-- ROW 4: Local District Market Chips Bar -->
+                    <HorizontalScrollView
+                        android:id="@+id/scrollMarketTabs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:scrollbars="none"
+                        android:visibility="visible">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupMarkets"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:chipSpacingHorizontal="4dp"
+                            app:singleLine="true"
+                            app:singleSelection="true" />
+                    </HorizontalScrollView>
+
+                </LinearLayout>
+
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <!-- Swipe Refresh & Mandi Rates List -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefreshMandi"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewMandi"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="8dp" />
+
+                    <!-- Loading Bar -->
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tvEmptyMandi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="32dp"
+                        android:text="No Mandi rates found for the selected filter."
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="14sp"
+                        android:visibility="gone" />
+
+                </FrameLayout>
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    </LinearLayout>
+
+    <!-- Scroll to Top FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScrollTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/scroll_to_top"
+        android:visibility="gone"
+        app:backgroundTint="@color/farmer_green_primary"
+        app:fabCustomSize="32dp"
+        app:maxImageSize="16dp"
+        app:elevation="2dp"
+        app:srcCompat="@drawable/ic_scroll_top"
+        app:tint="@android:color/white" />
+
+</FrameLayout>

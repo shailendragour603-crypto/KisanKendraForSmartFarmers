@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutCommentRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#18181A"
+    android:orientation="horizontal"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="8dp">
+
+    <!-- Comment Author Avatar -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivCommentAuthorAvatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:contentDescription="Comment Author Picture"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_default_avatar"
+        app:shapeAppearanceOverlay="@style/CircleImageView"
+        app:strokeColor="#2C2C2E"
+        app:strokeWidth="1dp" />
+
+    <!-- Main Comment Content Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Header Row: Username + Time ago (side-by-side) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvCommentAuthor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Farmer"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCommentTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="2w"
+                android:textColor="#8E8E93"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Reply To Tag (if nested reply) -->
+        <TextView
+            android:id="@+id/tvReplyTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Replying to @User"
+            android:textColor="#81C784"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Comment Message Text -->
+        <TextView
+            android:id="@+id/tvCommentText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Comment text..."
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <!-- Comment Action Links: Reply, See translation, Delete -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnReplyComment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:text="Reply"
+                android:textColor="#8E8E93"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnTranslateComment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:text="See translation"
+                android:textColor="#8E8E93"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnDeleteComment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:text="Delete"
+                android:textColor="#FF453A"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Right Side Like Column (Heart Icon + Like Count directly below) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="2dp">
+
+        <ImageButton
+            android:id="@+id/btnLikeComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Like comment"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_comment_heart" />
+
+        <TextView
+            android:id="@+id/tvCommentLikesCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:text="0"
+            android:textColor="#8E8E93"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

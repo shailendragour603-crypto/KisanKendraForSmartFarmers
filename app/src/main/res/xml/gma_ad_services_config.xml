@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config>
+    <!-- Allow Google Play Services to handle Privacy Sandbox Ad Topics -->
+    <topics allow="true" />
+    <!-- Allow Google Play Services to handle Protected Audience / Custom Audiences -->
+    <custom-audiences allow="true" />
+    <!-- Allow Google Play Services to handle Attribution Reporting -->
+    <attribution allow="true" />
+</ad-services-config>

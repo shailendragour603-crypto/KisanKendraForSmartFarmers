@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface">
+
+    <!-- Scroll-Aware Collapsing Header (Hides when scrolling up, reappears when scrolling down) -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarForum"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_farmer_surface"
+        app:elevation="0dp"
+        app:layout_scrollFlags="scroll|enterAlways|snap">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="2dp"
+            app:layout_scrollFlags="scroll|enterAlways|snap">
+
+            <!-- Screen Alert Banner -->
+            <include
+                android:id="@+id/alertBanner"
+                layout="@layout/layout_screen_alert_banner" />
+
+            <!-- 🔹 Create Post Bar (Vibrant & Eye-Catching Design) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCreatePostBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_stroke_color"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="8dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivUserPostAvatar"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="User Avatar"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_default_avatar"
+                        app:shapeAppearanceOverlay="@style/CircleImageView"
+                        app:strokeColor="@color/farmer_green_dark"
+                        app:strokeWidth="1.5dp" />
+
+                    <TextView
+                        android:id="@+id/tvCreatePostHint"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input_pill"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="14dp"
+                        android:text="Write Your post..."
+                        android:textColor="@color/farmer_green_title"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <!-- Gallery Media Attachment Button -->
+                    <ImageView
+                        android:id="@+id/btnPostGallery"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:background="@drawable/bg_badge_green"
+                        android:backgroundTint="#E8F5E9"
+                        android:clickable="true"
+                        android:contentDescription="Gallery Media"
+                        android:focusable="true"
+                        android:padding="8dp"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        app:tint="#2E7D32" />
+
+                    <!-- Camera Capture Button -->
+                    <ImageView
+                        android:id="@+id/btnPostCamera"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_badge_green"
+                        android:backgroundTint="#E3F2FD"
+                        android:clickable="true"
+                        android:contentDescription="Camera Capture"
+                        android:focusable="true"
+                        android:padding="8dp"
+                        android:src="@android:drawable/ic_menu_camera"
+                        app:tint="#1565C0" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Category Filter Chips for Forum -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupForumCategories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:checkedChip="@+id/chipForumAll"
+                    app:chipSpacingHorizontal="4dp"
+                    app:selectionRequired="true"
+                    app:singleLine="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumAll"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💬 सभी विषय"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumDiseases"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌾 फसल बीमारियां"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumFertilizer"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🧪 खाद व उर्वरक"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumMandi"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="मंडी सलाह"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumYojana"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🏛 सरकारी योजनाएं"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumCrops"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seeds &amp; Varieties"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumWeather"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Weather"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumDairy"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dairy Farming"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipForumMachinery"
+                        style="@style/AppChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Machinery &amp; Tractors"
+                        app:chipBackgroundColor="@color/chip_bg_color"
+                        android:textColor="@color/chip_text_color"
+                        app:chipStrokeColor="@color/chip_stroke_color"
+                        app:chipStrokeWidth="1.5dp" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Swipe Refresh & RecyclerView (Scrolls Smoothly with AppBarLayout Behavior) -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshForum"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvForumPosts"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="12dp"
+                android:paddingBottom="20dp" />
+
+            <ProgressBar
+                android:id="@+id/pbForum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/farmer_green_primary"
+                android:visibility="visible" />
+        </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Post New Question FAB (Kept as fallback, or hidden) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAskQuestion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/farmer_green_dark"
+        android:contentDescription="Ask Question"
+        android:text="✍️ Post Question"
+        android:textColor="@android:color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="24dp"
+        app:elevation="6dp"
+        app:iconTint="@android:color/white" />
+
+    <!-- Scroll to Top FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScrollTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/scroll_to_top"
+        android:visibility="gone"
+        app:backgroundTint="@color/farmer_green_primary"
+        app:fabCustomSize="32dp"
+        app:maxImageSize="16dp"
+        app:elevation="2dp"
+        app:srcCompat="@drawable/ic_scroll_top"
+        app:tint="@android:color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

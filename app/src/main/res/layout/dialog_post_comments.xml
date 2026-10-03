@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_dark_bottom_sheet"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="16dp">
+
+    <!-- Top Drag Handle for Bottom Sheet -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:background="#3A3A3C" />
+
+    <!-- Header Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/tvCommentsHeaderTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Comments"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvComments"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
+
+    <!-- Replying Banner (Hidden by default) -->
+    <LinearLayout
+        android:id="@+id/layoutReplyingBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_dark_reply_banner"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvReplyingTo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Replying to @Author"
+            android:textColor="#81C784"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnCancelReply"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Cancel Reply"
+            android:src="@drawable/ic_close"
+            app:tint="#8E8E93" />
+    </LinearLayout>
+
+    <!-- Quick Emoji Reaction Bar (Instagram Reels style) -->
+    <HorizontalScrollView
+        android:id="@+id/svQuickEmojiBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:overScrollMode="never"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvEmoji1"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="❤️"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji2"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="👏"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji3"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="🔥"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji4"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="🎉"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji5"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="😢"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji6"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="😍"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji7"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="😮"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/tvEmoji8"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="😂"
+                android:textSize="22sp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Modern Dark Comment Input Box -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_dark_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp">
+
+        <!-- User Avatar inside Comment Input -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivCommentUserAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:contentDescription="Your Avatar"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_default_avatar"
+            app:shapeAppearanceOverlay="@style/CircleImageView"
+            app:strokeColor="#3A3A3C"
+            app:strokeWidth="1dp" />
+
+        <EditText
+            android:id="@+id/etCommentInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:hint="Add a comment..."
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:paddingVertical="8dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#8E8E93"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSendComment"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:backgroundTint="#2E7D32"
+            android:contentDescription="Send Comment"
+            android:padding="0dp"
+            android:text="➔"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="18dp" />
+    </LinearLayout>
+</LinearLayout>

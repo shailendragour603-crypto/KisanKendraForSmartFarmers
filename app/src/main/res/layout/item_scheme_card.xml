@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#C8E6C9"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title & State Badge Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvSchemeTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PM-Kisan Samman Nidhi Yojana"
+                android:textColor="@color/farmer_green_title"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSchemeStateBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_green"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Central (All India)"
+                android:textColor="@color/farmer_green_dark"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Benefit Amount Badge -->
+        <TextView
+            android:id="@+id/tvSchemeBenefit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💰 Benefit: ₹6,000 / year direct bank transfer"
+            android:textColor="@color/price_modal_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Overview Description -->
+        <TextView
+            android:id="@+id/tvSchemeOverview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Income support scheme providing ₹6,000 per year in 3 equal installments to small and marginal farmer families across India."
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="15sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Key Eligibility -->
+        <TextView
+            android:id="@+id/tvSchemeEligibility"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📋 Eligibility: Small &amp; marginal landholding farmer families with land records in their name."
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="15sp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Action Buttons: Read Guide Article & Open Official Portal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReadSchemeArticle"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:backgroundTint="@color/price_modal_bg"
+                android:paddingVertical="10dp"
+                android:text="📖 Read Complete Guide &amp; How to Apply"
+                android:textColor="@color/price_modal_text"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="20dp"
+                app:icon="@android:drawable/ic_menu_agenda"
+                app:iconTint="@color/price_modal_text" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenSchemePortal"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="10dp"
+                android:text="🌐 Official Government Portal"
+                android:textColor="@color/farmer_green_dark"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="20dp"
+                app:icon="@android:drawable/ic_menu_compass"
+                app:iconTint="@color/farmer_green_dark"
+                app:strokeColor="@color/farmer_green_dark"
+                app:strokeWidth="1dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

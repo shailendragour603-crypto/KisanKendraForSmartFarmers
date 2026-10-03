@@ -1,0 +1,94 @@
+<resources>
+
+    <style name="ModernBottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/nav_active_bg</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+        <item name="android:width">56dp</item>
+        <item name="android:height">32dp</item>
+    </style>
+
+    <style name="CircleImageView">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="RoundedImageView">
+        <item name="cornerSize">10dp</item>
+    </style>
+
+    <style name="ToolbarTitleStyle">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+    </style>
+
+    <style name="ToolbarSecondaryTitleStyle">
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Global Chip Styling: Dark Navy Blue background and White text -->
+    <style name="AppChipStyle" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_bg_color</item>
+        <item name="chipSurfaceColor">@color/white</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+        <item name="chipStrokeWidth">1.5dp</item>
+        <item name="chipMinTouchTargetSize">0dp</item>
+        <item name="chipMinHeight">32dp</item>
+    </style>
+
+    <style name="AppChipActionStyle" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/chip_bg_color</item>
+        <item name="chipSurfaceColor">@color/white</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+        <item name="chipStrokeWidth">1.5dp</item>
+    </style>
+
+    <style name="BottomNavActiveLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="BottomNavInactiveLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+    <style name="AppBottomNavigationStyle" parent="Widget.Material3.BottomNavigationView">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="elevation">0dp</item>
+        <item name="itemIconTint">@color/nav_icon_color</item>
+        <item name="itemTextColor">@color/nav_label_color</item>
+        <item name="itemTextAppearanceActive">@style/BottomNavActiveLabel</item>
+        <item name="itemTextAppearanceInactive">@style/BottomNavInactiveLabel</item>
+        <item name="itemBackground">@android:color/transparent</item>
+        <item name="itemActiveIndicatorStyle">@style/ModernBottomNavIndicator</item>
+        <item name="itemRippleColor">@android:color/transparent</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemPaddingTop">2dp</item>
+        <item name="itemPaddingBottom">2dp</item>
+        <item name="itemIconSize">20dp</item>
+        <item name="android:minHeight">52dp</item>
+    </style>
+
+    <style name="CompactAutoCompleteTextView" parent="Widget.Material3.AutoCompleteTextView.OutlinedBox">
+        <item name="android:popupBackground">@drawable/bg_compact_popup</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <style name="CompactDropDownListView" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:background">#242428</item>
+        <item name="android:divider">#323236</item>
+        <item name="android:dividerHeight">0.8dp</item>
+        <item name="android:overScrollMode">never</item>
+        <item name="android:scrollbars">vertical</item>
+    </style>
+
+    <style name="CompactPopupMenuTextAppearance" parent="TextAppearance.AppCompat.Widget.PopupMenu.Large">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+</resources>

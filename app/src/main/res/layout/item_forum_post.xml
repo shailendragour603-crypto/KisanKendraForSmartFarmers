@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/forum_post_margin_horizontal"
+    android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="@dimen/forum_post_corner_radius"
+    app:cardElevation="2dp"
+    app:strokeColor="@color/card_stroke_color"
+    app:strokeWidth="@dimen/forum_post_stroke_width">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Author Header Row & Post Metadata -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="12dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivAuthorAvatar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Author Avatar"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_default_avatar"
+                app:shapeAppearanceOverlay="@style/CircleImageView"
+                app:strokeColor="@color/green_light"
+                app:strokeWidth="1dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvAuthorName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ramesh Farmer • Khandwa"
+                    android:textColor="@color/farmer_green_dark"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvPostTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2 hours ago"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvForumCategoryBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_green"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Diseases"
+                android:textColor="@color/farmer_green_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btnPostMoreOptions"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="More Options"
+                android:src="@drawable/ic_three_dots_more"
+                app:tint="?android:attr/textColorPrimary" />
+        </LinearLayout>
+
+        <!-- Question Description -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp">
+
+            <TextView
+                android:id="@+id/tvQuestionDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:text="I noticed yellowing on my 40-day old wheat crop after heavy morning dew. Is this yellow rust or nitrogen deficiency? Suggest remedy."
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- Full-Width Edge-to-Edge Photo Attachment -->
+        <ImageView
+            android:id="@+id/ivQuestionPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="460dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="Crop Attachment"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <!-- Full-Width Edge-to-Edge Video Attachment Container (In-Feed Auto Play Player) -->
+        <FrameLayout
+            android:id="@+id/layoutVideoContainer"
+            android:layout_width="match_parent"
+            android:layout_height="460dp"
+            android:layout_marginTop="8dp"
+            android:background="#000000"
+            android:visibility="gone">
+
+            <shop.sabjiwala.kisankendra.views.CenterCropVideoView
+                android:id="@+id/vvInFeedVideo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center" />
+
+            <ImageView
+                android:id="@+id/ivQuestionVideoThumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Video Thumbnail"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery" />
+
+            <View
+                android:id="@+id/vVideoScrim"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#30000000" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPlayVideoFeed"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:backgroundTint="#D84315"
+                android:text="▶️ Play"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="20dp" />
+
+            <!-- In-Feed Auto Play Status Badge -->
+            <TextView
+                android:id="@+id/tvAutoPlayBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                android:layout_margin="10dp"
+                android:background="#80000000"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="Video Reel"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Bottom Action Row: Like, Comment & Share -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="10dp">
+
+            <!-- Like Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLikePost"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:backgroundTint="@android:color/transparent"
+                android:paddingHorizontal="4dp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_feed_heart"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="28dp"
+                app:iconTint="@null"
+                app:strokeWidth="0dp"
+                tools:text="12" />
+
+            <!-- Comment Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReplies"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="16dp"
+                android:backgroundTint="@android:color/transparent"
+                android:paddingHorizontal="4dp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_feed_comment"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="28dp"
+                app:iconTint="@null"
+                app:strokeWidth="0dp"
+                tools:text="5" />
+
+            <!-- Share Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSharePost"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="16dp"
+                android:backgroundTint="@android:color/transparent"
+                android:paddingHorizontal="4dp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_feed_share"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="28dp"
+                app:iconTint="@null"
+                app:strokeWidth="0dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,6 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/nav_active_bg"/> <!-- Green background -->
+    <corners android:radius="50dp"/> <!-- Rounded rectangle -->
+</shape>
+
