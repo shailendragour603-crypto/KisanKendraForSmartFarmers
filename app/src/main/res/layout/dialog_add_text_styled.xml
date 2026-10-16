@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#212121">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add / Edit Text"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- Live Preview Text Box -->
+        <EditText
+            android:id="@+id/etInputText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#333333"
+            android:hint="Type text here..."
+            android:textColorHint="#999999"
+            android:minLines="2"
+            android:padding="12dp"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <!-- Font Choice Chips -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Select Font Style"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFonts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontDefault"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Default"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontSerif"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Serif"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontSans"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sans Serif"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontMono"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Monospace"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontBold"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bold"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFontItalic"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Italic"
+                    android:textStyle="italic"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="#333333" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Text Color Palette -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Text Color"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutTextColors"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Background Color Palette -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Background Color"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutBgColors"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Font Size Slider -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Size:"
+                android:textColor="#CCCCCC"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <SeekBar
+                android:id="@+id/seekBarTextSize"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="80"
+                android:progress="32" />
+
+            <TextView
+                android:id="@+id/tvTextSizeVal"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="32"
+                android:textColor="@android:color/white"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Actions: Cancel / Add -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnTextCancel"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:textColor="#BBBBBB" />
+
+            <Button
+                android:id="@+id/btnTextApply"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/farmer_green_primary"
+                android:text="Apply Text"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

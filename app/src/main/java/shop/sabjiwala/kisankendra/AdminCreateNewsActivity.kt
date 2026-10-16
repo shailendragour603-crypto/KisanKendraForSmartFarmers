@@ -228,7 +228,8 @@ class AdminCreateNewsActivity : AppCompatActivity() {
 
     private fun getStoredApiKey(): String {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        return prefs.getString(KEY_GEMINI_API_KEY, "").orEmpty()
+        val key = prefs.getString(KEY_GEMINI_API_KEY, "").orEmpty()
+        return if (key.isBlank()) "AQ.Ab8RN6J0nMCAVWg_2QmNCqWuk6HtX0A8z28nluvAtBGEEE5NGg" else key
     }
 
     private fun saveApiKey(key: String) {
@@ -305,36 +306,30 @@ class AdminCreateNewsActivity : AppCompatActivity() {
 
                 val prompt = """
                     You are an expert Indian agricultural journalist writing for farmers on the Kisan Kendra app.
-                    Read, translate (if input is in Hindi, Marathi, Gujarati, Telugu or any other language), rewrite, and expand the following news content into a complete, rich-formatted news article STRICTLY IN ENGLISH ONLY.
+                    Read, rewrite, and expand the following news content into a complete, engaging article STRICTLY IN CASUAL HINDI (सरल और बोलचाल की हिंदी ताकि किसान भाई आसानी से समझ सकें).
 
-                    INPUT CONTENT TO REWRITE (Can be in any language or web link text):
+                    INPUT CONTENT TO REWRITE:
                     $articleContent
 
                     REQUIRED ARTICLE STRUCTURE & FORMATTING RULES:
-                    1. ALWAYS WRITE AND OUTPUT ALL FIELDS (title and description) STRICTLY IN ENGLISH ONLY.
-                    2. Use clear section headings starting with ### (e.g. ### 📌 Overview, ### 🎁 Key Benefits, ### 📋 Eligibility Criteria, ### 📝 How to Apply / Official Links).
-                    3. Use bullet points (• or -) for all benefits, steps, requirements, and document lists.
-                    4. Embedded Web Links: Whenever official government portals, application websites, or reference links are mentioned in the content or relevant to the scheme, embed the exact clickable URLs (e.g. [PM-Kisan Official Portal](https://pmkisan.gov.in) or <a href="https://pmkisan.gov.in">PM-Kisan Portal</a>).
-                    5. CRITICAL: DO NOT OUTPUT ANY PREAMBLE, COMMENTARY, THINKING PROCESS, OR BULLET POINTS BEFORE OR AFTER THE JSON. OUTPUT ONLY THE RAW JSON OBJECT STARTING WITH '{' AND ENDING WITH '}'.
+                    1. ALWAYS WRITE AND OUTPUT ALL FIELDS (title, category, description) STRICTLY IN CASUAL HINDI ONLY.
+                    2. Structure the article with a clear title, subtitle headings starting with ### (e.g. ### 🌾 मुख्य बातें, ### 📋 जरूरी बातें या लाभ), and well-written informative paragraphs.
+                    3. EXCLUDE ALL EXTERNAL LINKS, source URLs, or website references. Do NOT include any website links or web URLs in the text.
+                    4. CRITICAL: DO NOT OUTPUT ANY PREAMBLE, COMMENTARY, THINKING PROCESS, OR TEXT BEFORE OR AFTER THE JSON. OUTPUT ONLY THE RAW JSON OBJECT STARTING WITH '{' AND ENDING WITH '}'.
 
                     Format your response PRECISELY as a JSON object with the following fields:
                     {
-                      "title": "A short, catchy, informative news headline STRICTLY IN ENGLISH ONLY",
+                      "title": "किसान भाइयों के लिए एक आकर्षक और स्पष्ट शीर्षक हिंदी में",
                       "category": "Govt Scheme OR Agri Market OR Agri Gyan OR Crop Protection OR Technology OR Success Stories",
-                      "description": "A full, detailed, rich-text article STRICTLY IN ENGLISH ONLY formatted with section headings (###), bullet lists (•), and embedded clickable official website links ([Portal Name](URL)).",
+                      "description": "एक विस्तृत, आकर्षक और समृद्ध लेख (rich-text article) जो सरल और बोलचाल की हिंदी में हो, जिसमें ### उपशीर्षक (subtitles) और पैराग्राफ शामिल हों। कोई भी बाहरी लिंक या वेबसाइट का यूआरएल शामिल न करें।",
                       "suggestedImageKeyword": "yojana OR mandi OR gyan"
                     }
                 """.trimIndent()
 
                 var responseText = ""
                 val modelNames = listOf(
-                    "gemini-3.6-flash",
-                    "gemini-3.7-flash",
-                    "gemini-3.1-flash-lite",
-                    "gemini-2.5-flash-lite",
-                    "gemini-3.1-pro-preview",
-                    "gemma-4-31b-it",
-                    "gemini-3.5-flash",
+                    "gemini-2.0-flash",
+                    "gemini-2.0-flash-lite",
                     "gemini-flash-latest"
                 )
 
@@ -467,13 +462,8 @@ class AdminCreateNewsActivity : AppCompatActivity() {
     private fun callGeminiRestApi(apiKey: String, prompt: String): String {
         val cleanKey = apiKey.trim().replace("\"", "").replace("'", "")
         val models = listOf(
-            "gemini-3.6-flash",
-            "gemini-3.7-flash",
-            "gemini-3.1-flash-lite",
-            "gemini-2.5-flash-lite",
-            "gemini-3.1-pro-preview",
-            "gemma-4-31b-it",
-            "gemini-3.5-flash",
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
             "gemini-flash-latest"
         )
 

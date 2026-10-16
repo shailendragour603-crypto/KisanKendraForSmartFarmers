@@ -135,41 +135,41 @@ data class CropProfitResult(
 object FarmingCalculatorUtils {
 
     val crops = listOf(
-        "Wheat",
-        "Paddy / Rice",
-        "Soybean",
-        "Cotton",
-        "Mustard",
-        "Maize",
-        "Gram / Chickpea",
-        "Potato",
-        "Sugarcane",
-        "Onion",
-        "General Crop"
+        "गेहूँ",
+        "धान / चावल",
+        "सोयाबीन",
+        "कपास",
+        "सरसों",
+        "मक्का",
+        "चना",
+        "आलू",
+        "गन्ना",
+        "प्याज़",
+        "अन्य सामान्य फसल"
     )
 
-    val units = listOf("Acre", "Bigha", "Hectare")
+    val units = listOf("एकड़", "बीघा", "हेक्टेयर")
 
     val calculatorCategories = listOf(
-        "🌱 Production Stage",
-        "📦 Post-Harvest Stage",
-        "Financial Stage"
+        "🌱 1. फसल बुआई व देखरेख",
+        "📦 2. कटाई और भंडारण",
+        "📈 3. कुल कमाई और मुनाफा"
     )
 
     val allCalculators = listOf(
         // Production
-        "1. 🚜 Farm Machinery & Field Preparation",
-        "2. 🌱 Sowing & Seed Calculator",
-        "3. 🧪 Fertilizer & Nutrient Calculator",
-        "4. 💧 Irrigation & Water Calculator",
-        "5. 💊 Crop Protection & Spray Calculator",
-        "6. 👨‍🌾 Labour & Worker Cost Calculator",
-        "7. 🌾 Harvesting Calculator",
+        "1. 🚜 खेत तैयारी व जुताई खर्च",
+        "2. 🌱 बीज व बुआई कैलकुलेटर",
+        "3. 🧪 खाद और उर्वरक की मात्रा",
+        "4. 💧 सिंचाई और पानी का हिसाब",
+        "5. 💊 दवाई व स्प्रे छिड़काव",
+        "6. 👨‍🌾 मजदूरी और मजदूर खर्च",
+        "7. 🌾 फसल कटाई का हिसाब",
         // Post-Harvest
-        "8. 📦 Post-Harvest, Transport & Storage",
-        "9. 🏪 Crop Sale & Mandi Calculator",
+        "8. 📦 भाड़ा, ढोआई व भंडारण",
+        "9. 🏪 मंडी बिक्री व रेट हिसाब",
         // Financial
-        "10. Complete Crop Profit & ROI Calculator"
+        "10. 📊 कुल मुनाफा और बचत हिसाब"
     )
 
     fun toAcres(rawArea: Double, unitIndex: Int): Double {
@@ -216,9 +216,9 @@ object FarmingCalculatorUtils {
         val costPerAcre = if (acres > 0) totalCost / acres else totalCost
 
         val rateText = if (isHourly) {
-            "₹${df(rate)}/Hour (${df(hoursPerAcre)} hrs/Acre)"
+            "₹${df(rate)}/घंटा (${df(hoursPerAcre)} घंटे/एकड़)"
         } else {
-            "₹${df(rate)}/Acre"
+            "₹${df(rate)}/एकड़"
         }
 
         return FieldPrepResult(
@@ -243,11 +243,11 @@ object FarmingCalculatorUtils {
         seedPricePerKg: Double
     ): SowingResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val defaultSeedRate = when (cropIndex) {
-            0 -> if (sowingMethod.contains("Broadcasting")) 45.0 else 40.0 // Wheat
-            1 -> if (sowingMethod.contains("Transplanting")) 10.0 else 20.0 // Paddy
+            0 -> if (sowingMethod.contains("Broadcasting") || sowingMethod.contains("छिटकवा")) 45.0 else 40.0 // Wheat
+            1 -> if (sowingMethod.contains("Transplanting") || sowingMethod.contains("रोपाई")) 10.0 else 20.0 // Paddy
             2 -> 35.0 // Soybean
             3 -> 1.5  // Cotton (pack/kg)
             4 -> 2.0  // Mustard
@@ -265,7 +265,7 @@ object FarmingCalculatorUtils {
 
         return SowingResult(
             cropName = crop,
-            variety = variety.ifBlank { "Standard Variety" },
+            variety = variety.ifBlank { "उन्नत किस्म" },
             areaInAcres = acres,
             sowingMethod = sowingMethod,
             seedRatePerAcre = finalSeedRate,
@@ -286,19 +286,19 @@ object FarmingCalculatorUtils {
         zincPriceKg: Double = 80.0
     ): FertilizerPlanResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val (ureaBagsPerAcre, dapBagsPerAcre, mopBagsPerAcre, zincKgPerAcre, schedule) = when (cropIndex) {
-            0 -> Tuple5(1.5, 1.0, 0.5, 5.0, "At Sowing: 100% DAP & MOP + 50% Urea.\n1st Irrigation (21 days): 50% Urea + Zinc.")
-            1 -> Tuple5(2.0, 1.0, 0.6, 10.0, "At Transplanting: 100% DAP + 33% Urea.\n10 Days After Transplanting: Zinc Sulphate.\nTillering & Panicle Stage: Remaining Urea in 2 splits.")
-            2 -> Tuple5(0.5, 1.0, 0.5, 5.0, "Legume Crop: Apply 100% DAP, MOP & Zinc at sowing. Urea kept minimal for nitrogen fixation.")
-            3 -> Tuple5(2.5, 1.0, 1.0, 8.0, "At Sowing: 100% DAP & MOP.\nUrea Split: 35 days (Square formation) & 60 days (Flowering).")
-            4 -> Tuple5(1.2, 0.8, 0.4, 10.0, "Oilseed: Apply 100% DAP & MOP + 50% Urea at basal. Apply Sulphur/Zinc for oil yield.")
-            5 -> Tuple5(2.0, 1.0, 0.8, 5.0, "Basal: 100% DAP, MOP + 33% Urea.\nKnee-High & Flowering Stage: Remaining Urea in 2 doses.")
-            6 -> Tuple5(0.3, 1.0, 0.5, 4.0, "Pulse Crop: Apply DAP & MOP at sowing. Minimal Nitrogen needed.")
-            7 -> Tuple5(3.0, 2.0, 1.5, 10.0, "Basal: 100% DAP & MOP + 50% Urea.\nEarthing Up (30 days): Remaining 50% Urea.")
-            8 -> Tuple5(4.0, 2.0, 1.5, 10.0, "Basal: DAP, MOP + 25% Urea.\nSplit Urea at 45, 90 & 120 days during grand growth.")
-            else -> Tuple5(1.5, 1.0, 0.5, 5.0, "Basal: 100% DAP & MOP + 50% Urea. Top dress remaining Urea at 1st irrigation.")
+            0 -> Tuple5(1.5, 1.0, 0.5, 5.0, "बुआई के समय: 100% डीएपी व एमओपी + 50% यूरिया।\nपहला पानी (21 दिन): 50% यूरिया + जिंक।")
+            1 -> Tuple5(2.0, 1.0, 0.6, 10.0, "रोपाई के समय: 100% डीएपी + 33% यूरिया।\n10 दिन बाद: जिंक सल्फेट।\nकल्ले फूटते समय: बचा हुआ यूरिया दो बार में दें।")
+            2 -> Tuple5(0.5, 1.0, 0.5, 5.0, "दलहन फसल: बुआई के समय डीएपी, एमओपी और जिंक डालें। यूरिया कम मात्रा में रखें।")
+            3 -> Tuple5(2.5, 1.0, 1.0, 8.0, "बुआई के समय: 100% डीएपी व एमओपी।\nयूरिया: 35 दिन और 60 दिन बाद दो किश्तों में दें।")
+            4 -> Tuple5(1.2, 0.8, 0.4, 10.0, "तिलहन: बुआई पर 100% डीएपी व एमओपी + 50% यूरिया। तेल बढ़ाने के लिए सल्फर/जिंक दें।")
+            5 -> Tuple5(2.0, 1.0, 0.8, 5.0, "शुरुआत में: 100% डीएपी, एमओपी + 33% यूरिया।\nघुटने बराबर व फूल आते समय: बाकी यूरिया दें।")
+            6 -> Tuple5(0.3, 1.0, 0.5, 4.0, "दलहनी फसल: बुआई के समय डीएपी व एमओपी दें। नाइट्रोजन की बहुत कम जरूरत होती है।")
+            7 -> Tuple5(3.0, 2.0, 1.5, 10.0, "बुआई पर: 100% डीएपी व एमओपी + 50% यूरिया।\nमिट्टी चढ़ाते समय (30 दिन): बचा हुआ 50% यूरिया।")
+            8 -> Tuple5(4.0, 2.0, 1.5, 10.0, "शुरुआत में: डीएपी, एमओपी + 25% यूरिया।\nबाकी यूरिया 45, 90 और 120 दिनों पर दें।")
+            else -> Tuple5(1.5, 1.0, 0.5, 5.0, "बुआई के समय: 100% डीएपी व एमओपी + 50% यूरिया। पहली सिंचाई पर बाकी यूरिया दें।")
         }
 
         val totalUreaBags = acres * ureaBagsPerAcre
@@ -348,11 +348,11 @@ object FarmingCalculatorUtils {
         directCanalCost: Double
     ): IrrigationResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val waterPerIrrigationPerAcreLiters = when {
-            method.contains("Drip", ignoreCase = true) -> 100000.0
-            method.contains("Sprinkler", ignoreCase = true) -> 120000.0
+            method.contains("Drip", ignoreCase = true) || method.contains("टपकन") -> 100000.0
+            method.contains("Sprinkler", ignoreCase = true) || method.contains("फव्वारा") -> 120000.0
             else -> 200000.0 // Flood irrigation
         }
 
@@ -360,12 +360,11 @@ object FarmingCalculatorUtils {
         val totalSeasonalWater = singleWaterTotal * numIrrigations
 
         val singleIrrigationCost = when {
-            pumpType.contains("Electric", ignoreCase = true) -> {
-                // kWh = HP * 0.746 * Hours
+            pumpType.contains("Electric", ignoreCase = true) || pumpType.contains("बिजली") -> {
                 val kWh = hp * 0.746 * hoursPerIrrigation
                 kWh * electricityRate
             }
-            pumpType.contains("Diesel", ignoreCase = true) -> {
+            pumpType.contains("Diesel", ignoreCase = true) || pumpType.contains("डीजल") -> {
                 val liters = fuelConsLHr * hoursPerIrrigation
                 liters * fuelPrice
             }
@@ -404,7 +403,7 @@ object FarmingCalculatorUtils {
         packageSizeUnits: Double = 500.0     // 500ml/g
     ): SprayResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val totalWaterReqLiters = acres * waterPerAcreLiters
         val tankLoads = ceil(totalWaterReqLiters / tankCapacityLiters).toInt().coerceAtLeast(1)
@@ -422,7 +421,7 @@ object FarmingCalculatorUtils {
             cropName = crop,
             areaInAcres = acres,
             problemCategory = problemCategory,
-            productName = productName.ifBlank { "Recommended Pesticide/Fungicide" },
+            productName = productName.ifBlank { "अनुशंसित कीटनाशक / फफूंदनाशक" },
             waterRequirementLiters = totalWaterReqLiters,
             tankCapacityLiters = tankCapacityLiters,
             tankLoads = tankLoads,
@@ -430,7 +429,7 @@ object FarmingCalculatorUtils {
             productPerTank = productPerTank,
             isLiquid = true,
             totalCost = totalCost,
-            labelGuidance = "⚠ Follow the product label and wear protective gear during application."
+            labelGuidance = "⚠ दवाई का छिड़काव करते समय सुरक्षा किट पहनें और पैकेट के निर्देश पढ़ें।"
         )
     }
 
@@ -465,7 +464,7 @@ object FarmingCalculatorUtils {
         cropIndex: Int,
         rawArea: Double,
         unitIndex: Int,
-        method: String, // "Combine Harvester / Machine" or "Manual Labour"
+        method: String, // "कंबाइन हार्वेस्टर / मशीन" or "मजदूरों द्वारा कटाई"
         numWorkers: Int,
         durationDays: Double,
         dailyWage: Double,
@@ -474,14 +473,14 @@ object FarmingCalculatorUtils {
         hoursPerAcre: Double
     ): HarvestingResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val totalCost: Double
         val detailsText: String
 
-        if (method.contains("Manual", ignoreCase = true)) {
+        if (method.contains("Manual", ignoreCase = true) || method.contains("मजदूर", ignoreCase = true)) {
             totalCost = numWorkers * durationDays * dailyWage
-            detailsText = "$numWorkers workers for ${df(durationDays)} days @ ₹${df(dailyWage)}/day"
+            detailsText = "$numWorkers मजदूर ${df(durationDays)} दिनों के लिए @ ₹${df(dailyWage)}/दिन"
         } else {
             totalCost = if (isHourlyMachine) {
                 acres * hoursPerAcre * machineRate
@@ -489,9 +488,9 @@ object FarmingCalculatorUtils {
                 acres * machineRate
             }
             detailsText = if (isHourlyMachine) {
-                "Machine @ ₹${df(machineRate)}/hr (${df(hoursPerAcre)} hrs/Acre)"
+                "मशीन @ ₹${df(machineRate)}/घंटा (${df(hoursPerAcre)} घंटे/एकड़)"
             } else {
-                "Combine Harvester @ ₹${df(machineRate)}/Acre"
+                "कंबाइन हार्वेस्टर @ ₹${df(machineRate)}/एकड़"
             }
         }
 
@@ -518,7 +517,7 @@ object FarmingCalculatorUtils {
         storageMonths: Double,
         storageRatePerQPerMonth: Double
     ): PostHarvestResult {
-        val crop = crops.getOrElse(cropIndex) { "Wheat" }
+        val crop = crops.getOrElse(cropIndex) { "गेहूँ" }
 
         val distanceFactor = if (distanceKm > 0) distanceKm / 20.0 else 1.0
         val transportCost = quantityQuintals * transportRatePerQ * distanceFactor
@@ -546,7 +545,7 @@ object FarmingCalculatorUtils {
         transportDeduction: Double,
         otherDeduction: Double
     ): CropSaleResult {
-        val crop = crops.getOrElse(cropIndex) { "Soybean" }
+        val crop = crops.getOrElse(cropIndex) { "सोयाबीन" }
 
         val grossSale = quantityQuintals * mandiPricePerQ
         val commissionDeduction = grossSale * (commissionPercent / 100.0)
@@ -585,7 +584,7 @@ object FarmingCalculatorUtils {
         postHarvestCost: Double
     ): CropProfitResult {
         val acres = toAcres(rawArea, unitIndex)
-        val crop = crops.getOrElse(cropIndex) { "Soybean" }
+        val crop = crops.getOrElse(cropIndex) { "सोयाबीन" }
 
         val totalYieldQuintals = acres * expectedYieldPerAcre
         val expectedRevenue = totalYieldQuintals * expectedPricePerQuintal

@@ -119,4 +119,72 @@ object MandiCacheHelper {
         }
         editor.apply()
     }
+
+    private const val PREFIX_STATE_CACHE = "state_cache_"
+    private const val PREFIX_STATE_TIME = "state_time_"
+    private const val STATE_CACHE_EXPIRY_MS = 2L * 60 * 60 * 1000L // 2 Hours max cache age
+
+    fun saveMandiStateLocally(context: Context, stateKey: String, records: List<MandiRecord>) {
+        if (stateKey.isBlank() || records.isEmpty()) return
+        try {
+            val prefs = getPrefs(context)
+            val json = Gson().toJson(records)
+            prefs.edit()
+                .putString(PREFIX_STATE_CACHE + stateKey, json)
+                .putLong(PREFIX_STATE_TIME + stateKey, System.currentTimeMillis())
+                .apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun getLocalMandiState(context: Context, stateKey: String): List<MandiRecord>? {
+        if (stateKey.isBlank()) return null
+        try {
+            val prefs = getPrefs(context)
+            val saveTime = prefs.getLong(PREFIX_STATE_TIME + stateKey, 0L)
+            val json = prefs.getString(PREFIX_STATE_CACHE + stateKey, null) ?: return null
+
+            val now = System.currentTimeMillis()
+            if (now - saveTime > STATE_CACHE_EXPIRY_MS) {
+                return null
+            }
+
+            // Invalidate cache if saved before 1:30 PM today, but current time is after 1:30 PM today (fresh rates landed)
+            val tz = java.util.TimeZone.getTimeZone("Asia/Kolkata")
+            val calSave = java.util.Calendar.getInstance(tz).apply { timeInMillis = saveTime }
+            val calNow = java.util.Calendar.getInstance(tz).apply { timeInMillis = now }
+
+            val sameDay = calSave.get(java.util.Calendar.YEAR) == calNow.get(java.util.Calendar.YEAR) &&
+                          calSave.get(java.util.Calendar.DAY_OF_YEAR) == calNow.get(java.util.Calendar.DAY_OF_YEAR)
+
+            if (sameDay) {
+                val saveMinutes = calSave.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calSave.get(java.util.Calendar.MINUTE)
+                val nowMinutes = calNow.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calNow.get(java.util.Calendar.MINUTE)
+                val cutoffMinutes = 13 * 60 + 30 // 1:30 PM IST
+
+                if (saveMinutes < cutoffMinutes && nowMinutes >= cutoffMinutes) {
+                    return null // Force fresh pull from Firestore for new afternoon rates
+                }
+            }
+
+            val type = object : TypeToken<List<MandiRecord>>() {}.type
+            return Gson().fromJson(json, type)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    fun clearMandiStateCache(context: Context, stateKey: String) {
+        if (stateKey.isBlank()) return
+        try {
+            getPrefs(context).edit()
+                .remove(PREFIX_STATE_CACHE + stateKey)
+                .remove(PREFIX_STATE_TIME + stateKey)
+                .apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

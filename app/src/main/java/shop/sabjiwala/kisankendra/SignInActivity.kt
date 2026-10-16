@@ -67,7 +67,17 @@ class SignInActivity : AppCompatActivity() {
                 }
             } catch (e: ApiException) {
                 hideGoogleLoading()
-                Toast.makeText(this, "Google Sign-In Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                when (e.statusCode) {
+                    12501 -> {
+                        // User cancelled sign-in prompt - no error Toast needed
+                    }
+                    10 -> {
+                        Toast.makeText(this, "Google Sign-In Error (10): Missing SHA-1 fingerprint in Firebase Console.", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        Toast.makeText(this, "Google Sign-In Error (${e.statusCode}): ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                }
             } catch (e: Exception) {
                 hideGoogleLoading()
                 Toast.makeText(this, "Google Sign-In Error: ${e.localizedMessage ?: "Service Unavailable"}", Toast.LENGTH_SHORT).show()

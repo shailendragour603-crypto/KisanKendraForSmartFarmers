@@ -115,11 +115,11 @@
                     app:chipStrokeWidth="1.5dp" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipToolDiseases"
+                    android:id="@+id/chipToolSchemes"
                     style="@style/AppChipStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Crop Care"
+                    android:text="Govt Scheme"
                     android:textSize="13sp"
                     app:chipBackgroundColor="@color/chip_bg_color"
                     android:textColor="@color/chip_text_color"
@@ -127,11 +127,11 @@
                     app:chipStrokeWidth="1.5dp" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipToolSchemes"
+                    android:id="@+id/chipToolWeather"
                     style="@style/AppChipStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Govt Scheme"
+                    android:text="Weather"
                     android:textSize="13sp"
                     app:chipBackgroundColor="@color/chip_bg_color"
                     android:textColor="@color/chip_text_color"
@@ -211,7 +211,7 @@
                             android:id="@+id/tvBtnFullDashboard"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Dashboard ➔"
+                            android:text="Report ➔"
                             android:textColor="@android:color/white"
                             android:textSize="12.5sp"
                             android:textStyle="bold" />
@@ -254,7 +254,7 @@
                     android:layout_marginStart="6dp"
                     android:backgroundTint="@color/kisan_diary_view_all_bg"
                     android:paddingVertical="10dp"
-                    android:text="View All Entries"
+                    android:text="Diary History"
                     android:textColor="@color/kisan_diary_view_all_text"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -263,6 +263,84 @@
                     app:rippleColor="@color/kisan_diary_view_all_ripple"
                     app:iconTint="@color/kisan_diary_view_all_text" />
             </LinearLayout>
+
+            <!-- NEW USER ONBOARDING BANNER (Visible when 0 crop cycles exist) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/layoutKisanDiaryOnboarding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#0F172A"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="3dp"
+                app:strokeColor="#2E7D32"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:contentDescription="Welcome Icon"
+                            android:src="@drawable/ic_diary_book"
+                            app:tint="#81C784" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvOnboardingTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="किसान डायरी में आपका स्वागत है!"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvOnboardingSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="अपनी फसल का खर्च, खाद और मुनाफे का हिसाब रखें।"
+                                android:textColor="#94A3B8"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStartFirstSeason"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="14dp"
+                        android:backgroundTint="@color/farmer_green_primary"
+                        android:text="पहला फसल सीजन शुरू करें"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_add"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="#FFFFFF" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- ANALYTICS DASHBOARD CONTAINER (Visible when "All Crops" is selected) -->
             <LinearLayout
@@ -402,14 +480,6 @@
                         android:orientation="vertical"
                         android:padding="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="📢 Sponsored Advertisement"
-                            android:textColor="#212121"
-                            android:textSize="11sp" />
-
                         <FrameLayout
                             android:id="@+id/adContainerKhata"
                             android:layout_width="match_parent"
@@ -446,7 +516,7 @@
                         android:id="@+id/tvHeaderCalc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🌾 Kisan Kendra — Farming Calculator System"
+                        android:text="🌾 किसान केंद्र — कृषि कैलकुलेटर"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="17sp"
                         android:textStyle="bold"
@@ -456,7 +526,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Select Plant Life Stage:"
+                        android:text="फसल का चरण चुनें:"
                         android:textColor="#555555"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -481,23 +551,21 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:checked="true"
-                                android:text="🌱 1. Production Stage" />
+                                android:text="1. फसल बुआई व देखरेख" />
 
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipStagePostHarvest"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="📦 2. Post-Harvest Stage" />
+                                android:text="2. कटाई और भंडारण" />
 
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipStageFinancial"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="3. Financial Stage"
-                                app:chipIcon="@drawable/ic_color_graphs"
-                                app:chipIconVisible="true" />
+                                android:text="3. कुल कमाई और मुनाफा" />
                         </com.google.android.material.chip.ChipGroup>
                     </HorizontalScrollView>
 
@@ -507,7 +575,7 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Select Calculator"
+                        android:hint="कैलकुलेटर चुनें"
                         android:layout_marginBottom="10dp">
 
                         <AutoCompleteTextView
@@ -530,7 +598,7 @@
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Select Crop"
+                            android:hint="फसल चुनें"
                             android:layout_marginBottom="8dp">
 
                             <AutoCompleteTextView
@@ -553,7 +621,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Land Area">
+                                android:hint="ज़मीन का क्षेत्रफल">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etCalcArea"
@@ -570,7 +638,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Unit">
+                                android:hint="इकाई">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvCalcUnit"
@@ -603,7 +671,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Operation">
+                                android:hint="कार्य / जुताई प्रकार">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvFieldPrepOperation"
@@ -619,7 +687,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Machine">
+                                android:hint="मशीन / साधन">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvFieldPrepMachine"
@@ -641,7 +709,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Rate (₹)">
+                                android:hint="किराया / रेट (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etFieldPrepRate"
@@ -658,7 +726,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Pricing By">
+                                android:hint="दर का प्रकार">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvFieldPrepPricingType"
@@ -682,14 +750,14 @@
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Variety (Optional)"
+                            android:hint="बीज की किस्म / वैरायटी (ऐच्छिक)"
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etSowingVariety"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="HD-2967 High Yield"
+                                android:text="HD-2967 उन्नत किस्म"
                                 android:textSize="14sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -704,7 +772,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Sowing Method">
+                                android:hint="बुआई का तरीका">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvSowingMethod"
@@ -720,7 +788,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Seed Price (₹/kg)">
+                                android:hint="बीज दर (₹/किलो)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSowingPrice"
@@ -744,7 +812,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Fertilizer Market Rates (₹/Bag or ₹/Kg):"
+                            android:text="खाद के बाजार भाव (₹/बोरी या ₹/किलो):"
                             android:textColor="#555555"
                             android:textSize="12sp"
                             android:textStyle="bold"
@@ -761,7 +829,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Urea (₹/Bag)">
+                                android:hint="यूरिया (₹/बोरी)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etFertUreaPrice"
@@ -778,7 +846,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="DAP (₹/Bag)">
+                                android:hint="डीएपी (₹/बोरी)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etFertDapPrice"
@@ -801,7 +869,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="MOP (₹/Bag)">
+                                android:hint="एमओपी (₹/बोरी)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etFertMopPrice"
@@ -818,7 +886,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Zinc (₹/kg)">
+                                android:hint="जिंक (₹/किलो)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etFertZincPrice"
@@ -850,7 +918,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Irrigation Method">
+                                android:hint="सिंचाई का तरीका">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvIrrigationMethod"
@@ -866,7 +934,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Total Irrigations">
+                                android:hint="कुल सिंचाई की संख्या">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etIrrigationCount"
@@ -889,7 +957,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Pump Source">
+                                android:hint="पानी का साधन / पंप">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvIrrigationPump"
@@ -905,7 +973,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Pump HP / Hours">
+                                android:hint="पंप HP / चलने के घंटे">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etIrrigationHours"
@@ -937,7 +1005,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Problem Type">
+                                android:hint="समस्या का प्रकार">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvSprayProblem"
@@ -953,13 +1021,13 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Product Name">
+                                android:hint="दवाई का नाम">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSprayProduct"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="Chlorpyrifos 20% EC"
+                                    android:text="क्लोरपायरीफॉस 20% EC"
                                     android:textSize="14sp" />
                             </com.google.android.material.textfield.TextInputLayout>
                         </LinearLayout>
@@ -975,7 +1043,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Tank Capacity (L)">
+                                android:hint="टंकी की क्षमता (लीटर)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSprayTankCap"
@@ -992,7 +1060,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Dose (ml or g/L)">
+                                android:hint="दवाई की मात्रा (मिली/लीटर)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSprayDosePerL"
@@ -1017,7 +1085,7 @@
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Work Type"
+                            android:hint="कार्य का प्रकार"
                             android:layout_marginBottom="8dp">
 
                             <AutoCompleteTextView
@@ -1039,7 +1107,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="No. of Workers">
+                                android:hint="मजदूरों की संख्या">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etLabourWorkers"
@@ -1056,7 +1124,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Days / Hours">
+                                android:hint="दिन / घंटे">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etLabourDuration"
@@ -1073,7 +1141,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Wage Rate (₹)">
+                                android:hint="मजदूरी दर (₹/दिन)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etLabourWage"
@@ -1098,7 +1166,7 @@
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Harvesting Method"
+                            android:hint="कटाई का तरीका"
                             android:layout_marginBottom="8dp">
 
                             <AutoCompleteTextView
@@ -1120,7 +1188,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Machine/Labour Rate">
+                                android:hint="मशीन या मजदूरी रेट (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etHarvestRate"
@@ -1137,7 +1205,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Workers/Days/Hrs">
+                                android:hint="दिन / मजदूर संख्या">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etHarvestCount"
@@ -1169,7 +1237,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Production (Quintals)">
+                                android:hint="कुल उपज (क्विंटल)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etTransportQty"
@@ -1186,7 +1254,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Transport Rate (₹/Q)">
+                                android:hint="गाड़ी भाड़ा (₹/क्विंटल)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etTransportRate"
@@ -1209,7 +1277,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Loading &amp; Unloading (₹)">
+                                android:hint="हमाली व लोड-अनलोड (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etTransportLoading"
@@ -1226,7 +1294,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Storage Cost (₹)">
+                                android:hint="गोदाम / भंडारण खर्च (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etTransportStorage"
@@ -1258,7 +1326,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Selling Qty (Quintals)">
+                                android:hint="बेची गई उपज (क्विंटल)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSaleQty"
@@ -1275,7 +1343,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Mandi Rate (₹/Quintal)">
+                                android:hint="मंडी भाव (₹/क्विंटल)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSalePrice"
@@ -1298,7 +1366,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Transport Charges (₹)">
+                                android:hint="गाड़ी भाड़ा (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSaleTransport"
@@ -1315,7 +1383,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Commission / Taxes (₹)">
+                                android:hint="कमीशन व मंडी टैक्स (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etSaleDeductions"
@@ -1347,7 +1415,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Expected Yield (Q/Acre)">
+                                android:hint="अनुमानित पैदावार (क्विंटल/एकड़)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitYieldPerAcre"
@@ -1364,7 +1432,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Expected Selling Price (₹/Q)">
+                                android:hint="अनुमानित मंडी भाव (₹/क्विंटल)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitPricePerQ"
@@ -1379,7 +1447,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Total Cost Items Summary (₹):"
+                            android:text="लागत और खर्च का विवरण (₹):"
                             android:textColor="#555555"
                             android:textSize="12sp"
                             android:textStyle="bold"
@@ -1396,7 +1464,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Seed Cost">
+                                android:hint="बीज का खर्च">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitSeedCost"
@@ -1413,7 +1481,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Machinery Cost">
+                                android:hint="जुताई व मशीन खर्च">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitMachineryCost"
@@ -1436,7 +1504,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Fertilizer Cost">
+                                android:hint="खाद व उर्वरक खर्च">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitFertilizerCost"
@@ -1453,7 +1521,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Irrigation Cost">
+                                android:hint="सिंचाई का खर्च">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitIrrigationCost"
@@ -1476,7 +1544,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="Labour Cost">
+                                android:hint="मजदूरी का खर्च">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitLabourCost"
@@ -1493,7 +1561,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="Harvest &amp; Transport (₹)">
+                                android:hint="कटाई व ढोआई खर्च (₹)">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etProfitHarvestCost"
@@ -1512,7 +1580,7 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/farmer_green_dark"
                         android:paddingVertical="10dp"
-                        android:text="⚡ Calculate Results"
+                        android:text="⚡ हिसाब लगाएं"
                         android:textColor="@android:color/white"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -1543,7 +1611,7 @@
                         android:id="@+id/tvCalcResultTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🌾 Calculation Results"
+                        android:text="🌾 हिसाब का परिणाम"
                         android:textColor="#1B5E20"
                         android:textSize="17sp"
                         android:textStyle="bold"
@@ -1604,7 +1672,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:paddingVertical="8dp"
-                        android:text="📥 Save Estimate to Kisan Diary"
+                        android:text="💾 किसान डायरी में सेव करें"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -1632,14 +1700,6 @@
                     android:orientation="vertical"
                     android:padding="8dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="📢 Sponsored Advertisement"
-                        android:textColor="#212121"
-                        android:textSize="11sp" />
-
                     <FrameLayout
                         android:id="@+id/adContainerCalculator"
                         android:layout_width="match_parent"
@@ -1649,64 +1709,12 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- TOOL 3 CONTAINER: Crop Disease Guide -->
-        <LinearLayout
-            android:id="@+id/containerDiseases"
+        <!-- TOOL 3 CONTAINER: Weather -->
+        <FrameLayout
+            android:id="@+id/containerWeather"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/tvHeaderDisease"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔍 Crop Disease &amp; Spray Remedy Guide"
-                android:textColor="@color/farmer_green_dark"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
-            <LinearLayout
-                android:id="@+id/containerDiseaseItems"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <!-- Sponsored Ad Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="8dp"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="1dp"
-                app:strokeColor="#E0E0E0"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="📢 Sponsored Advertisement"
-                        android:textColor="#212121"
-                        android:textSize="11sp" />
-
-                    <FrameLayout
-                        android:id="@+id/adContainerDiseases"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
+            android:visibility="gone" />
 
         <!-- TOOL 4 CONTAINER: Government Schemes & State Filter -->
         <LinearLayout
@@ -1774,14 +1782,6 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="📢 Sponsored Advertisement"
-                        android:textColor="#212121"
-                        android:textSize="11sp" />
 
                     <FrameLayout
                         android:id="@+id/adContainerSchemes"

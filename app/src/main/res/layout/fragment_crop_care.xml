@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Header / Search Bar Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvHeaderCropCare"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🛡️ फसल सुरक्षा और समाधान"
+                    android:textColor="#0F172A"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Search Bar Container with Voice Search -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_rounded_light_gray"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="#64748B"
+                        android:contentDescription="Search Icon" />
+
+                    <EditText
+                        android:id="@+id/etSearchProblem"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="अपनी समस्या यहाँ खोजें..."
+                        android:paddingHorizontal="8dp"
+                        android:textSize="14.5sp"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:inputType="text"
+                        android:maxLines="1" />
+
+                    <ImageButton
+                        android:id="@+id/btnVoiceSearchCropCare"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Voice Search"
+                        android:src="@drawable/ic_mic_vector"
+                        app:tint="@color/farmer_green_primary"
+                        android:padding="4dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Solution Cards RecyclerView inside SwipeRefresh -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshCropCare"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewCropCare"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="90dp"
+                    android:paddingHorizontal="8dp" />
+
+                <ProgressBar
+                    android:id="@+id/progressBarCropCare"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/farmer_green_primary"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tvEmptyState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="कोई समस्या या समाधान नहीं मिला।"
+                    android:textColor="#64748B"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
+
+    <!-- Admin Add Problem & Solution FAB -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAddCropCare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="96dp"
+        android:layout_marginEnd="16dp"
+        android:backgroundTint="@color/farmer_green_dark"
+        android:contentDescription="समस्या जोड़ें"
+        android:text="समस्या और समाधान जोड़ें"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        app:icon="@android:drawable/ic_menu_add"
+        app:iconTint="@android:color/white" />
+
+    <!-- Kisan AI Floating Bot Layout (Round Fitted Icon + Text with Background) -->
+    <LinearLayout
+        android:id="@+id/layoutKisanAiFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="4dp">
+
+        <!-- Text Label with Background -->
+        <TextView
+            android:id="@+id/tvKisanAiLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_neon_pill"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
+            android:shadowColor="#00FF66"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="6"
+            android:text="Kisan AI"
+            android:textColor="#00FF66"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <!-- Round Shape Icon Background fitted closely to icon edges -->
+        <FrameLayout
+            android:id="@+id/fabKisanAi"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_neon_circle"
+            android:elevation="6dp"
+            android:padding="10dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Kisan AI Chatbot"
+                android:src="@drawable/ic_kisan_ai_logo" />
+        </FrameLayout>
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

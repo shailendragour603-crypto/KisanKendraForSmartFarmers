@@ -1,18 +1,28 @@
 package shop.sabjiwala.kisankendra
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import java.io.File
+import java.io.FileOutputStream
 import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -28,6 +38,10 @@ import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
@@ -58,14 +72,17 @@ import shop.sabjiwala.kisankendra.views.CropStageExpenseChartView
 import shop.sabjiwala.kisankendra.views.ExpenseChartMode
 import shop.sabjiwala.kisankendra.views.FinancialDonutChartView
 import shop.sabjiwala.kisankendra.views.StageExpenseDataPoint
-import java.io.File
-import java.io.FileOutputStream
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class KisanDiaryDashboardActivity : AppCompatActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val lang = LocaleHelper.getPersistedLanguage(newBase)
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang))
+    }
 
     private val khataRepo by lazy { KhataRepository() }
 
@@ -119,9 +136,11 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
     private lateinit var btnToggleCropTotalExpense: MaterialButton
     private lateinit var btnToggleCropExpensePerAcre: MaterialButton
     private lateinit var cropExpenseChartView: CropExpenseChartView
+    private lateinit var tvSectionCropExpenseTitle: TextView
 
     private lateinit var tvSectionRecentLogTitle: TextView
     private lateinit var rvRecentEntries: RecyclerView
+    private lateinit var btnViewAllEntries: MaterialButton
     private val recentAdapter = RecentEntriesAdapter()
 
     private var localCropCycles = mutableListOf<CropCycle>()
@@ -129,6 +148,61 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
     private lateinit var actvDashboardSeasonFilter: AutoCompleteTextView
     private var selectedSeasonFilter = "All-Time"
     private var alertListenerRegistration: ListenerRegistration? = null
+
+    private var dashboardInterstitialAd: InterstitialAd? = null
+    private var lastDashboardInterstitialTime = 0L
+
+    companion object {
+        private const val MIN_INTERSTITIAL_GAP_MS = 60_000L // 60s minimum gap
+    }
+
+    private fun loadDashboardInterstitialAd() {
+        try {
+            val adRequest = AdRequest.Builder().build()
+            InterstitialAd.load(
+                this,
+                "ca-app-pub-3054731531860427/5297828555",
+                adRequest,
+                object : InterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: InterstitialAd) {
+                        dashboardInterstitialAd = ad
+                    }
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        dashboardInterstitialAd = null
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun tryShowDashboardInterstitialAd(onComplete: () -> Unit) {
+        val currentTime = System.currentTimeMillis()
+        if (dashboardInterstitialAd != null && currentTime - lastDashboardInterstitialTime >= MIN_INTERSTITIAL_GAP_MS) {
+            dashboardInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    dashboardInterstitialAd = null
+                    lastDashboardInterstitialTime = System.currentTimeMillis()
+                    loadDashboardInterstitialAd()
+                    onComplete()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    dashboardInterstitialAd = null
+                    lastDashboardInterstitialTime = System.currentTimeMillis()
+                    loadDashboardInterstitialAd()
+                    onComplete()
+                }
+            }
+            dashboardInterstitialAd?.show(this)
+        } else {
+            onComplete()
+            if (dashboardInterstitialAd == null) {
+                loadDashboardInterstitialAd()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -145,6 +219,7 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         listenToFirestoreData()
         applyDynamicTranslations()
         loadBannerAds()
+        loadDashboardInterstitialAd()
     }
 
     private fun setupScreenAlert() {
@@ -157,6 +232,12 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         alertListenerRegistration?.remove()
         alertListenerRegistration = null
         super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applyDynamicTranslations()
+        loadLocalDataAndRender()
     }
 
     private fun setupSwipeRefresh() {
@@ -211,21 +292,23 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
                 val file = MediaUtils.takeFullScrollScreenshot(scrollViewDashboard, this@KisanDiaryDashboardActivity)
                 val uri = file?.let { FileProvider.getUriForFile(this@KisanDiaryDashboardActivity, "${packageName}.fileprovider", it) }
                 withContext(Dispatchers.Main) {
-                    val shareText = "Build your personal Farm Dashboard on Kisan Kendra!\n" +
-                            "Access farming calculators, track expenses, check mandi rates, and read daily agri news!\n\n📥 Download Kisan Kendra App: https://play.google.com/store/apps/details?id=shop.sabjiwala.kisankendra"
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        if (uri != null) {
-                            type = "image/jpeg"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        } else {
-                            type = "text/plain"
+                    tryShowDashboardInterstitialAd {
+                        val shareText = "Build your personal Farm Dashboard on Kisan Kendra!\n" +
+                                "Access farming calculators, track expenses, check mandi rates, and read daily agri news!\n\n📥 Download Kisan Kendra App: https://play.google.com/store/apps/details?id=shop.sabjiwala.kisankendra"
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            if (uri != null) {
+                                type = "image/jpeg"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            } else {
+                                type = "text/plain"
+                            }
+                            putExtra(Intent.EXTRA_TEXT, shareText)
                         }
-                        putExtra(Intent.EXTRA_TEXT, shareText)
+                        val chooser = Intent.createChooser(intent, "Share Dashboard via")
+                        chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        startActivity(chooser)
                     }
-                    val chooser = Intent.createChooser(intent, "Share Dashboard via")
-                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    startActivity(chooser)
                 }
             }
         }
@@ -294,6 +377,7 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         btnToggleCropTotalExpense = findViewById(R.id.btnToggleCropTotalExpense)
         btnToggleCropExpensePerAcre = findViewById(R.id.btnToggleCropExpensePerAcre)
         cropExpenseChartView = findViewById(R.id.cropExpenseChartView)
+        tvSectionCropExpenseTitle = findViewById(R.id.tvSectionCropExpenseTitle)
 
         toggleGroupCropExpenseMetric.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
@@ -310,31 +394,130 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         rvRecentEntries.layoutManager = LinearLayoutManager(this)
         rvRecentEntries.adapter = recentAdapter
 
+        btnViewAllEntries = findViewById(R.id.btnViewAllEntries)
+        btnViewAllEntries.setOnClickListener {
+            tryShowDashboardInterstitialAd {
+                startActivity(Intent(this, KisanDiaryHistoryActivity::class.java))
+            }
+        }
+
+        val btnExportPdfReport = findViewById<MaterialButton>(R.id.btnExportPdfReport)
+        btnExportPdfReport?.setOnClickListener {
+            showExportPdfRewardDialog()
+        }
+
         actvDashboardSeasonFilter = findViewById(R.id.actvDashboardSeasonFilter)
     }
 
+    private fun showExportPdfRewardDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_kisan_ai_reward, null)
+        val btnClose = dialogView.findViewById<ImageButton>(R.id.btnCloseRewardDialog)
+        val tvBadge = dialogView.findViewById<TextView>(R.id.tvRewardBadge)
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvRewardTitle)
+        val tvSubtitle = dialogView.findViewById<TextView>(R.id.tvRewardSubtitle)
+        val btnWatch = dialogView.findViewById<MaterialButton>(R.id.btnWatchVideo)
+
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        val transTitle = TranslationHelper.getDirectTranslation("Download Full PDF Report", activeLang)
+            ?: if (activeLang == "hi") "पूरी PDF रिपोर्ट डाउनलोड करें" else "Download Full PDF Report"
+        val transSubtitle = TranslationHelper.getDirectTranslation("Watch a short video to download your complete report", activeLang)
+            ?: if (activeLang == "hi") "पूरी पीडीएफ रिपोर्ट पाने के लिए एक छोटा वीडियो देखें" else "Watch a short video to download your complete report"
+        val transBtnWatch = TranslationHelper.getDirectTranslation("Watch Video", activeLang)
+            ?: if (activeLang == "hi") "वीडियो देखें" else "Watch Video"
+
+        tvBadge.text = "PDF"
+        tvBadge.textSize = 20f
+        tvTitle.text = transTitle
+        tvSubtitle.text = transSubtitle
+        btnWatch.text = transBtnWatch
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        btnWatch.setOnClickListener {
+            dialog.dismiss()
+            showRewardedAdForPdfReport()
+        }
+
+        dialog.show()
+    }
+
+    private fun showRewardedAdForPdfReport() {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        val loadingMsg = if (activeLang == "hi") "⏳ वीडियो विज्ञापन लोड हो रहा है..." else "⏳ Loading video ad..."
+        Toast.makeText(this, loadingMsg, Toast.LENGTH_SHORT).show()
+
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(
+            this,
+            "ca-app-pub-3054731531860427/8586977507",
+            adRequest,
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(rewardedAd: RewardedAd) {
+                    rewardedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                            generateAndExportPdfReport()
+                        }
+                    }
+                    rewardedAd.show(this@KisanDiaryDashboardActivity) { _ ->
+                        generateAndExportPdfReport()
+                    }
+                }
+
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    val failLoadMsg = if (activeLang == "hi") "विज्ञापन तैयार नहीं है। आपकी रिपोर्ट जनरेट हो रही है..." else "Ad not ready. Generating your report..."
+                    Toast.makeText(this@KisanDiaryDashboardActivity, failLoadMsg, Toast.LENGTH_SHORT).show()
+                    generateAndExportPdfReport()
+                }
+            }
+        )
+    }
+
     private fun updateSeasonFilterDropdown() {
-        val filterOptions = mutableListOf("All-Time")
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        val defaultAllTime = if (activeLang == "hi") "सभी समय" else "All-Time"
+
+        val rawFilterOptions = mutableListOf("All-Time")
         val currentYearStr = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date())
 
         for (cycle in localCropCycles) {
             val option = cycle.seasonName.ifBlank { "Season" }
-            if (!filterOptions.contains(option)) {
-                filterOptions.add(option)
+            if (!rawFilterOptions.contains(option)) {
+                rawFilterOptions.add(option)
             }
         }
 
-        if (selectedSeasonFilter == "All-Time" && filterOptions.size > 1) {
-            val currentYearSeason = filterOptions.firstOrNull { it.contains(currentYearStr, ignoreCase = true) }
-            selectedSeasonFilter = currentYearSeason ?: filterOptions[1]
+        if ((selectedSeasonFilter == "All-Time" || selectedSeasonFilter == "सभी समय") && rawFilterOptions.size > 1) {
+            val currentYearSeason = rawFilterOptions.firstOrNull { it.contains(currentYearStr, ignoreCase = true) }
+            selectedSeasonFilter = currentYearSeason ?: rawFilterOptions[1]
+        } else if (selectedSeasonFilter !in rawFilterOptions && rawFilterOptions.isNotEmpty()) {
+            selectedSeasonFilter = rawFilterOptions[0]
         }
 
-        val adapter = ArrayAdapter(this, R.layout.item_compact_dropdown_single, filterOptions)
+        val displayOptions = rawFilterOptions.map { opt ->
+            if (opt.equals("All-Time", ignoreCase = true) || opt.equals("सभी समय", ignoreCase = true)) {
+                defaultAllTime
+            } else {
+                TranslationHelper.getTranslatedSeasonName(opt, activeLang, this)
+            }
+        }
+
+        val currentDisplaySelection = if (selectedSeasonFilter.equals("All-Time", ignoreCase = true) || selectedSeasonFilter.equals("सभी समय", ignoreCase = true)) {
+            defaultAllTime
+        } else {
+            TranslationHelper.getTranslatedSeasonName(selectedSeasonFilter, activeLang, this)
+        }
+
+        val adapter = ArrayAdapter(this, R.layout.item_compact_dropdown_single, displayOptions)
         actvDashboardSeasonFilter.setAdapter(adapter)
-        actvDashboardSeasonFilter.setText(selectedSeasonFilter, false)
+        actvDashboardSeasonFilter.setText(currentDisplaySelection, false)
 
         actvDashboardSeasonFilter.setOnItemClickListener { _, _, position, _ ->
-            selectedSeasonFilter = filterOptions.getOrElse(position) { "All-Time" }
+            selectedSeasonFilter = rawFilterOptions.getOrElse(position) { "All-Time" }
             calculateAndRenderDashboard()
         }
     }
@@ -421,6 +604,35 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
 
     private fun calculateAndRenderDashboard() {
         updateSeasonFilterDropdown()
+
+        val layoutEmpty = findViewById<View>(R.id.layoutDashboardEmptyState)
+        if (localCropCycles.isEmpty() && localKhataItems.isEmpty()) {
+            layoutEmpty?.visibility = View.VISIBLE
+            val tvEmptyTitle = findViewById<TextView>(R.id.tvDashboardEmptyTitle)
+            val tvEmptySubtitle = findViewById<TextView>(R.id.tvDashboardEmptySubtitle)
+            val btnAddFirst = findViewById<MaterialButton>(R.id.btnAddFirstEntryDashboard)
+
+            val activeLang = LocaleHelper.getPersistedLanguage(this)
+            val transTitle = TranslationHelper.getDirectTranslation("No Reports Available Yet", activeLang)
+                ?: if (activeLang == "hi") "अभी कोई रिपोर्ट उपलब्ध नहीं है" else "No Reports Available Yet"
+            val transSubtitle = TranslationHelper.getDirectTranslation("Please check again after adding crop season and expenses.", activeLang)
+                ?: if (activeLang == "hi") "फसल सीजन और खर्च दर्ज करने के बाद पुनः चेक करे।" else "Please check again after adding crop season and expenses."
+            val transBtn = TranslationHelper.getDirectTranslation("+ Add First Entry", activeLang)
+                ?: if (activeLang == "hi") "पहला खर्च / आय दर्ज करें" else "Add First Entry"
+
+            tvEmptyTitle?.text = transTitle
+            tvEmptySubtitle?.text = transSubtitle
+            btnAddFirst?.text = transBtn
+
+            btnAddFirst?.setOnClickListener {
+                val intent = Intent(this, KisanDiaryHistoryActivity::class.java).apply {
+                    putExtra("EXTRA_OPEN_ADD_ENTRY", true)
+                }
+                startActivity(intent)
+            }
+        } else {
+            layoutEmpty?.visibility = View.GONE
+        }
 
         val filteredCycles = if (selectedSeasonFilter == "All-Time") {
             localCropCycles
@@ -543,8 +755,50 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         stageExpenseChartView.setData(stagePoints)
 
         // 6. Key Insights
-        tvInsight1Value.text = String.format(Locale.ENGLISH, "%.0f%% Margin", profitMarginPercent)
-        tvInsight1Desc.text = String.format(Locale.ENGLISH, "You keep %.0f%% of income as profit.", profitMarginPercent)
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        val highestCostExpense = expenseItems.firstOrNull { it.amount > 0 }
+        val inputCostPercent = expenseItems.filter { it.categoryName in listOf("Seeds", "Fertiliser", "Pesticides") }.sumOf { it.percent }
+
+        val rawInsight1Val = if (activeLang == "hi") "मुनाफा: ${profitMarginPercent.toInt()}%" else "${profitMarginPercent.toInt()}% Margin"
+        val rawInsight1Desc = if (activeLang == "hi") "आप कमाई का ${profitMarginPercent.toInt()}% हिस्सा मुनाफा बचा रहे हैं।" else "You keep ${profitMarginPercent.toInt()}% of income as profit."
+
+        val rawInsight2Val = if (highestCostExpense != null) {
+            TranslationHelper.getTranslatedCategoryName(highestCostExpense.categoryName, activeLang, this)
+        } else {
+            if (activeLang == "hi") "सबसे बड़ा खर्च" else "Highest Cost"
+        }
+
+        val rawInsight2Desc = if (highestCostExpense != null) {
+            val catName = TranslationHelper.getTranslatedCategoryName(highestCostExpense.categoryName, activeLang, this)
+            if (activeLang == "hi") "$catName पर सबसे ज्यादा खर्च हुआ (${highestCostExpense.percent}%)।" else "$catName is your biggest expense (${highestCostExpense.percent}%)."
+        } else {
+            if (activeLang == "hi") "अपने दैनिक खर्चों को ट्रैक करें।" else "Track your daily expenses to discover cost drivers."
+        }
+
+        val rawInsight3Val = if (activeLang == "hi") "लागत घटाएं" else "Cost Reduction"
+        val rawInsight3Desc = if (activeLang == "hi") {
+            if (inputCostPercent > 0) "बीज-खाद जैसी इनपुट लागत कुल खर्च का $inputCostPercent% है। इसे घटाने से मुनाफा बढ़ेगा।" else "इनपुट लागत कम करने से सीधा मुनाफा बढ़ता है।"
+        } else {
+            if (inputCostPercent > 0) "Input costs make up $inputCostPercent% of expenses. Reducing them boosts profit." else "Reducing input costs directly increases your profit."
+        }
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            val transI1V = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight1Val, activeLang)
+            val transI1D = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight1Desc, activeLang)
+            val transI2V = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight2Val, activeLang)
+            val transI2D = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight2Desc, activeLang)
+            val transI3V = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight3Val, activeLang)
+            val transI3D = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, rawInsight3Desc, activeLang)
+
+            if (!isFinishing) {
+                tvInsight1Value.text = transI1V
+                tvInsight1Desc.text = transI1D
+                tvInsight2Value.text = transI2V
+                tvInsight2Desc.text = transI2D
+                tvInsight3Value.text = transI3V
+                tvInsight3Desc.text = transI3D
+            }
+        }
 
         val cardInsight1 = findViewById<MaterialCardView>(R.id.cardInsight1)
         val cardInsight2 = findViewById<MaterialCardView>(R.id.cardInsight2)
@@ -557,25 +811,8 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
             cardInsight1.setCardBackgroundColor(bgRed)
             tvInsight1Value.setTextColor(colorRed)
         }
-
-        val highestCostExpense = expenseItems.firstOrNull { it.amount > 0 }
-        if (highestCostExpense != null) {
-            tvInsight2Value.text = highestCostExpense.categoryName
-            tvInsight2Desc.text = "${highestCostExpense.categoryName} is your biggest expense (${highestCostExpense.percent}%)."
-        } else {
-            tvInsight2Value.text = "Highest Cost"
-            tvInsight2Desc.text = "Track your daily expenses to discover cost drivers."
-        }
         cardInsight2.setCardBackgroundColor(bgRed)
         tvInsight2Value.setTextColor(colorRed)
-
-        val inputCostPercent = expenseItems.filter { it.categoryName in listOf("Seeds", "Fertiliser", "Pesticides") }.sumOf { it.percent }
-        tvInsight3Value.text = "Cost Reduction"
-        tvInsight3Desc.text = if (inputCostPercent > 0) {
-            "Input costs make up $inputCostPercent% of expenses. Reducing them boosts profit."
-        } else {
-            "Reducing input costs directly increases your profit."
-        }
         cardInsight3.setCardBackgroundColor(ContextCompat.getColor(this, R.color.harvest_gold_light))
         tvInsight3Value.setTextColor(ContextCompat.getColor(this, R.color.harvest_gold))
 
@@ -646,24 +883,491 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
 
     private fun applyDynamicTranslations() {
         val activeLang = LocaleHelper.getPersistedLanguage(this)
-        if (activeLang == "en") return
 
         lifecycleScope.launch(Dispatchers.Main) {
-            toolbar.title = "My Farming Dashboard"
+            val titleText = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Kisan Diary Dashboard", activeLang)
+            toolbar.title = titleText
+            tvFarmingHeaderTitle.text = titleText
 
-            tvLabelTotalArea.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Area", activeLang)
+            tvLabelTotalArea.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Farming Area", activeLang)
             tvLabelTotalExpenses.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Expenses", activeLang)
             tvLabelTotalIncome.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Income", activeLang)
             tvLabelEstimatedProfit.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Estimated Profit", activeLang)
 
+            tvSectionFinancialSummaryTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Earnings, Expenses & Profit", activeLang)
             tvLabelLegendProfit.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Profit", activeLang)
-            tvLabelLegendExpenses.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Expenses", activeLang)
+            tvLabelLegendExpenses.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Expense", activeLang)
 
             btnToggleTotalProfit.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Profit (₹)", activeLang)
             btnToggleProfitPerAcre.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Profit / Acre (₹/Acre)", activeLang)
 
             btnToggleCropTotalExpense.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Total Expense (₹)", activeLang)
             btnToggleCropExpensePerAcre.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Expense / Acre (₹/Acre)", activeLang)
+
+            tvSectionCropPerformanceTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Crop Wise Profit", activeLang)
+            tvHeaderMajorExpenses.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Highest Expense", activeLang)
+            tvSectionStageExpenseTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Crop Stage Wise Expenses", activeLang)
+            tvSectionCropExpenseTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Crop Wise Expenses", activeLang)
+            tvSectionKeyInsightsTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Suggestions & Conclusions", activeLang)
+            tvSectionRecentLogTitle.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "Recent Activity Log", activeLang)
+
+            btnViewAllEntries.text = TranslationHelper.translateText(this@KisanDiaryDashboardActivity, "View All Entries", activeLang)
+            val btnExportPdf = findViewById<MaterialButton>(R.id.btnExportPdfReport)
+            if (btnExportPdf != null) {
+                btnExportPdf.text = TranslationHelper.getDirectTranslation("PDF Report", activeLang)
+                    ?: if (activeLang == "hi") "PDF रिपोर्ट" else "PDF Report"
+            }
+        }
+    }
+
+    private fun generateAndExportPdfReport() {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        Toast.makeText(this, if (activeLang == "hi") "⏳ PDF रिपोर्ट जनरेट हो रही है..." else "Generating PDF Report...", Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val pdfDocument = android.graphics.pdf.PdfDocument()
+                val pageWidth = 595 // Standard A4 Width in points
+                val pageHeight = 842 // Standard A4 Height in points
+
+                var currentPageNum = 1
+                var pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(pageWidth, pageHeight, currentPageNum).create()
+                var page = pdfDocument.startPage(pageInfo)
+                var canvas = page.canvas
+
+                val paint = Paint()
+                val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+                val inrLocale = Locale.Builder().setLanguage("en").setRegion("IN").build()
+                val formatter = NumberFormat.getCurrencyInstance(inrLocale).apply { maximumFractionDigits = 0 }
+
+                // Data Aggregations
+                val filteredCycles = if (selectedSeasonFilter == "All-Time") localCropCycles else localCropCycles.filter { it.seasonName.equals(selectedSeasonFilter, ignoreCase = true) }
+                val filteredCycleIds = filteredCycles.map { it.id }.toSet()
+                val filteredKhataItems = if (selectedSeasonFilter == "All-Time") localKhataItems else localKhataItems.filter { it.cropCycleId in filteredCycleIds || it.cropName.contains(selectedSeasonFilter.substringBefore(" "), ignoreCase = true) }
+
+                val totalAreaAcres = filteredCycles.sumOf { it.areaAcres }
+                val expenseEntries = filteredKhataItems.filter { !it.isIncome }
+                val incomeEntries = filteredKhataItems.filter { it.isIncome }
+                val totalExpenses = expenseEntries.sumOf { it.amount }
+                val totalIncome = incomeEntries.sumOf { it.amount }
+                val netProfit = totalIncome - totalExpenses
+                val profitMarginPercent = if (totalIncome > 0) ((netProfit / totalIncome) * 100).coerceAtLeast(0.0) else 0.0
+
+                fun drawHeader(canvas: Canvas) {
+                    paint.color = Color.parseColor("#1B5E20")
+                    paint.style = Paint.Style.FILL
+                    canvas.drawRect(0f, 0f, pageWidth.toFloat(), 70f, paint)
+
+                    textPaint.color = Color.WHITE
+                    textPaint.textSize = 15f
+                    textPaint.isFakeBoldText = true
+                    canvas.drawText("KISAN KENDRA - FARMING REPORT", 20f, 32f, textPaint)
+
+                    textPaint.textSize = 10f
+                    textPaint.isFakeBoldText = false
+                    canvas.drawText("किसान केंद्र — सम्पूर्ण कृषि एवं व्यय रिपोर्ट", 20f, 52f, textPaint)
+
+                    // Draw White Badge on Top-Right Header for High Contrast & Logo Visibility
+                    paint.color = Color.WHITE
+                    paint.style = Paint.Style.FILL
+                    val logoBadgeRect = RectF((pageWidth - 68).toFloat(), 11f, (pageWidth - 20).toFloat(), 59f)
+                    canvas.drawRoundRect(logoBadgeRect, 10f, 10f, paint)
+
+                    // Draw App Logo inside the White Badge
+                    try {
+                        val logoDrawable = ContextCompat.getDrawable(this@KisanDiaryDashboardActivity, R.mipmap.ic_launcher)
+                        if (logoDrawable != null) {
+                            val logoWidth = 38
+                            val logoHeight = 38
+                            val logoBitmap = Bitmap.createBitmap(logoWidth, logoHeight, Bitmap.Config.ARGB_8888)
+                            val logoCanvas = Canvas(logoBitmap)
+                            logoDrawable.setBounds(0, 0, logoWidth, logoHeight)
+                            logoDrawable.draw(logoCanvas)
+
+                            canvas.drawBitmap(logoBitmap, (pageWidth - 63).toFloat(), 16f, null)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+                fun drawFooter(canvas: Canvas, pageNum: Int) {
+                    paint.color = Color.parseColor("#2E7D32")
+                    paint.strokeWidth = 1.5f
+                    canvas.drawLine(20f, (pageHeight - 35).toFloat(), (pageWidth - 20).toFloat(), (pageHeight - 35).toFloat(), paint)
+
+                    textPaint.color = Color.parseColor("#64748B")
+                    textPaint.textSize = 8.5f
+                    textPaint.isFakeBoldText = false
+                    canvas.drawText("Generated by Kisan Kendra App — Smart Farming Companion", 20f, (pageHeight - 18).toFloat(), textPaint)
+                    canvas.drawText("Page $pageNum", (pageWidth - 60).toFloat(), (pageHeight - 18).toFloat(), textPaint)
+                }
+
+                var yPos = 95f
+
+                fun checkAndNewPage(requiredHeight: Float): Float {
+                    if (yPos + requiredHeight > pageHeight - 50f) {
+                        drawFooter(canvas, currentPageNum)
+                        pdfDocument.finishPage(page)
+
+                        currentPageNum++
+                        pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(pageWidth, pageHeight, currentPageNum).create()
+                        page = pdfDocument.startPage(pageInfo)
+                        canvas = page.canvas
+
+                        drawHeader(canvas)
+                        return 90f
+                    }
+                    return yPos
+                }
+
+                // Initial Page Setup
+                drawHeader(canvas)
+
+                // Metadata Bar
+                val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
+                val dateStr = sdf.format(Date())
+
+                textPaint.color = Color.parseColor("#334155")
+                textPaint.textSize = 9.5f
+                textPaint.isFakeBoldText = false
+                canvas.drawText("Generated On: $dateStr", 20f, yPos, textPaint)
+                canvas.drawText("Season Filter: $selectedSeasonFilter", 350f, yPos, textPaint)
+
+                yPos += 14f
+                paint.color = Color.parseColor("#CBD5E1")
+                paint.strokeWidth = 1f
+                canvas.drawLine(20f, yPos, (pageWidth - 20).toFloat(), yPos, paint)
+
+                yPos += 16f
+
+                // 1. KPI Summary Box
+                paint.color = Color.parseColor("#F1F8E9")
+                paint.style = Paint.Style.FILL
+                val kpiRect = RectF(20f, yPos, (pageWidth - 20).toFloat(), yPos + 62f)
+                canvas.drawRoundRect(kpiRect, 8f, 8f, paint)
+
+                paint.color = Color.parseColor("#2E7D32")
+                paint.style = Paint.Style.STROKE
+                paint.strokeWidth = 1f
+                canvas.drawRoundRect(kpiRect, 8f, 8f, paint)
+
+                textPaint.textSize = 9f
+                textPaint.color = Color.parseColor("#1B5E20")
+                textPaint.isFakeBoldText = true
+
+                canvas.drawText("TOTAL AREA", 35f, yPos + 22f, textPaint)
+                textPaint.isFakeBoldText = false
+                textPaint.textSize = 11f
+                canvas.drawText(String.format(Locale.ENGLISH, "%.1f Acres", totalAreaAcres), 35f, yPos + 44f, textPaint)
+
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("TOTAL INCOME", 160f, yPos + 22f, textPaint)
+                textPaint.isFakeBoldText = false
+                textPaint.textSize = 11f
+                textPaint.color = Color.parseColor("#2E7D32")
+                canvas.drawText(formatter.format(totalIncome), 160f, yPos + 44f, textPaint)
+
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                textPaint.color = Color.parseColor("#C62828")
+                canvas.drawText("TOTAL EXPENSES", 300f, yPos + 22f, textPaint)
+                textPaint.isFakeBoldText = false
+                textPaint.textSize = 11f
+                canvas.drawText(formatter.format(totalExpenses), 300f, yPos + 44f, textPaint)
+
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                textPaint.color = if (netProfit >= 0) Color.parseColor("#2E7D32") else Color.parseColor("#C62828")
+                canvas.drawText("NET PROFIT (${profitMarginPercent.toInt()}%)", 430f, yPos + 22f, textPaint)
+                textPaint.isFakeBoldText = false
+                textPaint.textSize = 11f
+                canvas.drawText(formatter.format(netProfit), 430f, yPos + 44f, textPaint)
+
+                yPos += 78f
+
+                // 2. Crop Performance & Profitability Table
+                yPos = checkAndNewPage(120f)
+
+                textPaint.color = Color.parseColor("#0F172A")
+                textPaint.textSize = 11f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("1. Crop Wise Profitability & Performance Breakdown", 20f, yPos, textPaint)
+
+                yPos += 10f
+                paint.color = Color.parseColor("#1B5E20")
+                paint.style = Paint.Style.FILL
+                canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 20f, paint)
+
+                textPaint.color = Color.WHITE
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("Crop & Season", 26f, yPos + 14f, textPaint)
+                canvas.drawText("Area", 200f, yPos + 14f, textPaint)
+                canvas.drawText("Expenses", 280f, yPos + 14f, textPaint)
+                canvas.drawText("Earnings", 370f, yPos + 14f, textPaint)
+                canvas.drawText("Net Profit", 460f, yPos + 14f, textPaint)
+
+                yPos += 20f
+                textPaint.textSize = 8.5f
+                textPaint.isFakeBoldText = false
+
+                var rIdx = 0
+                for (cycle in filteredCycles) {
+                    yPos = checkAndNewPage(20f)
+                    val items = filteredKhataItems.filter { it.cropCycleId == cycle.id || (it.cropCycleId.isBlank() && it.cropName.equals(cycle.cropName, ignoreCase = true)) }
+                    val cExp = items.filter { !it.isIncome }.sumOf { it.amount }
+                    val cInc = items.filter { it.isIncome }.sumOf { it.amount }
+                    val cNet = cInc - cExp
+
+                    paint.color = if (rIdx % 2 == 0) Color.parseColor("#F8FAFC") else Color.WHITE
+                    canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 18f, paint)
+
+                    textPaint.color = Color.parseColor("#1E293B")
+                    val cropLabel = "${cycle.cropName} (${cycle.seasonName})"
+                    val truncatedCrop = if (cropLabel.length > 26) cropLabel.substring(0, 23) + "..." else cropLabel
+                    canvas.drawText(truncatedCrop, 26f, yPos + 13f, textPaint)
+                    canvas.drawText(String.format(Locale.ENGLISH, "%.1f Ac", cycle.areaAcres), 200f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#C62828")
+                    canvas.drawText(formatter.format(cExp), 280f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#2E7D32")
+                    canvas.drawText(formatter.format(cInc), 370f, yPos + 13f, textPaint)
+
+                    textPaint.color = if (cNet >= 0) Color.parseColor("#2E7D32") else Color.parseColor("#C62828")
+                    canvas.drawText(formatter.format(cNet), 460f, yPos + 13f, textPaint)
+
+                    yPos += 18f
+                    rIdx++
+                }
+
+                yPos += 16f
+
+                // 3. Major Expense Category Breakdown Table
+                yPos = checkAndNewPage(100f)
+
+                textPaint.color = Color.parseColor("#0F172A")
+                textPaint.textSize = 11f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("2. Major Expenses Breakdown by Category", 20f, yPos, textPaint)
+
+                yPos += 10f
+                paint.color = Color.parseColor("#1B5E20")
+                paint.style = Paint.Style.FILL
+                canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 20f, paint)
+
+                textPaint.color = Color.WHITE
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("Expense Category", 26f, yPos + 14f, textPaint)
+                canvas.drawText("Total Amount (₹)", 280f, yPos + 14f, textPaint)
+                canvas.drawText("Share (% of Total)", 440f, yPos + 14f, textPaint)
+
+                yPos += 20f
+
+                val categoryMap = mutableMapOf<String, Double>()
+                for (item in expenseEntries) {
+                    val cName = getCleanCategoryName(item.category)
+                    categoryMap[cName] = (categoryMap[cName] ?: 0.0) + item.amount
+                }
+
+                val sortedCategories = categoryMap.entries.sortedByDescending { it.value }
+                var catIdx = 0
+                for ((catName, catAmt) in sortedCategories) {
+                    yPos = checkAndNewPage(18f)
+                    val pct = if (totalExpenses > 0) ((catAmt / totalExpenses) * 100).toInt() else 0
+
+                    paint.color = if (catIdx % 2 == 0) Color.parseColor("#F8FAFC") else Color.WHITE
+                    canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 18f, paint)
+
+                    textPaint.color = Color.parseColor("#1E293B")
+                    canvas.drawText(catName, 26f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#C62828")
+                    canvas.drawText(formatter.format(catAmt), 280f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#334155")
+                    canvas.drawText("$pct%", 440f, yPos + 13f, textPaint)
+
+                    yPos += 18f
+                    catIdx++
+                }
+
+                yPos += 16f
+
+                // 4. Stage-Wise Crop Expense Breakdown
+                yPos = checkAndNewPage(100f)
+
+                textPaint.color = Color.parseColor("#0F172A")
+                textPaint.textSize = 11f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("3. Stage-Wise Crop Expense Breakdown", 20f, yPos, textPaint)
+
+                yPos += 10f
+                paint.color = Color.parseColor("#1B5E20")
+                paint.style = Paint.Style.FILL
+                canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 20f, paint)
+
+                textPaint.color = Color.WHITE
+                textPaint.textSize = 9f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("Farming Stage", 26f, yPos + 14f, textPaint)
+                canvas.drawText("Expense Amount (₹)", 280f, yPos + 14f, textPaint)
+                canvas.drawText("Stage Share (%)", 440f, yPos + 14f, textPaint)
+
+                yPos += 20f
+
+                val stageMap = mutableMapOf<String, Double>()
+                for (item in expenseEntries) {
+                    val sKey = normalizeStageName(item.stage)
+                    stageMap[sKey] = (stageMap[sKey] ?: 0.0) + item.amount
+                }
+
+                val defaultStagesList = listOf("Sowing", "Irrigation", "Spray", "Harvesting", "Other")
+                var stageIdx = 0
+                for (stg in defaultStagesList) {
+                    val stgAmt = stageMap[stg] ?: 0.0
+                    yPos = checkAndNewPage(18f)
+                    val pct = if (totalExpenses > 0) ((stgAmt / totalExpenses) * 100).toInt() else 0
+
+                    paint.color = if (stageIdx % 2 == 0) Color.parseColor("#F8FAFC") else Color.WHITE
+                    canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 18f, paint)
+
+                    textPaint.color = Color.parseColor("#1E293B")
+                    canvas.drawText(stg, 26f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#C62828")
+                    canvas.drawText(formatter.format(stgAmt), 280f, yPos + 13f, textPaint)
+
+                    textPaint.color = Color.parseColor("#334155")
+                    canvas.drawText("$pct%", 440f, yPos + 13f, textPaint)
+
+                    yPos += 18f
+                    stageIdx++
+                }
+
+                yPos += 16f
+
+                // 5. Key Insights & Recommendations Box
+                yPos = checkAndNewPage(110f)
+
+                textPaint.color = Color.parseColor("#0F172A")
+                textPaint.textSize = 11f
+                textPaint.isFakeBoldText = true
+                canvas.drawText("4. Key Farming Insights & Recommendations", 20f, yPos, textPaint)
+
+                yPos += 10f
+                paint.color = Color.parseColor("#FFF8E1")
+                paint.style = Paint.Style.FILL
+                val insightRect = RectF(20f, yPos, (pageWidth - 20).toFloat(), yPos + 60f)
+                canvas.drawRoundRect(insightRect, 8f, 8f, paint)
+
+                paint.color = Color.parseColor("#F57F17")
+                paint.style = Paint.Style.STROKE
+                paint.strokeWidth = 1f
+                canvas.drawRoundRect(insightRect, 8f, 8f, paint)
+
+                val highestCostExpense = sortedCategories.firstOrNull()
+                val topCatName = highestCostExpense?.key ?: "Input Costs"
+                val topCatPct = if (totalExpenses > 0 && highestCostExpense != null) ((highestCostExpense.value / totalExpenses) * 100).toInt() else 0
+
+                textPaint.textSize = 8.5f
+                textPaint.color = Color.parseColor("#78350F")
+                textPaint.isFakeBoldText = true
+
+                canvas.drawText("• Profit Ratio: ${profitMarginPercent.toInt()}% of income kept as net profit.", 28f, yPos + 18f, textPaint)
+                canvas.drawText("• Highest Cost Driver: $topCatName is your largest expense category ($topCatPct% of total expenses).", 28f, yPos + 34f, textPaint)
+                canvas.drawText("• Cost Reduction Tip: Optimizing fertilizer & pesticide usage directly increases harvest margins.", 28f, yPos + 50f, textPaint)
+
+                yPos += 75f
+
+                // 6. Recent Diary Activity Log
+                if (filteredKhataItems.isNotEmpty()) {
+                    yPos = checkAndNewPage(120f)
+
+                    textPaint.color = Color.parseColor("#0F172A")
+                    textPaint.textSize = 11f
+                    textPaint.isFakeBoldText = true
+                    canvas.drawText("5. Recent Kisan Diary Activity Log", 20f, yPos, textPaint)
+
+                    yPos += 10f
+                    paint.color = Color.parseColor("#1B5E20")
+                    paint.style = Paint.Style.FILL
+                    canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 20f, paint)
+
+                    textPaint.color = Color.WHITE
+                    textPaint.textSize = 9f
+                    textPaint.isFakeBoldText = true
+                    canvas.drawText("Date", 26f, yPos + 14f, textPaint)
+                    canvas.drawText("Category", 120f, yPos + 14f, textPaint)
+                    canvas.drawText("Type", 270f, yPos + 14f, textPaint)
+                    canvas.drawText("Amount", 370f, yPos + 14f, textPaint)
+                    canvas.drawText("Note", 460f, yPos + 14f, textPaint)
+
+                    yPos += 20f
+                    textPaint.textSize = 8.5f
+                    textPaint.isFakeBoldText = false
+
+                    for ((idx, item) in filteredKhataItems.withIndex()) {
+                        yPos = checkAndNewPage(18f)
+
+                        paint.color = if (idx % 2 == 0) Color.parseColor("#F8FAFC") else Color.WHITE
+                        canvas.drawRect(20f, yPos, (pageWidth - 20).toFloat(), yPos + 18f, paint)
+
+                        textPaint.color = Color.parseColor("#334155")
+                        canvas.drawText(item.dateStr.ifBlank { "Recent" }, 26f, yPos + 13f, textPaint)
+
+                        val catText = if (item.category.length > 20) item.category.substring(0, 18) + ".." else item.category
+                        canvas.drawText(catText, 120f, yPos + 13f, textPaint)
+
+                        val typeText = if (item.isIncome) "Income (+)" else "Expense (-)"
+                        textPaint.color = if (item.isIncome) Color.parseColor("#2E7D32") else Color.parseColor("#C62828")
+                        canvas.drawText(typeText, 270f, yPos + 13f, textPaint)
+
+                        canvas.drawText(formatter.format(item.amount), 370f, yPos + 13f, textPaint)
+
+                        textPaint.color = Color.parseColor("#64748B")
+                        val noteText = if (item.note.length > 20) item.note.substring(0, 18) + ".." else item.note.ifBlank { "-" }
+                        canvas.drawText(noteText, 460f, yPos + 13f, textPaint)
+
+                        yPos += 18f
+                    }
+                }
+
+                // Draw Footer on Final Page
+                drawFooter(canvas, currentPageNum)
+                pdfDocument.finishPage(page)
+
+                val pdfFile = File(cacheDir, "Kisan_Kendra_Report_${System.currentTimeMillis()}.pdf")
+                val fos = FileOutputStream(pdfFile)
+                pdfDocument.writeTo(fos)
+                fos.close()
+                pdfDocument.close()
+
+                val uri = FileProvider.getUriForFile(this@KisanDiaryDashboardActivity, "${packageName}.fileprovider", pdfFile)
+
+                withContext(Dispatchers.Main) {
+                    val msg = if (activeLang == "hi") "PDF रिपोर्ट जनरेट हो गई!" else "PDF Report Generated Successfully!"
+                    Toast.makeText(this@KisanDiaryDashboardActivity, msg, Toast.LENGTH_SHORT).show()
+
+                    val pdfIntent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "application/pdf")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    val chooser = Intent.createChooser(pdfIntent, if (activeLang == "hi") "PDF रिपोर्ट खोलें या शेयर करें" else "View or Share PDF Report")
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(chooser)
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@KisanDiaryDashboardActivity, "Error generating PDF: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -674,13 +1378,22 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         val lower = trimmed.lowercase(Locale.ENGLISH)
         return when {
             lower == "seed" || lower == "seeds" || lower == "बीज" -> "Seeds"
-            lower.contains("fertilizer") || lower.contains("fertiliser") || lower.contains("खाद") -> "Fertiliser"
-            lower.contains("pesticide") || lower.contains("pesticides") || lower.contains("दवा") -> "Pesticides"
+            lower.contains("fertilizer") || lower.contains("fertiliser") || lower.contains("खाद") || lower.contains("उर्वरक") -> "Fertilizer"
+            lower.contains("pesticide") || lower.contains("pesticides") || lower.contains("कीटनाशक") || lower.contains("दवा") -> "Pesticides"
             lower == "irrigation" || lower == "water" || lower == "पानी" || lower == "सिंचाई" -> "Irrigation"
-            lower.contains("machinery") || lower == "tractor" || lower == "fuel" || lower == "diesel" -> "Machinery & Fuel"
+            lower.contains("machinery") || lower.contains("मशीनरी") -> "Machinery"
+            lower.contains("fuel") || lower.contains("ईंधन") || lower.contains("diesel") -> "Fuel"
             lower.contains("labor") || lower.contains("labour") || lower.contains("मजदूरी") -> "Labour"
-            lower.contains("harvest") || lower.contains("cutting") || lower.contains("कटाई") -> "Harvesting"
-            else -> trimmed.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ENGLISH) else it.toString() }
+            lower.contains("tillage") || lower.contains("जुताई") -> "Tillage"
+            lower.contains("storage") || lower.contains("भंडारण") -> "Storage"
+            lower.contains("transport") || lower.contains("परिवहन") -> "Transport"
+            lower.contains("insurance") || lower.contains("बीमा") -> "Insurance"
+            lower.contains("loan") || lower.contains("interest") || lower.contains("ऋण") || lower.contains("ब्याज") -> "Loan Interest"
+            lower.contains("crop sale") || lower.contains("फसल बिक्री") -> "Crop Sale"
+            lower.contains("vegetable sale") || lower.contains("सब्जी बिक्री") -> "Vegetable Sale"
+            lower.contains("rental") || lower.contains("किराया") -> "Tractor / Equipment Rental"
+            lower.contains("fodder") || lower.contains("चारा") -> "Fodder Sale"
+            else -> TranslationHelper.getTranslatedCategoryName(trimmed, "en")
         }
     }
 
@@ -699,11 +1412,17 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         val lower = categoryName.lowercase(Locale.ENGLISH)
         return when {
             lower.contains("seed") || lower.contains("बीज") -> R.drawable.ic_expense_seeds
-            lower.contains("fertilizer") || lower.contains("fertiliser") || lower.contains("खाद") -> R.drawable.ic_expense_fertilizer
-            lower.contains("pesticide") || lower.contains("spray") || lower.contains("दवा") -> R.drawable.ic_expense_pesticide
-            lower.contains("irrig") || lower.contains("water") || lower.contains("diesel") || lower.contains("पानी") -> R.drawable.ic_expense_irrigation
-            lower.contains("machin") || lower.contains("tractor") || lower.contains("fuel") -> R.drawable.ic_expense_machinery
+            lower.contains("fertilizer") || lower.contains("fertiliser") || lower.contains("खाद") || lower.contains("उर्वरक") -> R.drawable.ic_expense_fertilizer
+            lower.contains("pesticide") || lower.contains("spray") || lower.contains("कीटनाशक") || lower.contains("दवा") -> R.drawable.ic_expense_pesticide
+            lower.contains("irrig") || lower.contains("water") || lower.contains("सिंचाई") -> R.drawable.ic_expense_irrigation
+            lower.contains("machin") || lower.contains("मशीनरी") -> R.drawable.ic_expense_machinery
+            lower.contains("fuel") || lower.contains("diesel") || lower.contains("ईंधन") -> R.drawable.ic_expense_machinery
             lower.contains("labour") || lower.contains("labor") || lower.contains("मजदूरी") -> R.drawable.ic_expense_labour
+            lower.contains("tillage") || lower.contains("जुताई") -> R.drawable.ic_expense_machinery
+            lower.contains("storage") || lower.contains("भंडारण") -> R.drawable.ic_expense_electricity
+            lower.contains("transport") || lower.contains("परिवहन") -> R.drawable.ic_expense_machinery
+            lower.contains("insurance") || lower.contains("बीमा") -> R.drawable.ic_expense_electricity
+            lower.contains("loan") || lower.contains("interest") || lower.contains("ऋण") || lower.contains("ब्याज") -> R.drawable.ic_expense_electricity
             else -> R.drawable.ic_expense_electricity
         }
     }

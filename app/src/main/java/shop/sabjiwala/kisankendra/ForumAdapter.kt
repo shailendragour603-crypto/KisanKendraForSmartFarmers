@@ -37,7 +37,8 @@ class ForumAdapter(
     private val onReplyClick: (ForumPost) -> Unit,
     private val onShareClick: (ForumPost) -> Unit,
     private val onMediaClick: ((url: String, isVideo: Boolean) -> Unit)? = null,
-    private val onOptionsClick: ((ForumPost, View) -> Unit)? = null
+    private val onOptionsClick: ((ForumPost, View) -> Unit)? = null,
+    private val onAudioToggleClick: (() -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -57,6 +58,7 @@ class ForumAdapter(
         val vvInFeedVideo: VideoView = view.findViewById(R.id.vvInFeedVideo)
         val ivVideoThumbnail: ImageView = view.findViewById(R.id.ivQuestionVideoThumbnail)
         val btnPlayVideo: MaterialButton = view.findViewById(R.id.btnPlayVideoFeed)
+        val btnAudioToggle: ImageButton = view.findViewById(R.id.btnFeedAudioToggle)
         val btnLike: MaterialButton = view.findViewById(R.id.btnLikePost)
         val btnReplies: MaterialButton = view.findViewById(R.id.btnReplies)
         val btnShare: MaterialButton = view.findViewById(R.id.btnSharePost)
@@ -201,6 +203,16 @@ class ForumAdapter(
             postHolder.layoutVideoContainer.visibility = View.VISIBLE
             postHolder.ivVideoThumbnail.visibility = View.VISIBLE
             postHolder.btnPlayVideo.visibility = View.VISIBLE
+
+            if (ForumFragment.isSessionAudioMuted) {
+                postHolder.btnAudioToggle.setImageResource(R.drawable.ic_volume_off)
+            } else {
+                postHolder.btnAudioToggle.setImageResource(R.drawable.ic_volume_up)
+            }
+
+            postHolder.btnAudioToggle.setOnClickListener {
+                onAudioToggleClick?.invoke()
+            }
 
             Glide.with(holder.itemView.context)
                 .asBitmap()

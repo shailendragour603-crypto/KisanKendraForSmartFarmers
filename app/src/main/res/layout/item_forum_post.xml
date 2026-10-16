@@ -170,6 +170,19 @@
                 android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <!-- Audio Mute / Unmute Toggle Button in Bottom Right Corner -->
+            <ImageButton
+                android:id="@+id/btnFeedAudioToggle"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="12dp"
+                android:background="@drawable/bg_circle_translucent"
+                android:contentDescription="Toggle Audio Sound"
+                android:padding="8dp"
+                android:src="@drawable/ic_volume_up"
+                app:tint="@android:color/white" />
         </FrameLayout>
 
         <!-- Bottom Action Row: Like, Comment & Share -->

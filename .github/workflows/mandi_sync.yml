@@ -1,0 +1,31 @@
+name: Mandi Rates Daily Auto Sync
+
+on:
+  schedule:
+    # Runs every hour at :30 past between 08:00 UTC and 15:00 UTC (1:30 PM IST to 8:30 PM IST)
+    - cron: '30 8-15 * * *'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  sync_mandi_rates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests firebase-admin
+
+      - name: Run Mandi Auto-Sync Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          python mandi_auto_sync.py

@@ -7,6 +7,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import shop.sabjiwala.kisankendra.model.KhataItem
+import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -30,32 +32,39 @@ class RecentEntriesAdapter(
     override fun onBindViewHolder(holder: EntryViewHolder, position: Int) {
         val item = items[position]
         val context = holder.itemView.context
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
 
         val inrLocale = Locale.Builder().setLanguage("en").setRegion("IN").build()
         val currencyFormatter = NumberFormat.getCurrencyInstance(inrLocale).apply {
             maximumFractionDigits = 0
         }
 
-        val crop = item.cropName.ifBlank { "Farm" }
-        val category = item.category.ifBlank { "General" }
+        val cropRaw = item.cropName.ifBlank { "गेहूँ" }
+        val categoryRaw = item.category.ifBlank { "General" }
+        val stageRaw = item.stage.ifBlank { "General" }
+
+        val crop = TranslationHelper.getTranslatedCropName(cropRaw, activeLang, context)
+        val category = TranslationHelper.getTranslatedCategoryName(categoryRaw, activeLang, context)
         holder.tvTitle.text = "$crop • $category"
 
-        val stage = item.stage.ifBlank { "General" }
-        val date = item.dateStr.ifBlank { "Recently" }
+        val stage = TranslationHelper.getTranslatedStageName(stageRaw, activeLang, context)
+        val date = TranslationHelper.getTranslatedDate(item.dateStr.ifBlank { "Recently" }, activeLang)
         holder.tvSubtitle.text = "$stage • $date"
 
         val colorIncome = ContextCompat.getColor(context, R.color.price_modal_text)
         val colorExpense = ContextCompat.getColor(context, R.color.price_min_text)
 
+        val badgeText = TranslationHelper.getTranslatedTypeBadge(item.isIncome, activeLang, context)
+
         if (item.isIncome) {
-            holder.tvTypeBadge.text = "INCOME"
+            holder.tvTypeBadge.text = badgeText
             holder.tvTypeBadge.setTextColor(colorIncome)
             holder.tvTypeBadge.setBackgroundResource(R.drawable.bg_badge_income)
 
             holder.tvAmount.text = "+ ${currencyFormatter.format(item.amount)}"
             holder.tvAmount.setTextColor(colorIncome)
         } else {
-            holder.tvTypeBadge.text = "EXPENSE"
+            holder.tvTypeBadge.text = badgeText
             holder.tvTypeBadge.setTextColor(colorExpense)
             holder.tvTypeBadge.setBackgroundResource(R.drawable.bg_badge_expense)
 

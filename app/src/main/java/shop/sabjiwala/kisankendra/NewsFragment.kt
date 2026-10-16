@@ -354,10 +354,29 @@ class NewsFragment : Fragment() {
             }
     }
 
+    private fun saveNewsSessionState(checkedChipId: Int) {
+        val ctx = context ?: return
+        ctx.getSharedPreferences("news_session_prefs", Context.MODE_PRIVATE).edit()
+            .putInt("news_active_chip_id", checkedChipId)
+            .apply()
+    }
+
+    private fun restoreNewsSessionState() {
+        val ctx = context ?: return
+        val prefs = ctx.getSharedPreferences("news_session_prefs", Context.MODE_PRIVATE)
+        val savedChipId = prefs.getInt("news_active_chip_id", 0)
+        if (savedChipId != 0 && _binding != null) {
+            binding.chipGroupCategories.check(savedChipId)
+        }
+    }
+
     private fun setupCategoryChips() {
         translateNewsUiElements()
+        restoreNewsSessionState()
         binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
-            filterNewsByCategory(checkedIds.firstOrNull())
+            val checkedId = checkedIds.firstOrNull() ?: R.id.chipNews
+            saveNewsSessionState(checkedId)
+            filterNewsByCategory(checkedId)
         }
     }
 

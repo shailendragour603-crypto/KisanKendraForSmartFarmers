@@ -110,8 +110,8 @@ class NewsAdapter(
         binding.tvNewsDescription.text = RichTextHelper.formatRichText(descriptionExcerpt)
         binding.tvCategoryBadge.text = item.category.ifBlank { "Agriculture" }
 
-        // Dynamic AI translation for non-English active languages
-        if (activeLang != "en") {
+        // Dynamic AI translation for non-Hindi active languages
+        if (activeLang != "hi") {
             CoroutineScope(Dispatchers.Main).launch {
                 val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
                 binding.tvNewsTitle.text = translatedTitle

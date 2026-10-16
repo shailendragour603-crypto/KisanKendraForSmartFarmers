@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="20dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="10dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Close "X" Button -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnCloseRewardDialog"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="end"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Close Dialog"
+                android:padding="4dp"
+                android:src="@drawable/ic_close"
+                app:tint="#9CA3AF" />
+        </FrameLayout>
+
+        <!-- Big Highlight Badge -->
+        <FrameLayout
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/bg_circle_badge">
+
+            <TextView
+                android:id="@+id/tvRewardBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="+3"
+                android:textColor="#16A34A"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Short Title -->
+        <TextView
+            android:id="@+id/tvRewardTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="Unlock 3 Free Questions"
+            android:textColor="#111827"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- 1-Line Subtitle -->
+        <TextView
+            android:id="@+id/tvRewardSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Watch a short video to continue asking"
+            android:textColor="#6B7280"
+            android:textSize="14sp" />
+
+        <!-- Single Action Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnWatchVideo"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="22dp"
+            android:text="Watch Video"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#16A34A"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_play"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="#FFFFFF" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

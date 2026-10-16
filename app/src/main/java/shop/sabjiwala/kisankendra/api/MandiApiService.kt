@@ -9,6 +9,7 @@ interface MandiApiService {
     suspend fun getMandiPrices(
         @Query("api-key") apiKey: String,
         @Query("format") format: String = "json",
-        @Query("limit") limit: Int = 10000
+        @Query("limit") limit: Int = 1000,
+        @Query("offset") offset: Int = 0
     ): MandiResponse
 }

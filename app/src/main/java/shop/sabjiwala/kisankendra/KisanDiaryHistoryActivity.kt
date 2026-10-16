@@ -1,5 +1,6 @@
 package shop.sabjiwala.kisankendra
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -15,20 +16,29 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import shop.sabjiwala.kisankendra.utils.ShimmerHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import shop.sabjiwala.kisankendra.model.CropCycle
 import shop.sabjiwala.kisankendra.model.KhataItem
 import shop.sabjiwala.kisankendra.repository.KhataRepository
-import shop.sabjiwala.kisankendra.utils.FertilizerUtils
 import shop.sabjiwala.kisankendra.utils.KhataHelper
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
 import shop.sabjiwala.kisankendra.utils.MediaUtils
@@ -39,6 +49,11 @@ import java.util.Locale
 
 class KisanDiaryHistoryActivity : AppCompatActivity() {
 
+    override fun attachBaseContext(newBase: Context) {
+        val lang = LocaleHelper.getPersistedLanguage(newBase)
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang))
+    }
+
     private val khataRepo by lazy { KhataRepository() }
     private lateinit var khataAdapter: KhataAdapter
     private var allKhataItems = mutableListOf<KhataItem>()
@@ -46,7 +61,62 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
     private var cropCycles = mutableListOf<CropCycle>()
     private var selectedFilter = "All Entries"
     private var currentPage = 1
-    private val pageSize = 20
+    private val pageSize = 10
+
+    private var historyInterstitialAd: InterstitialAd? = null
+    private var lastHistoryInterstitialTime = 0L
+
+    companion object {
+        private const val MIN_INTERSTITIAL_GAP_MS = 60_000L // 60s minimum gap
+    }
+
+    private fun loadHistoryInterstitialAd() {
+        try {
+            val adRequest = AdRequest.Builder().build()
+            InterstitialAd.load(
+                this,
+                "ca-app-pub-3054731531860427/5297828555",
+                adRequest,
+                object : InterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: InterstitialAd) {
+                        historyInterstitialAd = ad
+                    }
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        historyInterstitialAd = null
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun tryShowHistoryInterstitialAd(onComplete: () -> Unit) {
+        val currentTime = System.currentTimeMillis()
+        if (historyInterstitialAd != null && currentTime - lastHistoryInterstitialTime >= MIN_INTERSTITIAL_GAP_MS) {
+            historyInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    historyInterstitialAd = null
+                    lastHistoryInterstitialTime = System.currentTimeMillis()
+                    loadHistoryInterstitialAd()
+                    onComplete()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    historyInterstitialAd = null
+                    lastHistoryInterstitialTime = System.currentTimeMillis()
+                    loadHistoryInterstitialAd()
+                    onComplete()
+                }
+            }
+            historyInterstitialAd?.show(this)
+        } else {
+            onComplete()
+            if (historyInterstitialAd == null) {
+                loadHistoryInterstitialAd()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -59,6 +129,11 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
         setupSwipeRefresh()
         setupFab()
         loadData()
+        loadHistoryInterstitialAd()
+
+        if (intent.getBooleanExtra("EXTRA_OPEN_ADD_ENTRY", false)) {
+            showAddKhataDialog(null)
+        }
     }
 
     private fun setupSwipeRefresh() {
@@ -97,7 +172,8 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
         khataAdapter = KhataAdapter(
             items = emptyList(),
             onEditClick = { item -> showAddKhataDialog(item) },
-            onDeleteClick = { item -> deleteEntry(item) }
+            onDeleteClick = { item -> deleteEntry(item) },
+            onLoadMore = { loadMoreItems() }
         )
         rv.adapter = khataAdapter
 
@@ -145,7 +221,33 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
         val filtered = getFilteredList()
         val limit = (currentPage * pageSize).coerceAtMost(filtered.size)
         displayedKhataItems = filtered.take(limit).toMutableList()
-        khataAdapter.updateData(displayedKhataItems)
+        khataAdapter.updateData(displayedKhataItems, filtered.size)
+
+        val layoutEmpty = findViewById<View>(R.id.layoutHistoryEmptyState)
+        if (filtered.isEmpty()) {
+            layoutEmpty?.visibility = View.VISIBLE
+            val tvEmptyTitle = findViewById<TextView>(R.id.tvHistoryEmptyTitle)
+            val tvEmptySubtitle = findViewById<TextView>(R.id.tvHistoryEmptySubtitle)
+            val btnAddFirst = findViewById<MaterialButton>(R.id.btnAddFirstEntryHistory)
+
+            val activeLang = LocaleHelper.getPersistedLanguage(this)
+            val transTitle = TranslationHelper.getDirectTranslation("Kisan Diary is Empty", activeLang)
+                ?: if (activeLang == "hi") "किसान डायरी खाली है" else "Kisan Diary is Empty"
+            val transSubtitle = TranslationHelper.getDirectTranslation("Add an entry to track seed, fertilizer, or labor expenses.", activeLang)
+                ?: if (activeLang == "hi") "अपने बीज, खाद या मजदूरी के खर्चों का हिसाब रखने के लिए एन्ट्री जोड़ें।" else "Add an entry to track seed, fertilizer, or labor expenses."
+            val transBtn = TranslationHelper.getDirectTranslation("+ Add New Entry", activeLang)
+                ?: if (activeLang == "hi") "नई एन्ट्री जोड़ें" else "Add New Entry"
+
+            tvEmptyTitle?.text = transTitle
+            tvEmptySubtitle?.text = transSubtitle
+            btnAddFirst?.text = transBtn
+
+            btnAddFirst?.setOnClickListener {
+                showAddKhataDialog(null)
+            }
+        } else {
+            layoutEmpty?.visibility = View.GONE
+        }
     }
 
     private fun setupFab() {
@@ -200,17 +302,27 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
     }
 
     private fun updateFilterDropdown() {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
         val actvFilter = findViewById<AutoCompleteTextView>(R.id.actvHistoryFilter)
-        val filterOptions = mutableListOf("All Entries")
+        val defaultOption = TranslationHelper.getDirectTranslation("All Entries", activeLang)
+            ?: if (activeLang == "hi") "सभी एंट्री" else "All Entries"
+
+        val filterOptions = mutableListOf(defaultOption)
         for (cycle in cropCycles) {
-            filterOptions.add("${cycle.cropName} (${cycle.seasonName})")
+            val transCrop = TranslationHelper.getTranslatedCropName("${cycle.cropName} (${cycle.seasonName})", activeLang, this)
+            filterOptions.add(transCrop)
         }
         val adapter = ArrayAdapter(this, R.layout.item_compact_dropdown_single, filterOptions)
         actvFilter.setAdapter(adapter)
-        actvFilter.setText(selectedFilter, false)
+
+        val displaySelected = if (selectedFilter == "All Entries") defaultOption else TranslationHelper.getTranslatedCropName(selectedFilter, activeLang, this)
+        actvFilter.setText(displaySelected, false)
 
         actvFilter.setOnItemClickListener { _, _, position, _ ->
-            selectedFilter = filterOptions.getOrElse(position) { "All Entries" }
+            selectedFilter = if (position == 0) "All Entries" else {
+                val cycle = cropCycles.getOrNull(position - 1)
+                if (cycle != null) "${cycle.cropName} (${cycle.seasonName})" else filterOptions.getOrElse(position) { "All Entries" }
+            }
             filterAndApplyData()
         }
     }
@@ -263,40 +375,176 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
             tvTitle?.text = "📖 Add New Entry"
         }
 
-        val categories = listOf("Seeds", "Fertilizer", "Pesticides", "Labor", "Diesel & Irrigation", "Machinery & Tractor", "Electricity & Water", "Miscellaneous", "Mandi Sale")
+        val expenseCategories = listOf(
+            "Seeds",
+            "Fertilizer",
+            "Pesticide",
+            "Irrigation",
+            "Machinery",
+            "Fuel",
+            "Labour",
+            "Tillage",
+            "Storage",
+            "Transport",
+            "Insurance",
+            "Loan Interest"
+        )
+        val incomeCategories = listOf(
+            "Crop Sale",
+            "Vegetable Sale",
+            "Tractor / Equipment Rental",
+            "Fodder Sale"
+        )
         val stages = listOf("Sowing", "Irrigation", "Spray", "Harvesting", "Sale")
 
-        val allAvailableCrops = (cropCycles.map { "${it.cropName} (${it.seasonName})" } + FertilizerUtils.crops).distinct()
-        val activeCropNames = if (allAvailableCrops.isNotEmpty()) allAvailableCrops else listOf("Wheat", "Rice", "Soybean", "Cotton", "Mustard")
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+        val getTranslatedSeason: (String) -> String = { s ->
+            if (activeLang == "hi") {
+                s.replace("Kharif", "खरीफ", ignoreCase = true)
+                 .replace("Rabi", "रबी", ignoreCase = true)
+                 .replace("Zaid", "जायद", ignoreCase = true)
+            } else {
+                s
+            }
+        }
+        val getCanonicalSeason: (String) -> String = { s ->
+            s.replace("खरीफ", "Kharif", ignoreCase = true)
+             .replace("रबी", "Rabi", ignoreCase = true)
+             .replace("जायद", "Zaid", ignoreCase = true)
+        }
+
+        val getTranslatedCategories: (Boolean) -> List<String> = { income ->
+            val list = if (income) incomeCategories else expenseCategories
+            list.map { cat ->
+                TranslationHelper.getTranslatedCategoryName(cat, activeLang, this)
+            }
+        }
+
+        var isIncome = isEdit && existingItem?.isIncome == true
+        if (isIncome) {
+            toggleType.check(R.id.btnTypeIncome)
+        } else {
+            toggleType.check(R.id.btnTypeExpense)
+        }
+
+        val updateCategoryDropdown = { income: Boolean ->
+            val transCats = getTranslatedCategories(income)
+            actvCategory.setAdapter(ArrayAdapter(this, R.layout.item_compact_dropdown_single, transCats))
+            if (transCats.isNotEmpty()) {
+                val currentText = actvCategory.text.toString()
+                if (!transCats.contains(currentText)) {
+                    actvCategory.setText(transCats[0], false)
+                }
+            }
+        }
+
+        val transStages = stages.map { stage ->
+            TranslationHelper.getTranslatedStageName(stage, activeLang, this)
+        }
+
+        val baseCycles = cropCycles.map { "${it.cropName} (${it.seasonName})" }
+        val rawMasterCrops = TranslationHelper.DEFAULT_HINDI_CROPS_LIST.filterNot { it.contains("अन्य फसल") }
+        val allAvailableCrops = (baseCycles + rawMasterCrops).distinct()
+        val activeCropNames = allAvailableCrops.map { cropItem ->
+            if (cropItem.startsWith("---")) {
+                if (activeLang == "hi") cropItem else TranslationHelper.getTranslatedCropName(cropItem, activeLang, this)
+            } else {
+                TranslationHelper.getTranslatedCropName(cropItem, activeLang, this)
+            }
+        }
         actvCrop.setAdapter(ArrayAdapter(this, R.layout.item_compact_dropdown_single, activeCropNames))
 
         val defaultCropText = if (isEdit && existingItem?.cropName != null) {
             val matchingCycleObj = cropCycles.firstOrNull { it.cropName.equals(existingItem.cropName, ignoreCase = true) }
-            if (matchingCycleObj != null) "${matchingCycleObj.cropName} (${matchingCycleObj.seasonName})" else existingItem.cropName
+            val baseText = if (matchingCycleObj != null) "${matchingCycleObj.cropName} (${matchingCycleObj.seasonName})" else existingItem.cropName
+            TranslationHelper.getTranslatedCropName(baseText, activeLang, this)
         } else if (cropCycles.isNotEmpty()) {
-            "${cropCycles[0].cropName} (${cropCycles[0].seasonName})"
+            TranslationHelper.getTranslatedCropName("${cropCycles[0].cropName} (${cropCycles[0].seasonName})", activeLang, this)
         } else if (activeCropNames.isNotEmpty()) {
-            activeCropNames[0]
+            activeCropNames.firstOrNull { !it.startsWith("---") } ?: activeCropNames[0]
         } else {
-            "Wheat"
+            TranslationHelper.getTranslatedCropName("गेहूँ (Kharif)", activeLang, this)
         }
         actvCrop.setText(defaultCropText, false)
 
-        val defaultCat = if (isEdit) existingItem?.category else categories[0]
-        val catInitIndex = categories.indexOf(defaultCat).let { if (it != -1) it else 0 }
+        val initialCats = if (isIncome) incomeCategories else expenseCategories
+        val transInitialCats = getTranslatedCategories(isIncome)
+        val defaultCat = if (isEdit && existingItem != null) existingItem.category else initialCats[0]
+        val catInitIndex = initialCats.indexOf(defaultCat).let { if (it != -1) it else 0 }
 
         val defaultStage = if (isEdit) existingItem?.stage else stages[0]
         val stageInitIndex = stages.indexOf(defaultStage).let { if (it != -1) it else 0 }
 
-        val activeLang = LocaleHelper.getPersistedLanguage(this)
-        val transCategories = categories
-        val transStages = stages.map { TranslationHelper.getDirectTranslation(it, activeLang) ?: it }
-
-        actvCategory.setAdapter(ArrayAdapter(this, R.layout.item_compact_dropdown_single, transCategories))
-        actvCategory.setText(transCategories[catInitIndex], false)
+        actvCategory.setAdapter(ArrayAdapter(this, R.layout.item_compact_dropdown_single, transInitialCats))
+        if (catInitIndex in transInitialCats.indices) {
+            actvCategory.setText(transInitialCats[catInitIndex], false)
+        } else if (transInitialCats.isNotEmpty()) {
+            actvCategory.setText(transInitialCats[0], false)
+        }
 
         actvStage.setAdapter(ArrayAdapter(this, R.layout.item_compact_dropdown_single, transStages))
         actvStage.setText(transStages[stageInitIndex], false)
+
+        val btnExpense = dialogView.findViewById<MaterialButton>(R.id.btnTypeExpense)
+        val btnIncome = dialogView.findViewById<MaterialButton>(R.id.btnTypeIncome)
+        val tilAmount = dialogView.findViewById<TextInputLayout>(R.id.tilKhataAmount)
+        val tilCrop = dialogView.findViewById<TextInputLayout>(R.id.tilKhataCrop)
+        val tilCategory = dialogView.findViewById<TextInputLayout>(R.id.tilKhataCategory)
+        val tilStage = dialogView.findViewById<TextInputLayout>(R.id.tilKhataStage)
+        val tilNote = dialogView.findViewById<TextInputLayout>(R.id.tilKhataNote)
+
+        val transTitle = TranslationHelper.getDirectTranslation(if (isEdit) "Edit Entry" else "Add New Entry", activeLang)
+            ?: if (activeLang == "hi") (if (isEdit) "एन्ट्री बदलें" else "नई एन्ट्री जोड़ें") else (if (isEdit) "Edit Entry" else "Add New Entry")
+        tvTitle?.text = "📖 $transTitle"
+
+        val transExpense = TranslationHelper.getDirectTranslation("Expense", activeLang) ?: if (activeLang == "hi") "खर्च" else "Expense"
+        val transIncome = TranslationHelper.getDirectTranslation("Income", activeLang) ?: if (activeLang == "hi") "आय" else "Income"
+        btnExpense?.text = "💸 $transExpense (-)"
+        btnIncome?.text = "💰 $transIncome (+)"
+
+        val transAmountHint = TranslationHelper.getDirectTranslation("Amount", activeLang) ?: if (activeLang == "hi") "राशि" else "Amount"
+        val transCropHint = TranslationHelper.getDirectTranslation("Select Crop Season", activeLang) ?: if (activeLang == "hi") "फसल का मौसम चुनें" else "Select Crop Season"
+        val transCatHint = TranslationHelper.getDirectTranslation("Category", activeLang) ?: if (activeLang == "hi") "श्रेणी" else "Category"
+        val transStageHint = TranslationHelper.getDirectTranslation("Crop Stage", activeLang) ?: if (activeLang == "hi") "फसल का चरण" else "Crop Stage"
+        val transNoteHint = TranslationHelper.getDirectTranslation("Note / Details", activeLang) ?: if (activeLang == "hi") "नोट / विवरण" else "Note / Details"
+
+        tilAmount?.hint = transAmountHint
+        tilCrop?.hint = transCropHint
+        tilCategory?.hint = transCatHint
+        tilStage?.hint = transStageHint
+        tilNote?.hint = transNoteHint
+
+        btnCancel.text = TranslationHelper.getDirectTranslation("Cancel", activeLang) ?: if (activeLang == "hi") "रद्द करें" else "Cancel"
+        btnSave.text = if (isEdit) (TranslationHelper.getDirectTranslation("Update Entry", activeLang) ?: if (activeLang == "hi") "एन्ट्री अपडेट करें" else "Update Entry")
+                       else (TranslationHelper.getDirectTranslation("Save Entry", activeLang) ?: if (activeLang == "hi") "एन्ट्री सहेजें" else "Save Entry")
+
+        if (activeLang != "en" && activeLang != "hi") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val transTitleAsync = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, if (isEdit) "Edit Entry" else "Add New Entry", activeLang)
+                tvTitle?.text = "📖 $transTitleAsync"
+
+                val transExpenseAsync = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Expense", activeLang)
+                val transIncomeAsync = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Income", activeLang)
+                btnExpense?.text = "💸 $transExpenseAsync (-)"
+                btnIncome?.text = "💰 $transIncomeAsync (+)"
+
+                tilAmount?.hint = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Amount", activeLang)
+                tilCrop?.hint = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Select Crop Season", activeLang)
+                tilCategory?.hint = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Category", activeLang)
+                tilStage?.hint = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Crop Stage", activeLang)
+                tilNote?.hint = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Note / Details", activeLang)
+
+                btnCancel.text = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, "Cancel", activeLang)
+                btnSave.text = TranslationHelper.translateText(this@KisanDiaryHistoryActivity, if (isEdit) "Update Entry" else "Save Entry", activeLang)
+            }
+        }
+
+        toggleType.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                isIncome = (checkedId == R.id.btnTypeIncome)
+                updateCategoryDropdown(isIncome)
+            }
+        }
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(dialogView)
@@ -311,12 +559,14 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val amount = amountStr.toDoubleOrNull() ?: 0.0
-            val cropText = actvCrop.text.toString().trim()
+            val cropText = getCanonicalSeason(actvCrop.text.toString().trim())
             val rawCategoryText = actvCategory.text.toString().trim()
             val rawStageText = actvStage.text.toString().trim()
 
-            val catIndex = transCategories.indexOfFirst { it.equals(rawCategoryText, ignoreCase = true) }
-            val category = if (catIndex in categories.indices) categories[catIndex] else rawCategoryText
+            val activeCategories = if (isIncome) incomeCategories else expenseCategories
+            val activeTransCategories = getTranslatedCategories(isIncome)
+            val catIndex = activeTransCategories.indexOfFirst { it.equals(rawCategoryText, ignoreCase = true) || rawCategoryText.contains(it, ignoreCase = true) }
+            val category = if (catIndex in activeCategories.indices) activeCategories[catIndex] else (activeCategories.firstOrNull { it.equals(rawCategoryText, ignoreCase = true) } ?: activeCategories[0])
 
             val stageIndex = transStages.indexOfFirst { it.equals(rawStageText, ignoreCase = true) }
             val stage = if (stageIndex in stages.indices) stages[stageIndex] else rawStageText
@@ -364,8 +614,10 @@ class KisanDiaryHistoryActivity : AppCompatActivity() {
                 khataRepo.addKhataItem(khataItem) { _ -> }
             }
 
-            dialog.dismiss()
-            Toast.makeText(this, if (isEdit) "Entry updated!" else "Entry added!", Toast.LENGTH_SHORT).show()
+            tryShowHistoryInterstitialAd {
+                dialog.dismiss()
+                Toast.makeText(this, if (isEdit) "Entry updated!" else "Entry added!", Toast.LENGTH_SHORT).show()
+            }
         }
 
         dialog.show()

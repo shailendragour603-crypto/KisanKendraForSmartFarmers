@@ -14,6 +14,8 @@ import android.view.View
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
+import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
 
 enum class ExpenseChartMode {
     TOTAL_EXPENSE,
@@ -226,7 +228,9 @@ class CropExpenseChartView @JvmOverloads constructor(
     }
 
     private fun getCleanCropName(rawName: String): String {
-        return rawName.split("/").firstOrNull()?.trim() ?: rawName
+        val clean = rawName.split("/").firstOrNull()?.trim() ?: rawName
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
+        return TranslationHelper.getTranslatedCropName(clean, activeLang, context)
     }
 
     private fun formatCompactRupees(amount: Double): String {

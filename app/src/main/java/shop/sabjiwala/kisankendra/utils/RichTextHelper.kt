@@ -45,10 +45,12 @@ object RichTextHelper {
         }
 
         var html = rawText
+            // Remove 'Overview' headers for past posts
+            .replace("(?mi)^#+\\s*(?:📌\\s*)?(?:Overview|Summary|अवलोकन|विवरण|रूपरेखा)\\s*(\r?\n)?".toRegex(), "")
             // Convert Markdown headers (Vibrant theme-neutral green for high contrast in both Light & Dark modes)
-            .replace("(?m)^### (.*?)$".toRegex(), "<br/><b><font color=\"#4CAF50\">$1</font></b><br/>")
-            .replace("(?m)^## (.*?)$".toRegex(), "<br/><b><font color=\"#4CAF50\">$1</font></b><br/>")
-            .replace("(?m)^# (.*?)$".toRegex(), "<br/><b><font color=\"#4CAF50\">$1</font></b><br/>")
+            .replace("(?m)^### (.*?)$".toRegex(), "<b><font color=\"#4CAF50\">$1</font></b>")
+            .replace("(?m)^## (.*?)$".toRegex(), "<b><font color=\"#4CAF50\">$1</font></b>")
+            .replace("(?m)^# (.*?)$".toRegex(), "<b><font color=\"#4CAF50\">$1</font></b>")
             // Convert Markdown bold
             .replace("\\*\\*(.*?)\\*\\*".toRegex(), "<b>$1</b>")
             // Convert Markdown links [Text](http://...) -> <a href="http://...">Text</a>
@@ -56,12 +58,14 @@ object RichTextHelper {
             // Convert raw URLs (http:// or https://) not in HTML tags or markdown links into clickable links
             .replace("(?<!href=\")(?<!\">)(https?://[a-zA-Z0-9./_\\-?=%&]+)".toRegex(), "<a href=\"$1\">$1</a>")
             // Convert bullet points
-            .replace("(?m)^[-*] (.*?)$".toRegex(), "• $1<br/>")
+            .replace("(?m)^[-*] (.*?)$".toRegex(), "• $1")
             // Convert newlines
             .replace("\n", "<br/>")
 
-        // Strip leading <br/> or <br> to ensure text starts at line 1 without top blank line
-        html = html.replace("^(<br\\s*/?>)+".toRegex(), "").trim()
+        // Strip leading and trailing <br/> or <br> to ensure text has no extra blank lines at ends
+        html = html.replace("^(<br\\s*/?>)+".toRegex(), "")
+            .replace("(<br\\s*/?>)+$".toRegex(), "")
+            .trim()
 
         return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
     }

@@ -37,27 +37,39 @@
         app:strokeColor="#E0E0E0"
         app:strokeWidth="1dp">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:layout_height="wrap_content">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:text="📢 Sponsored Advertisement"
-                android:textColor="#212121"
-                android:textSize="11sp" />
-
-            <FrameLayout
-                android:id="@+id/adTopArticleContainer"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
-        </LinearLayout>
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <com.google.android.ads.nativetemplates.TemplateView
+                    android:id="@+id/adTopArticleTemplate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:gnt_template_type="@layout/gnt_medium_template_view" />
+            </LinearLayout>
+
+            <!-- Small Close Icon for Top Frozen Ad Card -->
+            <ImageButton
+                android:id="@+id/btnCloseTopAd"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Close Ad"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_close"
+                app:tint="#757575" />
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <ScrollView
@@ -156,19 +168,11 @@
                         android:orientation="vertical"
                         android:padding="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="📢 Sponsored Advertisement"
-                            android:textColor="#212121"
-                            android:textSize="11sp" />
-
-                        <FrameLayout
-                            android:id="@+id/adInArticleContainer"
+                        <com.google.android.ads.nativetemplates.TemplateView
+                            android:id="@+id/adInArticleTemplate"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center" />
+                            app:gnt_template_type="@layout/gnt_medium_template_view" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -202,19 +206,11 @@
                         android:orientation="vertical"
                         android:padding="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="📢 Sponsored Advertisement"
-                            android:textColor="#212121"
-                            android:textSize="11sp" />
-
-                        <FrameLayout
-                            android:id="@+id/adMidArticleContainer"
+                        <com.google.android.ads.nativetemplates.TemplateView
+                            android:id="@+id/adMidArticleTemplate"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center" />
+                            app:gnt_template_type="@layout/gnt_medium_template_view" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -286,19 +282,11 @@
                             android:orientation="vertical"
                             android:padding="8dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="4dp"
-                                android:text="📢 Sponsored Advertisement"
-                                android:textColor="#212121"
-                                android:textSize="11sp" />
-
-                            <FrameLayout
-                                android:id="@+id/adBottomArticleContainer"
+                            <com.google.android.ads.nativetemplates.TemplateView
+                                android:id="@+id/adBottomArticleTemplate"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:gravity="center" />
+                                app:gnt_template_type="@layout/gnt_medium_template_view" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>

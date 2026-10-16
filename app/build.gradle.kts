@@ -98,11 +98,21 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     // 🔹 GEMINI AI SDK
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // 🔹 MEDIA EDITING
+    implementation("com.github.yalantis:ucrop:2.2.11")
+    implementation("com.burhanrashid52:photoeditor:3.1.1")
+    implementation("androidx.media3:media3-transformer:1.5.1")
+    implementation("androidx.media3:media3-effect:1.5.1")
+    implementation("androidx.media3:media3-common:1.5.1")
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-ui:1.5.1")
 
     // 🔹 TESTING
     testImplementation("junit:junit:4.13.2")

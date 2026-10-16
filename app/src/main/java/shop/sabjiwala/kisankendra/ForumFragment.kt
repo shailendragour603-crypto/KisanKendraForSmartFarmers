@@ -1,5 +1,6 @@
 package shop.sabjiwala.kisankendra
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
@@ -93,32 +94,78 @@ class ForumFragment : Fragment() {
     private var cameraPhotoUri: Uri? = null
     private var cameraVideoUri: Uri? = null
 
+    private val imageEditorLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val editedUri = result.data?.getParcelableExtra<Uri>(ImageEditorActivity.EXTRA_RESULT_URI)
+            if (editedUri != null) {
+                selectedMediaUri = editedUri
+                if (activeDialogMediaPreview != null) {
+                    activeDialogMediaContainer?.visibility = View.VISIBLE
+                    activeDialogMediaPreview?.let { iv ->
+                        Glide.with(this).load(editedUri).centerCrop().into(iv)
+                    }
+                } else {
+                    showCreatePostDialog(preAttachedUri = editedUri)
+                }
+            }
+        }
+    }
+
+    private val videoEditorLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val editedUri = result.data?.getParcelableExtra<Uri>(VideoEditorActivity.EXTRA_RESULT_URI)
+            if (editedUri != null) {
+                selectedMediaUri = editedUri
+                if (activeDialogMediaPreview != null) {
+                    activeDialogMediaContainer?.visibility = View.VISIBLE
+                    activeDialogMediaPreview?.let { iv ->
+                        Glide.with(this).load(editedUri).centerCrop().into(iv)
+                    }
+                } else {
+                    showCreatePostDialog(preAttachedUri = editedUri)
+                }
+            }
+        }
+    }
+
+    private fun launchEditorForMedia(uri: Uri, isVideo: Boolean) {
+        val safeUri = MediaUtils.copyUriToAppCache(requireContext(), uri) ?: uri
+        if (isVideo) {
+            val intent = Intent(requireContext(), VideoEditorActivity::class.java).apply {
+                putExtra(VideoEditorActivity.EXTRA_VIDEO_URI, safeUri)
+            }
+            videoEditorLauncher.launch(intent)
+        } else {
+            val intent = Intent(requireContext(), ImageEditorActivity::class.java).apply {
+                putExtra(ImageEditorActivity.EXTRA_IMAGE_URI, safeUri)
+            }
+            imageEditorLauncher.launch(intent)
+        }
+    }
+
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && cameraPhotoUri != null) {
-            selectedMediaUri = cameraPhotoUri
-            showCreatePostDialog(preAttachedUri = cameraPhotoUri)
+            launchEditorForMedia(cameraPhotoUri!!, false)
         }
     }
 
     private val takeVideoLauncher = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
         if (success && cameraVideoUri != null) {
-            selectedMediaUri = cameraVideoUri
-            showCreatePostDialog(preAttachedUri = cameraVideoUri)
+            launchEditorForMedia(cameraVideoUri!!, true)
         }
     }
 
     private val pickGalleryMediaLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
-            val safeUri = MediaUtils.copyUriToAppCache(requireContext(), uri) ?: uri
-            selectedMediaUri = safeUri
-            if (activeDialogMediaPreview != null) {
-                activeDialogMediaContainer?.visibility = View.VISIBLE
-                activeDialogMediaPreview?.let { iv ->
-                    Glide.with(this).load(safeUri).centerCrop().into(iv)
-                }
-            } else {
-                showCreatePostDialog(preAttachedUri = safeUri)
+            val resolvedMime = try {
+                if (uri.scheme == "content") {
+                    requireContext().contentResolver.getType(uri)
+                } else null
+            } catch (_: Exception) {
+                null
             }
+            val isVideo = resolvedMime?.startsWith("video/") == true || uri.toString().contains("video")
+            launchEditorForMedia(uri, isVideo)
         }
     }
 
@@ -141,7 +188,8 @@ class ForumFragment : Fragment() {
             onReplyClick = { post -> showCommentsDialog(post) },
             onShareClick = { post -> sharePostOnWhatsApp(post) },
             onMediaClick = { url, isVideo -> showOriginalMediaDialog(url, isVideo) },
-            onOptionsClick = { post, anchor -> showPostOptionsMenu(post, anchor) }
+            onOptionsClick = { post, anchor -> showPostOptionsMenu(post, anchor) },
+            onAudioToggleClick = { toggleSessionAudio() }
         )
         binding.rvForumPosts.adapter = adapter
 
@@ -215,8 +263,8 @@ class ForumFragment : Fragment() {
         binding.tvCreatePostHint.setOnClickListener { showCreatePostDialog() }
         binding.btnPostGallery.setOnClickListener { view ->
             val popup = PopupMenu(requireContext(), view)
-            popup.menu.add(0, 1, 1, "🖼️ Photo from Gallery")
-            popup.menu.add(0, 2, 2, "🎥 Video from Gallery")
+            popup.menu.add(0, 1, 1, "Photo from Gallery")
+            popup.menu.add(0, 2, 2, "Video from Gallery")
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> pickGalleryMediaLauncher.launch("image/*")
@@ -229,8 +277,8 @@ class ForumFragment : Fragment() {
 
         binding.btnPostCamera.setOnClickListener { view ->
             val popup = PopupMenu(requireContext(), view)
-            popup.menu.add(0, 1, 1, "📸 Take Photo")
-            popup.menu.add(0, 2, 2, "📹 Record Video")
+            popup.menu.add(0, 1, 1, "Take Photo")
+            popup.menu.add(0, 2, 2, "Record Video")
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> launchCameraCapture()
@@ -248,7 +296,41 @@ class ForumFragment : Fragment() {
         fetchForumPosts()
     }
 
+    companion object {
+        var isSessionAudioMuted: Boolean = false // Default: Sound ON (unmuted) by default for the session
+    }
+
     private var currentlyPlayingHolder: ForumAdapter.PostViewHolder? = null
+    private var currentlyPlayingMediaPlayer: android.media.MediaPlayer? = null
+
+    fun toggleSessionAudio() {
+        isSessionAudioMuted = !isSessionAudioMuted
+        val vol = if (isSessionAudioMuted) 0f else 1f
+        try {
+            currentlyPlayingMediaPlayer?.setVolume(vol, vol)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        updateFeedAudioToggleIcons()
+    }
+
+    private fun updateFeedAudioToggleIcons() {
+        val lm = binding.rvForumPosts.layoutManager as? LinearLayoutManager ?: return
+        val firstPos = lm.findFirstVisibleItemPosition()
+        val lastPos = lm.findLastVisibleItemPosition()
+        if (firstPos == RecyclerView.NO_POSITION || lastPos == RecyclerView.NO_POSITION) return
+
+        for (pos in firstPos..lastPos) {
+            val vh = binding.rvForumPosts.findViewHolderForAdapterPosition(pos) as? ForumAdapter.PostViewHolder
+            if (vh != null) {
+                if (isSessionAudioMuted) {
+                    vh.btnAudioToggle.setImageResource(R.drawable.ic_volume_off)
+                } else {
+                    vh.btnAudioToggle.setImageResource(R.drawable.ic_volume_up)
+                }
+            }
+        }
+    }
 
     private fun autoPlayFirstVisibleVideo() {
         val lm = binding.rvForumPosts.layoutManager as? LinearLayoutManager ?: return
@@ -277,6 +359,7 @@ class ForumFragment : Fragment() {
             currentlyPlayingHolder?.ivVideoThumbnail?.visibility = View.VISIBLE
             currentlyPlayingHolder?.btnPlayVideo?.visibility = View.VISIBLE
             currentlyPlayingHolder = null
+            currentlyPlayingMediaPlayer = null
         }
 
         if (targetHolder != null && targetVideoUrl.isNotBlank()) {
@@ -286,11 +369,15 @@ class ForumFragment : Fragment() {
             targetHolder.vvInFeedVideo.visibility = View.VISIBLE
             targetHolder.vvInFeedVideo.setVideoURI(Uri.parse(targetVideoUrl))
             targetHolder.vvInFeedVideo.setOnPreparedListener { mp ->
+                currentlyPlayingMediaPlayer = mp
                 mp.isLooping = true
-                mp.setVolume(0f, 0f)
+                val vol = if (isSessionAudioMuted) 0f else 1f
+                mp.setVolume(vol, vol)
                 targetHolder.vvInFeedVideo.start()
+                updateFeedAudioToggleIcons()
             }
             targetHolder.vvInFeedVideo.setOnErrorListener { _, _, _ ->
+                currentlyPlayingMediaPlayer = null
                 targetHolder.ivVideoThumbnail.visibility = View.VISIBLE
                 targetHolder.btnPlayVideo.visibility = View.VISIBLE
                 true
@@ -591,10 +678,29 @@ class ForumFragment : Fragment() {
         filterPostsByCategory()
     }
 
+    private fun saveForumSessionState(checkedChipId: Int) {
+        val ctx = context ?: return
+        ctx.getSharedPreferences("forum_session_prefs", Context.MODE_PRIVATE).edit()
+            .putInt("forum_active_chip_id", checkedChipId)
+            .apply()
+    }
+
+    private fun restoreForumSessionState() {
+        val ctx = context ?: return
+        val prefs = ctx.getSharedPreferences("forum_session_prefs", Context.MODE_PRIVATE)
+        val savedChipId = prefs.getInt("forum_active_chip_id", 0)
+        if (savedChipId != 0 && _binding != null) {
+            binding.chipGroupForumCategories.check(savedChipId)
+        }
+    }
+
     private fun setupCategoryChips() {
         translateForumUiElements()
+        restoreForumSessionState()
         binding.chipGroupForumCategories.setOnCheckedStateChangeListener { _, checkedIds ->
-            filterPostsByCategory(checkedIds.firstOrNull())
+            val checkedId = checkedIds.firstOrNull() ?: R.id.chipForumAll
+            saveForumSessionState(checkedId)
+            filterPostsByCategory(checkedId)
         }
     }
 
@@ -1525,20 +1631,20 @@ class ForumFragment : Fragment() {
             val chipDairy = dialogView.findViewById<Chip>(R.id.chipDialogDairy)
 
             if (tvSelectCategoryHeader != null) {
-                tvSelectCategoryHeader.text = "Select Category:"
+                tvSelectCategoryHeader.text = if (activeLang == "hi") "श्रेणी चुनें:" else TranslationHelper.translateText(ctx, "Select Category", activeLang) + ":"
             }
             if (tvMediaHeader != null) {
-                tvMediaHeader.text = TranslationHelper.translateText(ctx, "Add Media to post", activeLang) + ":"
+                tvMediaHeader.text = (if (activeLang == "hi") "पोस्ट में मीडिया जोड़ें" else TranslationHelper.translateText(ctx, "Add Media to post", activeLang)) + ":"
             }
 
-            etDesc.hint = TranslationHelper.translateText(ctx, "Write your question or thoughts here", activeLang) + "..."
+            etDesc.hint = (if (activeLang == "hi") "अपनी समस्या या प्रश्न यहाँ लिखें" else TranslationHelper.translateText(ctx, "Write your question or thoughts here", activeLang)) + "..."
 
-            btnCamera.text = "📷 " + TranslationHelper.translateText(ctx, "Live Photo", activeLang)
-            btnVideo.text = "📹 " + TranslationHelper.translateText(ctx, "Record Video", activeLang)
-            btnGalleryPhoto.text = "🖼️ " + TranslationHelper.translateText(ctx, "Gallery Photo", activeLang)
-            btnGalleryVideo.text = "🎥 " + TranslationHelper.translateText(ctx, "Gallery Video", activeLang)
-            btnSaveDraft.text = "💾 Save Draft"
-            btnSubmit.text = TranslationHelper.translateText(ctx, if (isEditMode) "Update Post" else "Post", activeLang)
+            btnCamera.text = if (activeLang == "hi") "लाइव फोटो" else TranslationHelper.translateText(ctx, "Live Photo", activeLang)
+            btnVideo.text = if (activeLang == "hi") "वीडियो रिकॉर्ड करें" else TranslationHelper.translateText(ctx, "Record Video", activeLang)
+            btnGalleryPhoto.text = if (activeLang == "hi") "गैलरी फोटो" else TranslationHelper.translateText(ctx, "Gallery Photo", activeLang)
+            btnGalleryVideo.text = if (activeLang == "hi") "गैलरी वीडियो" else TranslationHelper.translateText(ctx, "Gallery Video", activeLang)
+            btnSaveDraft.text = if (activeLang == "hi") "ड्राफ्ट सेव करें" else TranslationHelper.translateText(ctx, "Save Draft", activeLang)
+            btnSubmit.text = if (activeLang == "hi") (if (isEditMode) "पोस्ट अपडेट करें" else "पोस्ट करें") else TranslationHelper.translateText(ctx, if (isEditMode) "Update Post" else "Post", activeLang)
 
             if (chipGeneral != null) chipGeneral.text = TranslationHelper.translateText(ctx, "General Farming", activeLang)
             if (chipDiseases != null) chipDiseases.text = TranslationHelper.translateText(ctx, "Crop Diseases", activeLang)

@@ -3,22 +3,80 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="20dp">
+    android:background="@drawable/bg_modern_season_dialog"
+    android:overScrollMode="never"
+    android:padding="22dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvCycleDialogTitle"
-            android:layout_width="wrap_content"
+        <!-- Top Drag Handle -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="18dp"
+            android:background="#334155" />
+
+        <!-- Header Row with Icon Badge & Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🌾 Start New Crop Season"
-            android:textColor="@color/farmer_green_dark"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_neon_circle"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Crop Season Icon"
+                    android:src="@drawable/ic_crop_wheat"
+                    app:tint="#81C784" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvCycleDialogTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="नया फसल सीजन शुरू करें"
+                    android:textColor="#FFFFFF"
+                    android:textSize="19sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvCycleDialogSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="किसान डायरी के लिए नया फसल चक्र जोड़ें"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Divider line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="18dp"
+            android:background="#1E293B" />
 
         <!-- Crop Name Dropdown & Typeable Input -->
         <com.google.android.material.textfield.TextInputLayout
@@ -26,15 +84,26 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select or type crop"
-            android:layout_marginBottom="12dp">
+            android:hint="फसल चुनें या लिखें"
+            android:layout_marginBottom="14dp"
+            app:boxBackgroundColor="#1E293B"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/farmer_green_primary"
+            app:hintTextColor="#81C784"
+            app:endIconTint="#94A3B8">
 
             <AutoCompleteTextView
                 android:id="@+id/actvCycleCrop"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:completionThreshold="1"
                 android:inputType="textCapWords"
-                android:completionThreshold="1" />
+                android:textColor="#FFFFFF"
+                android:textColorHint="#64748B"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Season Name Dropdown & Typeable Input -->
@@ -43,15 +112,26 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select or type season"
-            android:layout_marginBottom="12dp">
+            android:hint="सीजन चुनें या लिखें"
+            android:layout_marginBottom="14dp"
+            app:boxBackgroundColor="#1E293B"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/farmer_green_primary"
+            app:hintTextColor="#81C784"
+            app:endIconTint="#94A3B8">
 
             <AutoCompleteTextView
                 android:id="@+id/actvCycleSeason"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:completionThreshold="1"
                 android:inputType="textCapWords"
-                android:completionThreshold="1" />
+                android:textColor="#FFFFFF"
+                android:textColorHint="#64748B"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Land Area & Unit -->
@@ -59,7 +139,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="22dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilCycleArea"
@@ -67,14 +147,24 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Land Area">
+                android:hint="ज़मीन का क्षेत्रफल"
+                app:boxBackgroundColor="#1E293B"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeColor="@color/farmer_green_primary"
+                app:hintTextColor="#81C784">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etCycleArea"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal"
-                    android:text="2.5" />
+                    android:text="2.5"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#64748B"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -83,14 +173,25 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:hint="Unit">
+                android:layout_marginStart="10dp"
+                android:hint="इकाई"
+                app:boxBackgroundColor="#1E293B"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeColor="@color/farmer_green_primary"
+                app:hintTextColor="#81C784"
+                app:endIconTint="#94A3B8">
 
                 <AutoCompleteTextView
                     android:id="@+id/actvCycleUnit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="none"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#64748B"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
@@ -103,22 +204,30 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCycleCancel"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cancel" />
-
-            <Space
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="रद्द करें"
+                android:textColor="#94A3B8"
+                android:textSize="14sp"
+                app:cornerRadius="12dp"
+                app:strokeColor="#334155"
+                app:strokeWidth="1dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCycleSave"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/farmer_green_dark"
-                android:text="Start Season" />
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1.2"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/farmer_green_primary"
+                android:text="सीजन शुरू करें"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
         </LinearLayout>
 
     </LinearLayout>

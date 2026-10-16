@@ -56,16 +56,22 @@
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
 
-        <activity
-            android:name=".OnboardingActivity"
-            android:exported="true"
-            android:theme="@style/Theme_KisanKendra_NoActionBar"
-            android:windowSoftInputMode="adjustResize">
+        <!-- Firebase Cloud Messaging Metadata -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="mandi_news_channel" />
+
+        <!-- Firebase Messaging Service -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="com.google.firebase.messaging.MESSAGING_EVENT" />
             </intent-filter>
-        </activity>
+        </service>
 
         <activity
             android:name=".MainActivity"
@@ -74,6 +80,10 @@
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
             android:windowSoftInputMode="adjustResize"
             tools:ignore="LockedOrientationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
             <!-- App Links / Deep Linking -->
             <intent-filter android:autoVerify="true">
@@ -117,9 +127,25 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".AdminReportedPostsActivity"
+            android:exported="false"
+            android:label="Admin - Reported Forum Posts"
+            android:parentActivityName=".AdminDashboardActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".AdminManageAlertsActivity"
             android:exported="false"
             android:label="Admin - Manage Screen Alerts"
+            android:parentActivityName=".AdminDashboardActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".AdminNotificationActivity"
+            android:exported="false"
+            android:label="Admin - Broadcast Notifications"
             android:parentActivityName=".AdminDashboardActivity"
             android:theme="@style/Theme_KisanKendra_NoActionBar"
             android:windowSoftInputMode="adjustResize" />
@@ -163,6 +189,29 @@
             android:parentActivityName=".MainActivity"
             android:theme="@style/Theme_KisanKendra_NoActionBar"
             android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
+        <activity
+            android:name=".ImageEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme_KisanKendra_NoActionBar" />
+
+        <activity
+            android:name=".AdminManageTranslationsActivity"
+            android:exported="false"
+            android:label="Master Translations"
+            android:parentActivityName=".AdminDashboardActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".VideoEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme_KisanKendra_NoActionBar" />
 
         <!-- FileProvider for camera capture -->
         <provider

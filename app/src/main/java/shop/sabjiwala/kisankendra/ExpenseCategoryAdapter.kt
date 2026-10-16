@@ -7,6 +7,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -37,7 +39,9 @@ class ExpenseCategoryAdapter(
 
     override fun onBindViewHolder(holder: ExpenseViewHolder, position: Int) {
         val item = items[position]
-        val displayCategoryName = item.categoryName
+        val context = holder.itemView.context
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
+        val displayCategoryName = TranslationHelper.getTranslatedCategoryName(item.categoryName, activeLang, context)
 
         holder.ivIcon.setImageResource(item.iconRes)
         holder.tvName.text = displayCategoryName

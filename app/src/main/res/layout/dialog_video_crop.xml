@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#212121"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📐 Video Crop &amp; Aspect Ratio"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Aspect Ratio Selection Chips -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Select Video Preset Size"
+        android:textColor="#CCCCCC"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupVideoRatio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoRatioOriginal"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Original (Fit)"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoRatio11"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1:1 (Square)"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoRatio45"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4:5 (Portrait)"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoRatio916"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="9:16 (Story/Reel)"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoRatio169"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="16:9 (Landscape)"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <Button
+        android:id="@+id/btnDoneVideoCrop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/farmer_green_primary"
+        android:text="Done"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

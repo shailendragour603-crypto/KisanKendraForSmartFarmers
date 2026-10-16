@@ -39,6 +39,10 @@ object MandiUtils {
         "cauliflower" to "फूलगोभी",
         "cabbage" to "पत्तागोभी",
         "bhindi" to "भिंडी",
+        "lady finger" to "भिंडी",
+        "ladies finger" to "भिंडी",
+        "ladyfinger" to "भिंडी",
+        "ladiesfinger" to "भिंडी",
         "indore" to "इंदौर",
         "ujjain" to "उज्जैन",
         "ratlam" to "रतलाम",
@@ -245,5 +249,11 @@ object MandiUtils {
             sb.append(phonetics[char] ?: char)
         }
         return sb.toString().lowercase()
+    }
+
+    fun translateHindiToEnglish(hindiText: String?): String {
+        if (hindiText.isNullOrBlank()) return ""
+        val key = hindiText.lowercase().trim()
+        return hindiToEnglishMap[key] ?: hindiText
     }
 }

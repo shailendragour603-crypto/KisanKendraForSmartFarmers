@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/card_surface_bg"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#FFCDD2"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Report Header: Reason Badge & Timestamp -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvReportReason"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D32F2F"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="🚩 Inappropriate or Abusive Content" />
+
+            <TextView
+                android:id="@+id/tvReportTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                tools:text="2 hours ago" />
+        </LinearLayout>
+
+        <!-- Reporter and Author UID Info -->
+        <TextView
+            android:id="@+id/tvReportMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp"
+            tools:text="Reporter: user_1234 • Author: author_5678" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="10dp"
+            android:alpha="0.2"
+            android:background="?android:attr/listDivider" />
+
+        <!-- Original Post Preview Container -->
+        <LinearLayout
+            android:id="@+id/layoutPostContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Author Name & Category -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvPostAuthor"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Ramesh Patel • Gujarat" />
+
+                <TextView
+                    android:id="@+id/tvPostCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_expense"
+                    android:backgroundTint="@color/farmer_green_primary"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    tools:text="Crop Protection" />
+            </LinearLayout>
+
+            <!-- Post Description -->
+            <TextView
+                android:id="@+id/tvPostDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="6"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="14sp"
+                tools:text="Detailed description of the reported post content..." />
+
+            <!-- Post Image / Media Preview Frame -->
+            <FrameLayout
+                android:id="@+id/framePostMedia"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginTop="10dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/ivPostMedia"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Post media preview" />
+
+                <ImageView
+                    android:id="@+id/ivVideoPlayIndicator"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_media_play"
+                    android:contentDescription="Video play indicator"
+                    app:tint="@android:color/white"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Post Engagement Stats -->
+            <TextView
+                android:id="@+id/tvPostStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                tools:text="❤️ 12 Likes • 💬 4 Replies • 🔁 2 Shares" />
+
+        </LinearLayout>
+
+        <!-- Missing / Deleted Post Notice -->
+        <TextView
+            android:id="@+id/tvPostMissingNotice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="#FFF3E0"
+            android:padding="10dp"
+            android:text="⚠️ Original forum post was already deleted or not found."
+            android:textColor="#E65100"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:alpha="0.2"
+            android:background="?android:attr/listDivider" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDismissReport"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Dismiss Report"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp"
+                app:icon="@drawable/ic_close"
+                app:iconTint="?android:attr/textColorSecondary"
+                app:strokeColor="?android:attr/textColorSecondary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeletePost"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#D32F2F"
+                android:text="Delete Post"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                app:icon="@drawable/ic_delete"
+                app:iconTint="@android:color/white" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

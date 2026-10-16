@@ -2,34 +2,62 @@
     <string name="app_name">किसान केंद्र</string>
     <string name="app_tagline">समृद्ध किसान • सशक्त भारत</string>
 
-    <string name="nav_home">Tools</string>
-    <string name="nav_mandi">Mandi</string>
-    <string name="nav_news">News</string>
-    <string name="nav_weather">Weather</string>
-    <string name="nav_forum">Forum</string>
+    <!-- Bottom Navigation Labels -->
+    <string name="nav_home">टूल्स</string>
+    <string name="nav_mandi">मंडी भाव</string>
+    <string name="nav_news">न्यूज़</string>
+    <string name="nav_crop_care">समाधान</string>
+    <string name="nav_weather">मौसम</string>
+    <string name="nav_forum">फोरम</string>
 
+    <!-- News Categories -->
     <string name="cat_all">📰 सभी न्यूज़</string>
     <string name="cat_yojana">🏛 सरकारी योजनाएं</string>
     <string name="cat_gyan">💡 कृषि ज्ञान</string>
     <string name="cat_mandi">🌾 बाजार अपडेट</string>
 
+    <!-- Mandi Rate Labels -->
     <string name="mandi_min_price">न्यूनतम भाव</string>
     <string name="mandi_modal_price">मॉडल भाव</string>
     <string name="mandi_max_price">अधिकतम भाव</string>
-    <string name="btn_share" translatable="false">Share</string>
+    <string name="mandi_per_quintal">प्रति क्विंटल</string>
+    <string name="btn_share">शेयर करें</string>
 
+    <!-- Settings Labels -->
     <string name="settings_title">सेटिंग्स</string>
     <string name="settings_lang_title">ऐप भाषा</string>
-    <string name="settings_account_title">खाता</string>
+    <string name="settings_account_title">अकाउंट</string>
     <string name="settings_display_title">डिस्प्ले व थीम</string>
     <string name="settings_help_title">सहायता एवं मदद</string>
     <string name="settings_logout">लॉग आउट</string>
     <string name="settings_name_hint">आपका नाम</string>
-    <string name="settings_save_name" translatable="false">Save Name</string>
+    <string name="settings_save_name">नाम सहेजें</string>
     <string name="settings_delete_account">खाता और सहेजा गया डेटा हटाएं</string>
+    <string name="settings_delete_account_short">खाता हटाएं</string>
+    <string name="settings_edit_name">संपादित करें</string>
+    <string name="settings_cancel">रद्द करें</string>
+    <string name="settings_save">सहेजें</string>
+    <string name="settings_guest_account">अतिथि खाता</string>
+    <string name="settings_guest_subtitle">सभी उपकरणों पर डेटा सिंक करने के लिए साइन इन करें</string>
+    <string name="settings_sign_in_up">साइन इन / साइन अप</string>
+    <string name="settings_google_sign_in">गूगल से साइन इन करें</string>
     <string name="settings_about_app">किसान केंद्र के बारे में</string>
-    <string name="settings_share_app" translatable="false">Share App with Farmers</string>
+    <string name="settings_share_app">किसान मित्रों के साथ ऐप शेयर करें</string>
 
+    <!-- Feedback Strings -->
+    <string name="settings_feedback">फीडबैक / बग रिपोर्ट</string>
+    <string name="feedback_title">हमारी मदद करें</string>
+    <string name="feedback_subtitle">ऐप में कोई नया सुझाव दें या समस्या की रिपोर्ट करें।</string>
+    <string name="feedback_category_label">श्रेणी चुनें</string>
+    <string name="feedback_feature_request">💡 नया फ़ीचर सुझाव</string>
+    <string name="feedback_report_bug">🐛 बग / समस्या रिपोर्ट</string>
+    <string name="feedback_general">💬 सामान्य फीडबैक</string>
+    <string name="feedback_hint">अपनी राय या समस्या का विस्तार से वर्णन करें...</string>
+    <string name="feedback_submit">फीडबैक भेजें</string>
+    <string name="feedback_login_required">फीडबैक भेजने के लिए कृपया साइन इन करें।</string>
+    <string name="feedback_success">धन्यवाद! आपका फीडबैक भेज दिया गया है। 🙏</string>
+
+    <!-- Native Info Titles -->
     <string name="about_title">हमारे बारे में</string>
     <string name="contact_title">संपर्क करें</string>
     <string name="privacy_title">गोपनीयता नीति</string>

@@ -23,7 +23,7 @@
         android:elevation="2dp"
         app:navigationIcon="@drawable/ic_arrow_back"
         app:navigationIconTint="@android:color/white"
-        app:title="My Farming Dashboard"
+        app:title="किसान डायरी डैशबोर्ड"
         app:subtitleTextColor="#E8F5E9"
         app:titleTextColor="@android:color/white"
         app:titleTextAppearance="@style/ToolbarSecondaryTitleStyle" />
@@ -57,6 +57,73 @@
                 android:orientation="vertical"
                 android:padding="12dp">
 
+                <!-- EMPTY STATE CARD FOR NEW USERS -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/layoutDashboardEmptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="12dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    app:strokeColor="@color/card_stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="28dp">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:contentDescription="Empty Report Icon"
+                            android:src="@drawable/ic_chart"
+                            app:tint="@color/farmer_green_primary" />
+
+                        <TextView
+                            android:id="@+id/tvDashboardEmptyTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:gravity="center"
+                            android:text="अभी कोई रिपोर्ट उपलब्ध नहीं है"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvDashboardEmptySubtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="फसल सीजन और खर्च दर्ज करने के बाद पुनः चेक करे।"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="13.5sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddFirstEntryDashboard"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_marginTop="22dp"
+                            android:backgroundTint="@color/farmer_green_primary"
+                            android:text="पहला खर्च / आय दर्ज करें"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="14dp"
+                            app:icon="@drawable/ic_add"
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp"
+                            app:iconTint="#FFFFFF" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- 🟢 SECTION 1: MY FARMING SUMMARY HEADER CARD -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
@@ -84,36 +151,75 @@
                                 android:id="@+id/tvFarmingHeaderTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="🌱 FARM DASHBOARD"
+                                android:drawablePadding="8dp"
+                                android:text="किसान डायरी डैशबोर्ड"
                                 android:textColor="?android:attr/textColorPrimary"
                                 android:textSize="20sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                app:drawableStartCompat="@drawable/ic_diary_book"
+                                app:drawableTint="@color/farmer_green_primary" />
                         </RelativeLayout>
 
-                        <!-- Season/Year Filter Dropdown -->
-                        <com.google.android.material.textfield.TextInputLayout
+                        <!-- Season Selector & Export PDF Button Row -->
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                            app:boxCornerRadiusTopStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxStrokeColor="#1B5E20"
-                            app:hintTextColor="#1B5E20">
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
 
-                            <AutoCompleteTextView
-                                android:id="@+id/actvDashboardSeasonFilter"
-                                android:layout_width="match_parent"
+                            <!-- Season/Year Filter Dropdown -->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:inputType="none"
-                                android:text="All-Time"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
-                                android:hint="Select Season / Year" />
+                                android:layout_weight="1"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp"
+                                app:boxStrokeColor="#1B5E20"
+                                app:hintTextColor="#1B5E20">
 
-                        </com.google.android.material.textfield.TextInputLayout>
+                                <AutoCompleteTextView
+                                    android:id="@+id/actvDashboardSeasonFilter"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none"
+                                    android:text="सभी समय"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:hint="ऋतु / वर्ष चुनें" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <!-- Modern Compact Export PDF Button -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnExportPdfReport"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="48dp"
+                                android:layout_marginStart="8dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="0dp"
+                                android:text="PDF"
+                                android:textColor="@color/farmer_green_dark"
+                                android:textSize="12.5sp"
+                                android:textStyle="bold"
+                                app:cornerRadius="10dp"
+                                app:strokeColor="@color/farmer_green_dark"
+                                app:strokeWidth="1.5dp"
+                                app:icon="@drawable/ic_pdf_download"
+                                app:iconGravity="textStart"
+                                app:iconPadding="4dp"
+                                app:iconSize="18dp"
+                                app:iconTint="@color/farmer_green_dark" />
+
+                        </LinearLayout>
 
                         <!-- 4 KPI Cards Grid (2x2) -->
                         <GridLayout
@@ -145,7 +251,7 @@
                                         android:id="@+id/tvLabelTotalArea"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Total Area"
+                                        android:text="कुल कृषि क्षेत्र"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="13sp"
                                         android:textStyle="bold" />
@@ -185,7 +291,7 @@
                                         android:id="@+id/tvLabelTotalExpenses"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Total Expenses"
+                                        android:text="कुल खर्च"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="13sp"
                                         android:textStyle="bold" />
@@ -225,7 +331,7 @@
                                         android:id="@+id/tvLabelTotalIncome"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Total Income"
+                                        android:text="कुल आमदनी"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="13sp"
                                         android:textStyle="bold" />
@@ -265,7 +371,7 @@
                                         android:id="@+id/tvLabelEstimatedProfit"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Estimated Profit"
+                                        android:text="अनुमानित मुनाफा"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="13sp"
                                         android:textStyle="bold" />
@@ -316,10 +422,13 @@
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentStart="true"
                                 android:layout_toStartOf="@+id/cardProfitMarginBadge"
-                                android:text="📊 Financial Summary"
+                                android:drawablePadding="8dp"
+                                android:text="कमाई, खर्च और मुनाफा"
                                 android:textColor="?android:attr/textColorPrimary"
                                 android:textSize="18sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                app:drawableStartCompat="@drawable/ic_chart"
+                                app:drawableTint="@color/farmer_green_primary" />
 
                             <!-- Profit Margin Badge -->
                             <com.google.android.material.card.MaterialCardView
@@ -339,7 +448,7 @@
                                     android:layout_height="wrap_content"
                                     android:paddingHorizontal="12dp"
                                     android:paddingVertical="6dp"
-                                    android:text="Profit Margin 0%"
+                                    android:text="मुनाफा मार्जिन 0%"
                                     android:textColor="@color/price_modal_text"
                                     android:textSize="13sp"
                                     android:textStyle="bold"
@@ -471,11 +580,14 @@
                             android:id="@+id/tvSectionCropPerformanceTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🌾 Crop Profitability &amp; Yield"
+                            android:layout_marginBottom="10dp"
+                            android:drawablePadding="8dp"
+                            android:text="फसल अनुसार मुनाफा"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:layout_marginBottom="10dp" />
+                            app:drawableStartCompat="@drawable/ic_trend_up"
+                            app:drawableTint="@color/farmer_green_primary" />
 
                         <!-- Graph Metric Toggle Group: Total Profit vs Profit / Acre -->
                         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -563,10 +675,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentStart="true"
-                                android:text="💸 Major Expenses Breakdown"
+                                android:drawablePadding="8dp"
+                                android:text="सबसे ज्यादा खर्च हुआ"
                                 android:textColor="?android:attr/textColorPrimary"
                                 android:textSize="18sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                app:drawableStartCompat="@drawable/ic_header_expense"
+                                app:drawableTint="@color/farmer_green_primary" />
 
                             <TextView
                                 android:id="@+id/tvMajorExpensesTotalAmount"
@@ -639,11 +754,14 @@
                             android:id="@+id/tvSectionStageExpenseTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📈 Stage-Wise Expense Trend"
+                            android:layout_marginBottom="10dp"
+                            android:drawablePadding="8dp"
+                            android:text="फसल चरण अनुसार खर्च"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:layout_marginBottom="10dp" />
+                            app:drawableStartCompat="@drawable/ic_crop_stage_chart"
+                            app:drawableTint="@color/farmer_green_primary" />
 
                         <!-- Stage Line Chart -->
                         <shop.sabjiwala.kisankendra.views.CropStageExpenseChartView
@@ -682,11 +800,14 @@
                             android:id="@+id/tvSectionCropExpenseTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💸 Crop Expense &amp; Cost / Acre"
+                            android:layout_marginBottom="10dp"
+                            android:drawablePadding="8dp"
+                            android:text="फसल आधारित खर्च"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:layout_marginBottom="10dp" />
+                            app:drawableStartCompat="@drawable/ic_sprout"
+                            app:drawableTint="@color/farmer_green_primary" />
 
                         <!-- Graph Metric Toggle Group: Total Expense vs Expense / Acre -->
                         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -753,10 +874,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
-                            android:text="💡 Key Insights"
+                            android:drawablePadding="8dp"
+                            android:text="सुझाव एवं निष्कर्ष"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            app:drawableStartCompat="@drawable/ic_info"
+                            app:drawableTint="@color/farmer_green_primary" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -930,11 +1054,14 @@
                             android:id="@+id/tvSectionRecentLogTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📋 Recent Activity Log"
+                            android:layout_marginBottom="10dp"
+                            android:drawablePadding="8dp"
+                            android:text="हाल की डायरी गतिविधि"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:layout_marginBottom="10dp" />
+                            app:drawableStartCompat="@drawable/ic_recent_transactions"
+                            app:drawableTint="@color/farmer_green_primary" />
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvRecentEntries"
@@ -942,6 +1069,21 @@
                             android:layout_height="wrap_content"
                             android:nestedScrollingEnabled="false"
                             tools:listitem="@layout/item_recent_diary_entry" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnViewAllEntries"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="सभी डायरी एंट्री देखें"
+                            android:textColor="@color/farmer_green_dark"
+                            app:strokeColor="@color/farmer_green_primary"
+                            app:icon="@drawable/ic_arrow_back"
+                            app:iconGravity="textEnd"
+                            app:iconTint="@color/farmer_green_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <!-- Decorative Farm Landscape Footer Banner -->
                         <View

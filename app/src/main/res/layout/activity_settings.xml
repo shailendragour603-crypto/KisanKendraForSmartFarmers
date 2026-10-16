@@ -402,6 +402,82 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- 🔹 CARD: Language Selection -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_light"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:drawablePadding="10dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/settings_lang_title"
+                                android:textColor="@color/farmer_green_dark"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                app:drawableStartCompat="@drawable/ic_info" />
+
+                            <TextView
+                                android:id="@+id/tvLanguageStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="हिंदी (Default) / English"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchEnglish"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="English"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvCurrentLanguage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="6dp"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:text="वर्तमान भाषा: हिंदी (Default)" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 🔹 CARD 3: Display Settings -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

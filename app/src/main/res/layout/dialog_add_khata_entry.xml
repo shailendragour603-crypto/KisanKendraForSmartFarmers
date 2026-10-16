@@ -14,7 +14,7 @@
             android:id="@+id/tvKhataDialogTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📖 Add New Entry"
+            android:text="📖 नई एन्ट्री जोड़ें"
             android:textColor="@color/farmer_green_dark"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -35,7 +35,7 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="💸 Expense (-)"
+                android:text="💸 खर्च (-)"
                 android:textColor="#C62828"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -45,7 +45,7 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="💰 Income (+)"
+                android:text="💰 आय (+)"
                 android:textColor="#2E7D32"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -57,7 +57,7 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Rs."
+            android:hint="राशि"
             android:layout_marginBottom="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -66,7 +66,9 @@
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Crop Season Dropdown -->
@@ -75,14 +77,16 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select Crop Season"
+            android:hint="फसल का मौसम चुनें"
             android:layout_marginBottom="12dp">
 
             <AutoCompleteTextView
                 android:id="@+id/actvKhataCrop"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
+                android:inputType="none"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Category Dropdown -->
@@ -91,14 +95,16 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Category"
+            android:hint="श्रेणी"
             android:layout_marginBottom="12dp">
 
             <AutoCompleteTextView
                 android:id="@+id/actvKhataCategory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
+                android:inputType="none"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Crop Stage Dropdown -->
@@ -107,14 +113,16 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Crop Stage"
+            android:hint="फसल का चरण"
             android:layout_marginBottom="12dp">
 
             <AutoCompleteTextView
                 android:id="@+id/actvKhataStage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
+                android:inputType="none"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Note/Description -->
@@ -123,14 +131,16 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Note / Details"
+            android:hint="नोट / विवरण"
             android:layout_marginBottom="20dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etKhataNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences" />
+                android:inputType="textCapSentences"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Action Buttons -->
@@ -145,7 +155,7 @@
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cancel" />
+                android:text="रद्द करें" />
 
             <Space
                 android:layout_width="0dp"
@@ -157,7 +167,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/farmer_green_dark"
-                android:text="Save Entry" />
+                android:text="एन्ट्री सहेजें" />
         </LinearLayout>
 
     </LinearLayout>

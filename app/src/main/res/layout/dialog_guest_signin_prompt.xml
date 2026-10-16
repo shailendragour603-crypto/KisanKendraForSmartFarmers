@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_neon_fade_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="28dp">
+
+    <!-- Kisan AI Name Above Logo -->
+    <TextView
+        android:id="@+id/tvGuestTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:shadowColor="#00FF66"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="8"
+        android:text="Kisan AI"
+        android:textColor="#00FF66"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <!-- AI Bot Logo with Neon Fading Glow Effect -->
+    <FrameLayout
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_neon_fade_glow"
+        android:padding="16dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Kisan AI Logo"
+            android:src="@drawable/ic_kisan_ai_logo" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvGuestMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:gravity="center"
+        android:text="Kisan AI is ready to help you, Please sign in."
+        android:textColor="#E2E8F0"
+        android:textSize="14.5sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelGuest"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textColor="#94A3B8" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSignInGuest"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="#00FF66"
+            android:text="Sign In"
+            android:textColor="#0F172A"
+            android:textStyle="bold"
+            app:cornerRadius="25dp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -16,16 +16,16 @@ data class CropFertilizerResult(
 object FertilizerUtils {
 
     val crops = listOf(
-        "Wheat",
-        "Paddy / Rice",
-        "Soybean",
-        "Cotton",
-        "Mustard",
-        "Maize",
-        "Gram / Chickpea",
-        "Potato",
-        "Sugarcane",
-        "Onion"
+        "गेहूँ",
+        "धान / चावल",
+        "सोयाबीन",
+        "कपास",
+        "सरसों",
+        "मक्का",
+        "चना",
+        "आलू",
+        "गन्ना",
+        "प्याज़"
     )
 
     val units = listOf("Acre", "Bigha", "Hectare")

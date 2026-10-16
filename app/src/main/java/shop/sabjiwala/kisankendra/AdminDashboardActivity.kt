@@ -23,6 +23,7 @@ import shop.sabjiwala.kisankendra.databinding.ActivityAdminDashboardBinding
 import shop.sabjiwala.kisankendra.model.MandiRecord
 import shop.sabjiwala.kisankendra.model.parseMandiRecordFromMap
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -63,16 +64,105 @@ class AdminDashboardActivity : AppCompatActivity() {
             startActivity(Intent(this, AdminFeedbackActivity::class.java))
         }
 
+        binding.cardManageReportedPosts.setOnClickListener {
+            startActivity(Intent(this, AdminReportedPostsActivity::class.java))
+        }
+
         binding.cardPostNews.setOnClickListener {
             startActivity(Intent(this, AdminCreateNewsActivity::class.java))
+        }
+
+        binding.cardEmergencySyncMandi.setOnClickListener {
+            triggerEmergencyApiSync()
         }
 
         binding.cardUploadMandiJson.setOnClickListener {
             jsonFilePickerLauncher.launch("application/json")
         }
 
+        binding.cardManageTranslations.setOnClickListener {
+            startActivity(Intent(this, AdminManageTranslationsActivity::class.java))
+        }
+
         binding.cardManageScreenAlerts.setOnClickListener {
             startActivity(Intent(this, AdminManageAlertsActivity::class.java))
+        }
+
+        binding.cardManageNotifications.setOnClickListener {
+            startActivity(Intent(this, AdminNotificationActivity::class.java))
+        }
+    }
+
+    private fun triggerEmergencyApiSync() {
+        Toast.makeText(this, "⚡ Starting Emergency Mandi API Sync & Auto-Dictionary Builder...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val repository = MandiRepository()
+                val apiKey = "579b464db66ec23bdd000001f0acdf7b0b4943fe5b9998c1304ba55f"
+
+                // Read live records first, then fetch previous/yesterday records to compare price changes accurately
+                val liveRecords = repository.fetchMandiRatesFromApi(apiKey = apiKey, limit = 10000)
+                val previousRecords = repository.getPreviousDayRecords(liveRecords)
+
+                if (liveRecords.isNotEmpty()) {
+                    val recordsWithDiff = calculatePriceDifferences(liveRecords, previousRecords)
+                    repository.saveMandiRatesToFirestore(recordsWithDiff)
+
+                    val uniqueStates = liveRecords.mapNotNull { it.state }.distinct().size
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@AdminDashboardActivity,
+                            "✅ Emergency Sync Successful! Synced ${liveRecords.size} records across $uniqueStates states.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@AdminDashboardActivity,
+                            "⚠️ API returned 0 records. Please check API key or try again later.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@AdminDashboardActivity,
+                        "❌ Emergency Sync Failed: ${e.localizedMessage}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun calculatePriceDifferences(
+        currentList: List<MandiRecord>,
+        previousList: List<MandiRecord>
+    ): List<MandiRecord> {
+        val previousPriceMap = previousList.associateBy { record ->
+            "${record.state.orEmpty().trim()}_${record.market.orEmpty().trim()}_${record.commodity.orEmpty().trim()}_${record.variety.orEmpty().trim()}".lowercase()
+        }
+
+        return currentList.map { current ->
+            val key = "${current.state.orEmpty().trim()}_${current.market.orEmpty().trim()}_${current.commodity.orEmpty().trim()}_${current.variety.orEmpty().trim()}".lowercase()
+            val previousRecord = previousPriceMap[key]
+
+            val currentPrice = current.maxPrice?.toDoubleOrNull() ?: current.modalPrice?.toDoubleOrNull() ?: 0.0
+            val previousPrice = previousRecord?.maxPrice?.toDoubleOrNull() ?: previousRecord?.modalPrice?.toDoubleOrNull()
+
+            val computedDiff = if (previousPrice != null && previousPrice > 0.0) {
+                currentPrice - previousPrice
+            } else {
+                null
+            }
+
+            current.apply {
+                priceDiff = computedDiff
+            }
         }
     }
 
@@ -105,30 +195,19 @@ class AdminDashboardActivity : AppCompatActivity() {
                 }
 
                 if (!records.isNullOrEmpty()) {
-                    val serializedRecords = records.map { record ->
-                        hashMapOf(
-                            "state" to record.state,
-                            "district" to record.district,
-                            "market" to record.market,
-                            "commodity" to record.commodity,
-                            "variety" to record.variety,
-                            "minPrice" to record.minPrice,
-                            "maxPrice" to record.maxPrice,
-                            "modalPrice" to record.modalPrice,
-                            "arrivalDate" to record.arrivalDate,
-                            "priceDiff" to record.priceDiff
-                        )
-                    }
+                    val repository = MandiRepository()
+                    val previousRecords = repository.getPreviousDayRecords(records)
+                    val recordsWithDiff = calculatePriceDifferences(records, previousRecords)
 
-                    val data = hashMapOf(
-                        "updatedAt" to Timestamp.now(),
-                        "records" to serializedRecords
-                    )
-
-                    firestore.collection("mandi_cache").document("latest").set(data, SetOptions.merge()).await()
+                    repository.saveMandiRatesToFirestore(recordsWithDiff)
+                    val uniqueStates = recordsWithDiff.mapNotNull { it.state }.distinct().size
 
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@AdminDashboardActivity, "Successfully uploaded ${records.size} mandi rates to Firebase!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@AdminDashboardActivity,
+                            "Successfully uploaded and synced ${records.size} mandi rates across $uniqueStates states with price trend comparisons!",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 } else {
                     withContext(Dispatchers.Main) {

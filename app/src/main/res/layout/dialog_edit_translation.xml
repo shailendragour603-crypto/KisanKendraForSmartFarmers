@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Key Field -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilTransKey"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:boxStrokeColor="@color/farmer_green_primary"
+        app:hintEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTransKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="English Key (e.g. Indore / Wheat)"
+            android:inputType="text"
+            android:textColor="?android:attr/textColorPrimary" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Value Field -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilTransValue"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:boxStrokeColor="@color/farmer_green_primary"
+        app:hintEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTransValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Translation (e.g. इंदौर / गेहूँ)"
+            android:inputType="text"
+            android:textColor="?android:attr/textColorPrimary" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

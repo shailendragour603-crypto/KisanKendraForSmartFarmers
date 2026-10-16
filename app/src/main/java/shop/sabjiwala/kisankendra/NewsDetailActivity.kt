@@ -17,11 +17,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.AdListener
+import com.google.android.ads.nativetemplates.TemplateView
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.AdListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -290,43 +290,34 @@ class NewsDetailActivity : AppCompatActivity() {
     }
 
     private fun loadAllArticleAds() {
-        loadBannerIntoContainer(binding.adTopArticleContainer, binding.cardTopArticleAd)
-        loadBannerIntoContainer(binding.adInArticleContainer, binding.adInArticleContainer.parent?.parent as? View)
-        loadBannerIntoContainer(binding.adMidArticleContainer, binding.adMidArticleContainer.parent?.parent as? View)
-        loadBannerIntoContainer(binding.adBottomArticleContainer, binding.adBottomArticleContainer.parent?.parent as? View)
-    }
-
-    private fun loadBannerIntoContainer(container: FrameLayout, cardView: View?) {
-        container.post {
-            try {
-                cardView?.visibility = View.GONE
-                val adView = AdView(this).apply {
-                    adUnitId = "ca-app-pub-3054731531860427/9592937417"
-                    val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@NewsDetailActivity, getAdWidth())
-                    setAdSize(adSize)
-                    adListener = object : AdListener() {
-                        override fun onAdLoaded() {
-                            cardView?.visibility = View.VISIBLE
-                        }
-
-                        override fun onAdFailedToLoad(error: LoadAdError) {
-                            cardView?.visibility = View.GONE
-                        }
-                    }
-                }
-                container.removeAllViews()
-                container.addView(adView)
-                adView.loadAd(AdRequest.Builder().build())
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        binding.btnCloseTopAd.setOnClickListener {
+            binding.cardTopArticleAd.visibility = View.GONE
         }
+        loadNativeAdIntoContainer(binding.adTopArticleTemplate, binding.cardTopArticleAd)
+        loadNativeAdIntoContainer(binding.adInArticleTemplate, binding.adInArticleTemplate.parent?.parent as? View)
+        loadNativeAdIntoContainer(binding.adMidArticleTemplate, binding.cardMidArticleAd)
+        loadNativeAdIntoContainer(binding.adBottomArticleTemplate, binding.adBottomArticleTemplate.parent?.parent as? View)
     }
 
-    private fun getAdWidth(): Int {
-        val displayMetrics = resources.displayMetrics
-        val density = displayMetrics.density
-        return (displayMetrics.widthPixels / density).toInt()
+    private fun loadNativeAdIntoContainer(templateView: TemplateView, cardView: View?) {
+        try {
+            cardView?.visibility = View.GONE
+            val adLoader = AdLoader.Builder(this, "ca-app-pub-3054731531860427/8792970999")
+                .forNativeAd { nativeAd ->
+                    templateView.setNativeAd(nativeAd)
+                    cardView?.visibility = View.VISIBLE
+                }
+                .withAdListener(object : AdListener() {
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        cardView?.visibility = View.GONE
+                    }
+                })
+                .build()
+            adLoader.loadAd(AdRequest.Builder().build())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            cardView?.visibility = View.GONE
+        }
     }
 
     private fun displayDescription(desc: String) {
@@ -364,7 +355,7 @@ class NewsDetailActivity : AppCompatActivity() {
         binding.tvDetailDate.text = if (date.isNotBlank()) "📅 $date" else "📅 Today"
 
         val activeLang = LocaleHelper.getPersistedLanguage(this)
-        if (activeLang != "en") {
+        if (activeLang != "hi") {
             lifecycleScope.launch(Dispatchers.Main) {
                 if (articleTitle.isNotBlank()) {
                     val translatedTitle = TranslationHelper.translateText(this@NewsDetailActivity, articleTitle, activeLang)
@@ -472,5 +463,17 @@ class NewsDetailActivity : AppCompatActivity() {
             date = formattedDate,
             id = item.id
         )
+    }
+
+    override fun onDestroy() {
+        try {
+            binding.adTopArticleTemplate.destroyNativeAd()
+            binding.adInArticleTemplate.destroyNativeAd()
+            binding.adMidArticleTemplate.destroyNativeAd()
+            binding.adBottomArticleTemplate.destroyNativeAd()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        super.onDestroy()
     }
 }

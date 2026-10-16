@@ -77,16 +77,11 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    <LinearLayout
         android:id="@+id/swipeRefreshWeather"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ScrollView
-            android:id="@+id/scrollViewWeather"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -99,8 +94,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
-                android:clipChildren="false"
-                android:clipToPadding="false"
                 app:cardBackgroundColor="@color/weather_hero_card_bg"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="4dp"
@@ -108,10 +101,9 @@
                 app:strokeWidth="1dp">
 
                 <LinearLayout
+                    android:id="@+id/llWeatherHeroBg"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
                     android:orientation="vertical"
                     android:padding="12dp">
 
@@ -494,6 +486,5 @@
                 android:paddingBottom="80dp" />
 
         </LinearLayout>
-    </ScrollView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
 </LinearLayout>

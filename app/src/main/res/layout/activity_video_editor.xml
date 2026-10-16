@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootVideoEditor"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Top Action Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarEditor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="#121212"
+        app:title="Edit Video"
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/ic_close"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingEnd="8dp">
+
+            <ImageButton
+                android:id="@+id/btnUndo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Undo"
+                android:padding="8dp"
+                android:src="@drawable/ic_undo"
+                app:tint="@android:color/white" />
+
+            <ImageButton
+                android:id="@+id/btnRedo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Redo"
+                android:padding="8dp"
+                android:src="@drawable/ic_redo"
+                app:tint="@android:color/white" />
+
+            <ImageButton
+                android:id="@+id/btnReset"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Reset"
+                android:padding="8dp"
+                android:src="@drawable/ic_delete"
+                app:tint="#FF5252" />
+
+            <Button
+                android:id="@+id/btnExport"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/farmer_green_primary"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="0dp"
+                android:text="Export"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Video Player Preview Area -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:surface_type="texture_view"
+        app:resize_mode="fit"
+        app:use_controller="true"
+        app:layout_constraintTop_toBottomOf="@id/toolbarEditor"
+        app:layout_constraintBottom_toTopOf="@id/layoutExportProgress"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Export Progress Overlay Container -->
+    <LinearLayout
+        android:id="@+id/layoutExportProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/panelSubToolsContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tvExportStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Processing video export... Please wait"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+
+        <ProgressBar
+            android:id="@+id/progressBarExport"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:indeterminate="true" />
+    </LinearLayout>
+
+    <!-- Dynamic Inline Sub-Panel Container -->
+    <FrameLayout
+        android:id="@+id/panelSubToolsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1A1A1A"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/toolsScrollView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Bottom Horizontal Main Tool Bar -->
+    <HorizontalScrollView
+        android:id="@+id/toolsScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#121212"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/toolsLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp">
+
+            <!-- Crop & Aspect Ratio Tool -->
+            <LinearLayout
+                android:id="@+id/btnCropRatio"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_trim"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Crop"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Audio & Music Tool -->
+            <LinearLayout
+                android:id="@+id/btnAudio"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_music"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Audio"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Playback Speed Tool -->
+            <LinearLayout
+                android:id="@+id/btnSpeed"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_speed"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Speed"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Trim Video Tool -->
+            <LinearLayout
+                android:id="@+id/btnTrim"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Trim"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Rotate Tool -->
+            <LinearLayout
+                android:id="@+id/btnRotate"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_rotate_right"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Rotate"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Adjustments / Filters Tool -->
+            <LinearLayout
+                android:id="@+id/btnAdjust"
+                android:layout_width="72dp"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_brightness"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Adjust"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

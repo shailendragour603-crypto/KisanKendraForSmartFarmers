@@ -59,6 +59,9 @@ import com.google.android.gms.ads.AdListener
 import shop.sabjiwala.kisankendra.databinding.ActivityMainBinding
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
 import shop.sabjiwala.kisankendra.utils.TranslationHelper
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -183,6 +186,21 @@ class MainActivity : AppCompatActivity() {
             loadRewardedAd()
         }
 
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val currentLang = LocaleHelper.getPersistedLanguage(this@MainActivity)
+                TranslationHelper.syncMasterDictionaryFromFirestore(this@MainActivity, currentLang)
+                if (currentLang != "hi") {
+                    TranslationHelper.syncMasterDictionaryFromFirestore(this@MainActivity, "hi")
+                }
+                if (currentLang != "en") {
+                    TranslationHelper.syncMasterDictionaryFromFirestore(this@MainActivity, "en")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         setupOnBackPressedDispatcher()
 
         window.decorView.postDelayed({
@@ -197,147 +215,160 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        subscribeToNotificationTopics()
+        listenForLivePushNotifications()
+
         // Load requested tab or HomeFragment as default landing screen
         if (savedInstanceState == null) {
-            val selectedTabId = intent.getIntExtra("select_tab_id", R.id.nav_home)
-            binding.bottomNavigation.selectedItemId = selectedTabId
+            if (intent.hasExtra("target_screen")) {
+                handleNotificationNavigation(intent)
+            } else {
+                val selectedTabId = intent.getIntExtra("select_tab_id", R.id.nav_home)
+                binding.bottomNavigation.selectedItemId = selectedTabId
+            }
         }
     }
 
-    data class LanguageOption(val code: String, val nativeName: String)
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationNavigation(intent)
+    }
 
-    private val languages = listOf(
-        LanguageOption("en", "English"),
-        LanguageOption("hi", "हिंदी"),
-        LanguageOption("mr", "मराठी"),
-        LanguageOption("pa", "ਪੰਜਾਬੀ"),
-        LanguageOption("ta", "தமிழ்"),
-        LanguageOption("ml", "മലയാളം"),
-        LanguageOption("bn", "বাংলা"),
-        LanguageOption("kn", "कन्नड"),
-        LanguageOption("or", "ଓଡ଼ିଆ"),
-        LanguageOption("as", "असमिया"),
-        LanguageOption("gu", "ગુજરાતી"),
-        LanguageOption("te", "తెలుగు")
-    )
+    private fun handleNotificationNavigation(intent: Intent?) {
+        val targetScreen = intent?.getStringExtra("target_screen")
+        if (!targetScreen.isNullOrEmpty()) {
+            val navTabId = when (targetScreen.lowercase()) {
+                "mandi", "mandi_updates" -> R.id.nav_mandi
+                "news", "news_updates" -> R.id.nav_news
+                "crop_care", "weather", "advisory", "advisory_updates" -> R.id.nav_crop_care
+                "forum" -> R.id.nav_forum
+                else -> R.id.nav_home
+            }
+            binding.bottomNavigation.selectedItemId = navTabId
+        }
+    }
+
+    private fun subscribeToNotificationTopics() {
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("all_users")
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("FCM", "Successfully subscribed to 'all_users' topic")
+                    } else {
+                        Log.w("FCM", "Failed to subscribe to 'all_users' topic", task.exception)
+                    }
+                }
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("mandi_updates")
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("news_updates")
+        } catch (e: Exception) {
+            Log.e("FCM", "Error subscribing to topics: ${e.localizedMessage}")
+        }
+    }
+
+    private fun listenForLivePushNotifications() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val startTime = System.currentTimeMillis()
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("push_notifications")
+            .whereGreaterThan("timestamp", startTime)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null) return@addSnapshotListener
+                for (change in snapshots.documentChanges) {
+                    if (change.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        val doc = change.document
+                        val sentBy = doc.getString("sentBy")
+                        if (sentBy == currentUserId) continue
+
+                        val title = doc.getString("title") ?: "मंडी भाव अपडेट"
+                        val body = doc.getString("body") ?: "आज के ताज़ा भाव देखें।"
+                        val targetScreen = doc.getString("targetScreen")
+
+                        showInAppNotification(title, body, targetScreen)
+                    }
+                }
+            }
+    }
+
+    private fun showInAppNotification(title: String, body: String, targetScreen: String?) {
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val channelId = "mandi_news_channel"
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = android.app.NotificationChannel(
+                    channelId,
+                    "Mandi & News Updates",
+                    android.app.NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Notifications for Mandi prices, agricultural news, and advisories"
+                    enableVibration(true)
+                    enableLights(true)
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                if (!targetScreen.isNullOrEmpty()) {
+                    putExtra("target_screen", targetScreen)
+                }
+            }
+
+            val requestCode = System.currentTimeMillis().toInt()
+            val pendingIntent = android.app.PendingIntent.getActivity(
+                this,
+                requestCode,
+                intent,
+                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val builder = androidx.core.app.NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+                .setAutoCancel(true)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(androidx.core.app.NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(pendingIntent)
+
+            notificationManager.notify(requestCode, builder.build())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
 
     private fun setupLanguageDropdown() {
         updateLanguageDropdownText()
 
-        binding.btnLanguageDropdown.setOnClickListener { anchorView ->
-            val context = this
-            val density = resources.displayMetrics.density
-            val popupWidth = (145 * density).toInt()
-
-            val scrollView = ScrollView(context).apply {
-                isVerticalScrollBarEnabled = true
-                overScrollMode = View.OVER_SCROLL_NEVER
-            }
-
-            val popupView = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                background = ContextCompat.getDrawable(context, R.drawable.bg_compact_popup)
-                val pVert = (4 * density).toInt()
-                val pHoriz = (2 * density).toInt()
-                setPadding(pHoriz, pVert, pHoriz, pVert)
-            }
-            scrollView.addView(popupView)
-
-            val popupWindow = PopupWindow(
-                scrollView,
-                popupWidth,
-                (280 * density).toInt(),
-                true
-            ).apply {
-                elevation = 12 * density
-                isOutsideTouchable = true
-                isFocusable = true
-            }
-
+        binding.btnLanguageDropdown.setOnClickListener {
             val currentLangCode = LocaleHelper.getPersistedLanguage(this)
+            val newLangCode = if (currentLangCode == "en") "hi" else "en"
 
-            for ((index, lang) in languages.withIndex()) {
-                if (index > 0) {
-                    val divider = View(context).apply {
-                        layoutParams = LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            (1 * density).toInt()
-                        ).apply {
-                            val mH = (6 * density).toInt()
-                            setMargins(mH, 0, mH, 0)
-                        }
-                        setBackgroundColor(Color.parseColor("#323236"))
-                    }
-                    popupView.addView(divider)
-                }
+            LocaleHelper.setLocale(this, newLangCode)
+            updateLanguageDropdownText()
 
-                val isSelected = lang.code == currentLangCode
+            val toastMsg = if (newLangCode == "en") "Language switched to English" else "भाषा बदलकर हिंदी की गई"
+            Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show()
 
-                val row = LinearLayout(context).apply {
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                    background = ContextCompat.getDrawable(context, android.R.drawable.list_selector_background)
-                    val padH = (12 * density).toInt()
-                    val padV = (10 * density).toInt()
-                    setPadding(padH, padV, padH, padV)
-                    isClickable = true
-                    isFocusable = true
-                }
-
-                val tv = TextView(context).apply {
-                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                    text = lang.nativeName
-                    setTextColor(if (isSelected) Color.parseColor("#81C784") else Color.WHITE)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                    typeface = if (isSelected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-                }
-
-                row.addView(tv)
-
-                if (isSelected) {
-                    val checkIv = ImageView(context).apply {
-                        val size = (16 * density).toInt()
-                        layoutParams = LinearLayout.LayoutParams(size, size)
-                        setImageResource(R.drawable.ic_check)
-                        ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(Color.parseColor("#81C784")))
-                    }
-                    row.addView(checkIv)
-                }
-
-                row.setOnClickListener {
-                    popupWindow.dismiss()
-                    if (lang.code != currentLangCode) {
-                        LocaleHelper.setLocale(this, lang.code)
-                        updateLanguageDropdownText()
-
-                        val currentTabId = binding.bottomNavigation.selectedItemId
-                        val intent = Intent(this, MainActivity::class.java).apply {
-                            putExtra("select_tab_id", currentTabId)
-                            putExtra("skip_splash", true)
-                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                        }
-                        startActivity(intent)
-                        finish()
-                    }
-                }
-
-                popupView.addView(row)
+            val currentTabId = binding.bottomNavigation.selectedItemId
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("select_tab_id", currentTabId)
+                putExtra("skip_splash", true)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
-
-            val anchorWidth = if (anchorView.width > 0) anchorView.width else (80 * density).toInt()
-            val xOffset = -(popupWidth - anchorWidth)
-            popupWindow.showAsDropDown(anchorView, xOffset, (4 * density).toInt())
+            startActivity(intent)
+            finish()
         }
     }
 
     private fun updateLanguageDropdownText() {
         val currentCode = LocaleHelper.getPersistedLanguage(this)
-        val match = languages.firstOrNull { it.code == currentCode } ?: languages[0]
-        binding.btnLanguageDropdown.text = "${match.nativeName} ▾"
+        val isEnglish = currentCode == "en"
+        binding.btnLanguageDropdown.text = if (isEnglish) "English ⇄" else "हिंदी ⇄"
     }
 
     private fun setupBottomNavigation() {
@@ -348,7 +379,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home -> HomeFragment()
                 R.id.nav_news -> NewsFragment()
                 R.id.nav_mandi -> MandiFragment()
-                R.id.nav_weather -> WeatherFragment()
+                R.id.nav_crop_care -> CropCareFragment()
                 R.id.nav_forum -> ForumFragment()
                 else -> null
             }
@@ -528,6 +559,12 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         if (permissionsNeeded.isNotEmpty()) {
             requestPermissionsLauncher.launch(permissionsNeeded.toTypedArray())

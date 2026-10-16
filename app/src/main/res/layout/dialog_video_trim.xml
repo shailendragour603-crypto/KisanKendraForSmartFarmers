@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#212121"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✂️ Video Trimming"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Start Cut SeekBar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="Start Cut"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp" />
+
+        <SeekBar
+            android:id="@+id/seekBarTrimStart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/tvTrimStartVal"
+            android:layout_width="45dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="00:00"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- End Cut SeekBar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="End Cut"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp" />
+
+        <SeekBar
+            android:id="@+id/seekBarTrimEnd"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="100" />
+
+        <TextView
+            android:id="@+id/tvTrimEndVal"
+            android:layout_width="45dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="00:00"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDoneTrim"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/farmer_green_primary"
+        android:text="Done"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

@@ -136,35 +136,50 @@ class MandiAdapter(
         val emoji = MandiUtils.getEmoji(item.commodity)
         mandiHolder.tvEmoji.text = emoji
 
-        val rawMarket = item.market.orEmpty().trim()
-        val rawDistrict = item.district.orEmpty().trim()
-        val displayLoc = if (rawMarket.equals(rawDistrict, ignoreCase = true) || rawDistrict.isBlank()) {
-            rawMarket.ifBlank { rawDistrict }
+        val rawCommodityBase = item.commodity.orEmpty().trim()
+        val rawVariety = item.variety.orEmpty().trim()
+
+        val rawCommodity = if (rawVariety.isNotBlank() &&
+            !rawVariety.equals("Other", ignoreCase = true) &&
+            !rawVariety.equals("FAQ", ignoreCase = true) &&
+            !rawCommodityBase.lowercase().contains(rawVariety.lowercase())) {
+            "$rawCommodityBase ($rawVariety)"
         } else {
-            "$rawMarket, $rawDistrict"
+            rawCommodityBase
         }
 
-        mandiHolder.tvCommodity.text = item.commodity ?: "N/A"
-        mandiHolder.tvMarketDetails.text = displayLoc
+        val rawMarket = TranslationHelper.getCleanMarketName(item.market.orEmpty())
+        val rawDistrict = TranslationHelper.getCleanMarketName(item.district.orEmpty())
 
-        if (activeLang != "en") {
-            val rawCommodity = item.commodity.orEmpty()
-
-            CoroutineScope(Dispatchers.Main).launch {
-                val transCommodity = TranslationHelper.translateText(context, rawCommodity, activeLang)
-                val transMarket = TranslationHelper.translateText(context, rawMarket, activeLang)
-                val transDistrict = TranslationHelper.translateText(context, rawDistrict, activeLang)
-
-                val transLoc = if (transMarket.equals(transDistrict, ignoreCase = true) || transDistrict.isBlank()) {
-                    transMarket.ifBlank { transDistrict }
-                } else {
-                    "$transMarket, $transDistrict"
-                }
-
-                mandiHolder.tvCommodity.text = transCommodity.ifBlank { rawCommodity }
-                mandiHolder.tvMarketDetails.text = transLoc
-            }
+        val transCommodity = if (activeLang == "en") {
+            rawCommodity
+        } else {
+            val t = TranslationHelper.getTranslatedCropName(rawCommodity, "hi")
+            if (t == rawCommodity) MandiUtils.translateFast(rawCommodity).ifBlank { TranslationHelper.getHindiCropName(rawCommodity) } else t
         }
+
+        val transMarket = if (activeLang == "en") {
+            rawMarket
+        } else {
+            val t = TranslationHelper.getTranslatedMarketName(rawMarket, "hi")
+            if (t == rawMarket) MandiUtils.translateFast(rawMarket).ifBlank { rawMarket } else t
+        }
+
+        val transDistrict = if (activeLang == "en") {
+            rawDistrict
+        } else {
+            val t = TranslationHelper.getTranslatedMarketName(rawDistrict, "hi")
+            if (t == rawDistrict) MandiUtils.translateFast(rawDistrict).ifBlank { rawDistrict } else t
+        }
+
+        val transLoc = if (transMarket.equals(transDistrict, ignoreCase = true) || transDistrict.isBlank()) {
+            transMarket.ifBlank { transDistrict }
+        } else {
+            "$transMarket, $transDistrict"
+        }
+
+        mandiHolder.tvCommodity.text = transCommodity.ifBlank { "N/A" }
+        mandiHolder.tvMarketDetails.text = transLoc
 
         val min = item.minPrice?.toDoubleOrNull() ?: 0.0
         val max = item.maxPrice?.toDoubleOrNull() ?: 0.0

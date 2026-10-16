@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#212121"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🎚️ Video Adjustments &amp; Filters"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Preset Filter Options -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Video Filters"
+        android:textColor="#CCCCCC"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupVideoFilters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoFilterNone"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Normal"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoFilterVivid"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vivid"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoFilterBW"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="B&amp;W"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoFilterWarm"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Warm"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideoFilterInvert"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Invert"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="#333333" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- Brightness Slider -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="Brightness"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp" />
+
+        <SeekBar
+            android:id="@+id/seekBarBrightness"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="50" />
+
+        <TextView
+            android:id="@+id/tvBrightnessVal"
+            android:layout_width="36dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="0"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- Contrast Slider -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="Contrast"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp" />
+
+        <SeekBar
+            android:id="@+id/seekBarContrast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="50" />
+
+        <TextView
+            android:id="@+id/tvContrastVal"
+            android:layout_width="36dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="0"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDoneAdjustments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/farmer_green_primary"
+        android:text="Done"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

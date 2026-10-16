@@ -72,6 +72,7 @@ class MandiFragment : Fragment() {
     private var selectedStateName: String = "⭐ Saved"
     private var selectedDistrictName: String = "All Districts"
     private var selectedMarketName: String = "All Markets"
+    private var isUserStateManuallySelected = false
 
     private var alertListenerRegistration: ListenerRegistration? = null
 
@@ -111,6 +112,37 @@ class MandiFragment : Fragment() {
         onBackPressedCallback?.isEnabled = isSavedActive || isSearchActive || isNonDefaultState
     }
 
+    private fun saveMandiSessionState() {
+        val ctx = context ?: return
+        val prefs = ctx.getSharedPreferences("mandi_session_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString("session_state", selectedStateName)
+            .putString("session_district", selectedDistrictName)
+            .putString("session_market", selectedMarketName)
+            .putBoolean("session_manual_state", isUserStateManuallySelected)
+            .apply()
+    }
+
+    private fun restoreMandiSessionState() {
+        val ctx = context ?: return
+        val prefs = ctx.getSharedPreferences("mandi_session_prefs", Context.MODE_PRIVATE)
+        val savedS = prefs.getString("session_state", null)
+        val savedD = prefs.getString("session_district", null)
+        val savedM = prefs.getString("session_market", null)
+        val manualS = prefs.getBoolean("session_manual_state", false)
+
+        if (!savedS.isNullOrBlank()) {
+            selectedStateName = savedS
+            isUserStateManuallySelected = manualS
+        }
+        if (!savedD.isNullOrBlank()) {
+            selectedDistrictName = savedD
+        }
+        if (!savedM.isNullOrBlank()) {
+            selectedMarketName = savedM
+        }
+    }
+
     private fun resetToDefaultMandiHome() {
         val ctx = context ?: return
         val savedState = LocationHelper.getSavedState(ctx)
@@ -119,7 +151,10 @@ class MandiFragment : Fragment() {
         selectedStateName = if (!savedState.isNullOrBlank()) savedState else "⭐ Saved"
         selectedDistrictName = if (!savedDistrict.isNullOrBlank()) savedDistrict else "All Districts"
         selectedMarketName = "All Markets"
+        isUserStateManuallySelected = false
         binding.etSearch.setText("")
+
+        ctx.getSharedPreferences("mandi_session_prefs", Context.MODE_PRIVATE).edit().clear().apply()
 
         setupStateChips()
         filterData()
@@ -186,7 +221,7 @@ class MandiFragment : Fragment() {
             },
             onLoadMore = {
                 if (currentLoadedLimit < filteredRecords.size) {
-                    currentLoadedLimit = (currentLoadedLimit + 20).coerceAtMost(filteredRecords.size)
+                    currentLoadedLimit = (currentLoadedLimit + 100).coerceAtMost(filteredRecords.size)
                     adapter?.updateData(filteredRecords.take(currentLoadedLimit), filteredRecords.size)
                 }
             }
@@ -196,13 +231,23 @@ class MandiFragment : Fragment() {
         ShimmerHelper.setupSwipeRefresh(binding.swipeRefreshMandi)
         binding.swipeRefreshMandi.setOnRefreshListener {
             MandiRepository.clearCache()
-            viewModel.loadMandiRates(forceRefresh = true)
+            val ctx = context
+            if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
+                viewModel.loadMandiRatesByState(selectedStateName, ctx, forceRefresh = true)
+            } else {
+                viewModel.loadMandiRates(forceRefresh = true, context = ctx)
+            }
         }
 
         binding.btnForceRefreshMandi.setOnClickListener {
             binding.swipeRefreshMandi.isRefreshing = true
             MandiRepository.clearCache()
-            viewModel.loadMandiRates(forceRefresh = true)
+            val ctx = context
+            if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
+                viewModel.loadMandiRatesByState(selectedStateName, ctx, forceRefresh = true)
+            } else {
+                viewModel.loadMandiRates(forceRefresh = true, context = ctx)
+            }
             Toast.makeText(requireContext(), "Refreshing Mandi Rates...", Toast.LENGTH_SHORT).show()
         }
         MediaUtils.startPulseAnimation(binding.btnForceRefreshMandi)
@@ -226,7 +271,7 @@ class MandiFragment : Fragment() {
                 val lastVisiblePos = lm.findLastVisibleItemPosition()
                 if (lastVisiblePos >= adapter!!.itemCount - 3) {
                     if (currentLoadedLimit < filteredRecords.size) {
-                        currentLoadedLimit = (currentLoadedLimit + 20).coerceAtMost(filteredRecords.size)
+                        currentLoadedLimit = (currentLoadedLimit + 100).coerceAtMost(filteredRecords.size)
                         adapter?.updateData(filteredRecords.take(currentLoadedLimit), filteredRecords.size)
                     }
                 }
@@ -241,12 +286,21 @@ class MandiFragment : Fragment() {
         setupCategorySpinner()
         translateMandiUiElements()
 
+        context?.let { ctx ->
+            val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+            lifecycleScope.launch(Dispatchers.IO) {
+                TranslationHelper.syncMasterDictionaryFromFirestore(ctx, activeLang)
+            }
+        }
+
         viewModel.mandiData.observe(viewLifecycleOwner) { records ->
             allRecords = records
 
-            // Apply saved location filter instantly (<0.001s)
+            restoreMandiSessionState()
+
+            // Apply saved location filter ONLY on initial load if no state selected
             val ctx = context
-            if (ctx != null && (selectedStateName == "All States" || selectedStateName == "⭐ Saved")) {
+            if (ctx != null && !isUserStateManuallySelected && (selectedStateName == "All States" || selectedStateName == "⭐ Saved" || selectedStateName.isBlank())) {
                 val savedState = LocationHelper.getSavedState(ctx)
                 val savedDistrict = LocationHelper.getSavedDistrict(ctx)
                 if (!savedState.isNullOrBlank()) {
@@ -254,11 +308,19 @@ class MandiFragment : Fragment() {
                     if (!savedDistrict.isNullOrBlank()) {
                         selectedDistrictName = savedDistrict
                     }
+                    if (records.size < 50) {
+                        viewModel.loadMandiRatesByState(savedState, ctx)
+                        return@observe
+                    }
                 }
             }
 
-            setupCategorySpinner()
-            setupStateChips()
+            // Only build state chips once on initial load
+            if (binding.chipGroupStates.childCount == 0) {
+                setupStateChips()
+            }
+
+            setupDistrictSpinner()
             filterData()
             updateBackPressState()
 
@@ -302,7 +364,9 @@ class MandiFragment : Fragment() {
         })
 
         if (viewModel.mandiData.value.isNullOrEmpty()) {
-            viewModel.loadMandiRates()
+            val ctx = context
+            val savedState = if (ctx != null) LocationHelper.getSavedState(ctx) else null
+            viewModel.loadMandiRates(preferredStateName = savedState, context = ctx)
         }
 
         updateBackPressState()
@@ -318,15 +382,21 @@ class MandiFragment : Fragment() {
         if (hasFine || hasCoarse) {
             LocationHelper.getUserLocationDetails(safeCtx) { district, state, _ ->
                 if (!isAdded || _binding == null) return@getUserLocationDetails
-                if (!state.isNullOrBlank()) {
-                    selectedStateName = state
+
+                // Do NOT override if the user has manually selected a state chip!
+                if (!isUserStateManuallySelected && (selectedStateName == "All States" || selectedStateName == "⭐ Saved" || selectedStateName.isBlank())) {
+                    if (!state.isNullOrBlank()) {
+                        selectedStateName = state
+                    }
+                    if (!district.isNullOrBlank()) {
+                        selectedDistrictName = district
+                    }
+                    if (binding.chipGroupStates.childCount == 0) {
+                        setupStateChips()
+                    }
+                    filterData()
+                    updateBackPressState()
                 }
-                if (!district.isNullOrBlank()) {
-                    selectedDistrictName = district
-                }
-                setupStateChips()
-                filterData()
-                updateBackPressState()
             }
         } else {
             locationPermissionLauncher.launch(
@@ -343,20 +413,63 @@ class MandiFragment : Fragment() {
         val savedState = if (ctx != null) LocationHelper.getSavedState(ctx) else null
         val defaultState = if (!savedState.isNullOrBlank()) savedState else if (selectedStateName != "⭐ Saved" && selectedStateName != "All States") selectedStateName else null
 
-        val uniqueStates = allRecords.mapNotNull { it.state?.trim() }.filter { it.isNotBlank() }.distinct().sorted().toMutableList()
+        val availableStates = mutableListOf(
+            "Madhya Pradesh",
+            "Rajasthan",
+            "Maharashtra",
+            "Uttar Pradesh",
+            "Gujarat",
+            "Punjab",
+            "Haryana",
+            "Bihar",
+            "Chhattisgarh",
+            "West Bengal",
+            "Karnataka",
+            "Tamil Nadu",
+            "Telangana",
+            "Andhra Pradesh",
+            "Odisha",
+            "Jharkhand",
+            "Kerala",
+            "Assam",
+            "Himachal Pradesh",
+            "Uttarakhand",
+            "Goa",
+            "Tripura",
+            "Meghalaya",
+            "Manipur",
+            "Nagaland",
+            "Mizoram",
+            "Arunachal Pradesh",
+            "Sikkim",
+            "Jammu and Kashmir",
+            "Delhi",
+            "Puducherry",
+            "Chandigarh",
+            "Andaman and Nicobar",
+            "Dadra and Nagar Haveli",
+            "Ladakh"
+        )
+
+        val recordStates = allRecords.mapNotNull { it.state?.trim() }.filter { it.isNotBlank() }.distinct()
+        for (st in recordStates) {
+            if (!availableStates.any { it.equals(st, ignoreCase = true) }) {
+                availableStates.add(st)
+            }
+        }
 
         val allStates = mutableListOf("⭐ Saved")
 
-        // Prioritize fetched / default location state to come 1st on state chips
+        // Prioritize user's saved/location state right after "⭐ Saved"
         if (!defaultState.isNullOrBlank()) {
-            val matchedDefault = uniqueStates.find { it.equals(defaultState.trim(), ignoreCase = true) }
+            val matchedDefault = availableStates.find { it.equals(defaultState.trim(), ignoreCase = true) }
             if (matchedDefault != null) {
-                uniqueStates.remove(matchedDefault)
+                availableStates.remove(matchedDefault)
                 allStates.add(matchedDefault)
             }
         }
 
-        allStates.addAll(uniqueStates)
+        allStates.addAll(availableStates)
 
         if (selectedStateName == "All States" || selectedStateName.isBlank()) {
             selectedStateName = if (!defaultState.isNullOrBlank()) defaultState else (allStates.getOrNull(1) ?: "⭐ Saved")
@@ -392,9 +505,13 @@ class MandiFragment : Fragment() {
 
             chip.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
+                    isUserStateManuallySelected = true
                     selectedStateName = stateName
                     selectedDistrictName = "All Districts"
                     selectedMarketName = "All Markets"
+                    if (stateName != "All States" && stateName != "⭐ Saved") {
+                        viewModel.loadMandiRatesByState(stateName)
+                    }
                     setupDistrictSpinner()
                     filterData()
                     updateBackPressState()
@@ -408,37 +525,68 @@ class MandiFragment : Fragment() {
     }
 
     private fun setupDistrictSpinner() {
+        val ctx = context ?: return
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
         val stateRecords = if (selectedStateName == "All States") {
             allRecords
         } else {
             allRecords.filter { it.state.orEmpty().equals(selectedStateName, ignoreCase = true) }
         }
 
-        val districts = mutableListOf("All Districts")
-        val uniqueDistricts = stateRecords.mapNotNull { it.district?.trim() }.filter { it.isNotBlank() }.distinct().sorted()
-        districts.addAll(uniqueDistricts)
+        val defaultDistText = TranslationHelper.getDirectTranslation("All Districts", activeLang)
+            ?: if (activeLang == "hi") "सभी ज़िले" else "All Districts"
 
-        val adapterDistricts = ArrayAdapter(requireContext(), R.layout.item_compact_dropdown_single, districts)
+        val rawDistricts = stateRecords.mapNotNull { it.district?.trim() }.filter { it.isNotBlank() }.distinct().sorted()
+        val displayDistricts = mutableListOf(defaultDistText)
+        displayDistricts.addAll(rawDistricts.map { if (activeLang == "en") it else TranslationHelper.getTranslatedMarketName(it, activeLang) })
+
+        val adapterDistricts = ArrayAdapter(requireContext(), R.layout.item_compact_dropdown_single, displayDistricts)
         binding.spinnerState.setAdapter(adapterDistricts)
 
-        val matchedDistrict = districts.find { it.equals(selectedDistrictName, ignoreCase = true) || it.contains(selectedDistrictName, ignoreCase = true) || selectedDistrictName.contains(it, ignoreCase = true) }
-        val initialDistrict = matchedDistrict ?: "All Districts"
-        selectedDistrictName = initialDistrict
+        val currentTransSelected = TranslationHelper.getTranslatedMarketName(selectedDistrictName, activeLang)
+        val matchedDistrict = displayDistricts.find {
+            it.equals(currentTransSelected, ignoreCase = true) || it.equals(selectedDistrictName, ignoreCase = true)
+        }
+        val initialDistrict = matchedDistrict ?: defaultDistText
         binding.spinnerState.setText(initialDistrict, false)
 
         binding.spinnerState.setOnItemClickListener { parent, _, position, _ ->
             val chosenDistrict = parent.getItemAtPosition(position).toString()
-            selectedDistrictName = chosenDistrict
+            selectedDistrictName = if (position == 0) "All Districts" else rawDistricts.getOrNull(position - 1) ?: chosenDistrict
             selectedMarketName = "All Markets"
             setupMarketChips()
             filterData()
             updateBackPressState()
         }
 
+        if (activeLang != "en") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                var needsUpdate = false
+                val updatedDistricts = mutableListOf(defaultDistText)
+                for (raw in rawDistricts) {
+                    val currentTrans = TranslationHelper.getTranslatedMarketName(raw, activeLang)
+                    if (currentTrans == raw) {
+                        val asyncTrans = TranslationHelper.translateText(requireContext(), raw, activeLang)
+                        updatedDistricts.add(asyncTrans)
+                        needsUpdate = true
+                    } else {
+                        updatedDistricts.add(currentTrans)
+                    }
+                }
+                if (needsUpdate && _binding != null) {
+                    val updatedAdapter = ArrayAdapter(requireContext(), R.layout.item_compact_dropdown_single, updatedDistricts)
+                    binding.spinnerState.setAdapter(updatedAdapter)
+                }
+            }
+        }
+
         setupMarketChips()
     }
 
     private fun setupMarketChips() {
+        val ctx = context ?: return
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
         val chipGroup = binding.chipGroupMarkets
         chipGroup.removeAllViews()
 
@@ -447,12 +595,17 @@ class MandiFragment : Fragment() {
             filteredForMarkets = filteredForMarkets.filter { it.state.orEmpty().equals(selectedStateName, ignoreCase = true) }
         }
         if (selectedDistrictName != "All Districts") {
-            filteredForMarkets = filteredForMarkets.filter { it.district.orEmpty().equals(selectedDistrictName, ignoreCase = true) }
+            filteredForMarkets = filteredForMarkets.filter { it.district.orEmpty().contains(selectedDistrictName, ignoreCase = true) || selectedDistrictName.contains(it.district.orEmpty(), ignoreCase = true) }
         }
 
-        val markets = mutableListOf("All Markets")
-        val uniqueMarkets = filteredForMarkets.mapNotNull { it.market?.trim() }.filter { it.isNotBlank() }.distinct().sorted()
-        markets.addAll(uniqueMarkets)
+        val rawMarkets = filteredForMarkets.mapNotNull { it.market?.trim() }.filter { it.isNotBlank() }.distinct().sorted()
+        val cleanMarkets = rawMarkets.map { TranslationHelper.getCleanMarketName(it) }.distinct()
+
+        val allMarketsLabel = TranslationHelper.getDirectTranslation("All Markets", activeLang)
+            ?: if (activeLang == "hi") "सभी मंडियाँ" else "All Markets"
+
+        val markets = mutableListOf(allMarketsLabel)
+        markets.addAll(cleanMarkets.map { if (activeLang == "en") it else TranslationHelper.getTranslatedMarketName(it, activeLang) })
 
         if (markets.size <= 1) {
             binding.scrollMarketTabs.visibility = View.GONE
@@ -461,9 +614,10 @@ class MandiFragment : Fragment() {
 
         binding.scrollMarketTabs.visibility = View.VISIBLE
 
-        for (marketName in markets) {
+        for ((index, marketDisplayName) in markets.withIndex()) {
+            val rawMarket = if (index == 0) "All Markets" else cleanMarkets.getOrNull(index - 1) ?: marketDisplayName
             val chip = Chip(requireContext()).apply {
-                text = marketName
+                text = marketDisplayName
                 isCheckable = true
                 isClickable = true
                 setChipBackgroundColorResource(R.color.chip_bg_color)
@@ -472,13 +626,22 @@ class MandiFragment : Fragment() {
                 chipStrokeWidth = 1.5f
             }
 
-            if (marketName == selectedMarketName) {
+            if (activeLang != "en" && index > 0 && marketDisplayName == rawMarket) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val asyncMarket = TranslationHelper.getTranslatedMarketName(rawMarket, activeLang, requireContext())
+                    if (asyncMarket.isNotBlank() && _binding != null) {
+                        chip.text = asyncMarket
+                    }
+                }
+            }
+
+            if (rawMarket == selectedMarketName) {
                 chip.isChecked = true
             }
 
             chip.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    selectedMarketName = marketName
+                    selectedMarketName = rawMarket
                     filterData()
                     updateBackPressState()
                 }
@@ -491,12 +654,14 @@ class MandiFragment : Fragment() {
     private fun translateMandiUiElements() {
         val ctx = context ?: return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
-        if (activeLang == "en") return
 
         lifecycleScope.launch(Dispatchers.Main) {
-            val selectDist = TranslationHelper.translateText(ctx, "Select District", activeLang)
-            val selectItem = TranslationHelper.translateText(ctx, "Select Item", activeLang)
-            val searchHint = TranslationHelper.translateText(ctx, "Search Crop or Market...", activeLang)
+            val selectDist = TranslationHelper.getDirectTranslation("Select District", activeLang)
+                ?: TranslationHelper.translateText(ctx, "Select District", activeLang)
+            val selectItem = TranslationHelper.getDirectTranslation("Select Category", activeLang)
+                ?: TranslationHelper.translateText(ctx, "Select Category", activeLang)
+            val searchHint = TranslationHelper.getDirectTranslation("Search Crop or Market...", activeLang)
+                ?: TranslationHelper.translateText(ctx, "Search Crop or Market...", activeLang)
 
             binding.spinnerState.hint = selectDist
             binding.spinnerCategory.hint = selectItem
@@ -505,18 +670,20 @@ class MandiFragment : Fragment() {
     }
 
     private fun setupCategorySpinner() {
-        val dropdownItems = CategoryUtils.buildFullCategoryDropdown(allRecords)
+        val ctx = context ?: return
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        val dropdownItems = CategoryUtils.buildFullCategoryDropdown(allRecords, activeLang)
         val categoryAdapter = ArrayAdapter(requireContext(), R.layout.item_compact_dropdown_single, dropdownItems)
         binding.spinnerCategory.setAdapter(categoryAdapter)
 
         if (binding.spinnerCategory.text.isNullOrBlank()) {
-            binding.spinnerCategory.setText(CategoryUtils.MAJOR_CATEGORIES.first(), false)
+            binding.spinnerCategory.setText(CategoryUtils.getMajorCategories(activeLang).first(), false)
         }
 
         binding.spinnerCategory.setOnItemClickListener { parent, _, position, _ ->
             val chosen = parent.getItemAtPosition(position).toString()
             if (chosen.startsWith("---")) {
-                binding.spinnerCategory.setText(CategoryUtils.MAJOR_CATEGORIES.first(), false)
+                binding.spinnerCategory.setText(CategoryUtils.getMajorCategories(activeLang).first(), false)
                 return@setOnItemClickListener
             }
             filterData()
@@ -534,30 +701,49 @@ class MandiFragment : Fragment() {
         val isSavedFilter = selectedStateName == "⭐ Saved"
         val favorites = if (isSavedFilter) MandiCacheHelper.getFavorites(requireContext()) else emptySet()
 
+        val cleanSelDist = LocationHelper.cleanDistrictName(selectedDistrictName).orEmpty().lowercase()
+        val cleanSelMarket = TranslationHelper.getCleanMarketName(selectedMarketName).lowercase()
+
         filteredRecords = allRecords.filter { item ->
             val docId = MandiCacheHelper.getDocId(item)
+            val cleanItemDist = LocationHelper.cleanDistrictName(item.district).orEmpty().lowercase()
+            val cleanItemMarket = TranslationHelper.getCleanMarketName(item.market.orEmpty()).lowercase()
+
             val matchesSaved = !isSavedFilter || favorites.contains(docId)
             val matchesState = isSavedFilter || selectedStateName == "All States" || item.state.orEmpty().equals(selectedStateName, ignoreCase = true)
-            val matchesDistrict = isSavedFilter || selectedDistrictName == "All Districts" || item.district.orEmpty().contains(selectedDistrictName, ignoreCase = true)
-            val matchesMarket = isSavedFilter || selectedMarketName == "All Markets" || item.market.orEmpty().equals(selectedMarketName, ignoreCase = true)
+            val matchesDistrict = isSavedFilter || selectedDistrictName == "All Districts" ||
+                    item.district.orEmpty().contains(selectedDistrictName, ignoreCase = true) ||
+                    selectedDistrictName.contains(item.district.orEmpty(), ignoreCase = true) ||
+                    item.market.orEmpty().contains(selectedDistrictName, ignoreCase = true) ||
+                    (cleanSelDist.isNotBlank() && cleanItemDist.isNotBlank() && (cleanItemDist.contains(cleanSelDist) || cleanSelDist.contains(cleanItemDist))) ||
+                    (cleanSelDist.isNotBlank() && cleanItemMarket.isNotBlank() && cleanItemMarket.contains(cleanSelDist))
 
-            val matchesCategory = CategoryUtils.matchesSelection(item.commodity.orEmpty(), selectedCategory)
+            val matchesMarket = isSavedFilter || selectedMarketName == "All Markets" ||
+                    item.market.orEmpty().equals(selectedMarketName, ignoreCase = true) ||
+                    item.market.orEmpty().contains(selectedMarketName, ignoreCase = true) ||
+                    selectedMarketName.contains(item.market.orEmpty(), ignoreCase = true) ||
+                    (cleanSelMarket.isNotBlank() && cleanItemMarket.isNotBlank() && (cleanItemMarket.contains(cleanSelMarket) || cleanSelMarket.contains(cleanItemMarket)))
+
+            val matchesCategory = CategoryUtils.matchesSelection("${item.commodity.orEmpty()} ${item.variety.orEmpty()}", selectedCategory)
 
             val matchesQuery = query.isBlank() ||
                     item.commodity.orEmpty().contains(query, ignoreCase = true) ||
+                    item.variety.orEmpty().contains(query, ignoreCase = true) ||
                     item.market.orEmpty().contains(query, ignoreCase = true) ||
-                    item.district.orEmpty().contains(query, ignoreCase = true)
+                    item.district.orEmpty().contains(query, ignoreCase = true) ||
+                    item.state.orEmpty().contains(query, ignoreCase = true)
 
             matchesSaved && matchesState && matchesDistrict && matchesMarket && matchesCategory && matchesQuery
         }
 
-        currentLoadedLimit = 20
+        currentLoadedLimit = if (selectedDistrictName != "All Districts" || query.isNotBlank()) 100 else 50
         adapter?.updateData(filteredRecords.take(currentLoadedLimit), filteredRecords.size)
         if (filteredRecords.isEmpty()) {
             binding.tvEmptyMandi.visibility = View.VISIBLE
         } else {
             binding.tvEmptyMandi.visibility = View.GONE
         }
+        saveMandiSessionState()
     }
 
     private fun shareOnWhatsApp(item: MandiRecord) {
@@ -572,8 +758,8 @@ class MandiFragment : Fragment() {
             val rawState = item.state.orEmpty()
 
             val commodity = if (activeLang != "en") TranslationHelper.translateText(ctx, rawCommodity, activeLang) else rawCommodity
-            val market = if (activeLang != "en") TranslationHelper.translateText(ctx, rawMarket, activeLang) else rawMarket
-            val district = if (activeLang != "en") TranslationHelper.translateText(ctx, rawDistrict, activeLang) else rawDistrict
+            val market = if (activeLang != "en") TranslationHelper.getTranslatedMarketName(rawMarket, activeLang, ctx) else rawMarket
+            val district = if (activeLang != "en") TranslationHelper.getTranslatedMarketName(rawDistrict, activeLang, ctx) else rawDistrict
             val state = if (activeLang != "en") TranslationHelper.translateText(ctx, rawState, activeLang) else rawState
 
             val message = "🌱 *$commodity*\n📍 Market: $market\n🗺️ Dist: $district, $state\n💰 Min: ₹${item.minPrice}\n🚀 Max: ₹${item.maxPrice}\n\n📲 Download Kisan Kendra App on Google Play Store:\n$appUrl"
@@ -593,7 +779,6 @@ class MandiFragment : Fragment() {
         val currentHour = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata")).get(Calendar.HOUR_OF_DAY)
         val isAfter4Pm = currentHour >= 16
 
-        val topBadgeText = if (isAfter4Pm) "Today's Price" else "Yesterday's Price"
         val tabTodayText = if (isAfter4Pm) "Today" else "Last Day"
 
         val tvSheetEmoji = dialogView.findViewById<TextView>(R.id.tvSheetEmoji)
@@ -616,19 +801,71 @@ class MandiFragment : Fragment() {
         val tvSummaryAverage = dialogView.findViewById<TextView>(R.id.tvSummaryAverage)
         val tvSummaryLowest = dialogView.findViewById<TextView>(R.id.tvSummaryLowest)
 
-        // Fixed Top Right Badge Label
-        tvSheetTimeBadge.text = "Price Chart"
-        btnTabToday.text = tabTodayText
-        btnTab7Days.text = "7 Days"
-        btnTab30Days.text = "30 Days"
+        val activeLang = LocaleHelper.getPersistedLanguage(requireContext())
 
-        // Emoji & Names (Exclude State Name)
+        val tvSheetUnitSub = dialogView.findViewById<TextView>(R.id.tvSheetUnitSub)
+        val tvSheetHighestSub = dialogView.findViewById<TextView>(R.id.tvSheetHighestSub)
+        val tvSheetDiffSub = dialogView.findViewById<TextView>(R.id.tvSheetDiffSub)
+        val tvHighestRateTitle = dialogView.findViewById<TextView>(R.id.tvHighestRateTitle)
+        val tvHighestRateSub = dialogView.findViewById<TextView>(R.id.tvHighestRateSub)
+        val tvAvgRateTitle = dialogView.findViewById<TextView>(R.id.tvAvgRateTitle)
+        val tvAvgRateSub = dialogView.findViewById<TextView>(R.id.tvAvgRateSub)
+        val tvLowestRateTitle = dialogView.findViewById<TextView>(R.id.tvLowestRateTitle)
+        val tvLowestRateSub = dialogView.findViewById<TextView>(R.id.tvLowestRateSub)
+
+        // Localized Labels
+        tvSheetTimeBadge.text = TranslationHelper.getDirectTranslation("Price Chart", activeLang) ?: if (activeLang == "hi") "मूल्य चार्ट" else "Price Chart"
+
+        val transTodayText = TranslationHelper.getDirectTranslation(tabTodayText, activeLang) ?: if (activeLang == "hi") (if (isAfter4Pm) "आज" else "पिछला दिन") else tabTodayText
+        val trans7DaysText = TranslationHelper.getDirectTranslation("7 Days", activeLang) ?: if (activeLang == "hi") "7 दिन" else "7 Days"
+        val trans30DaysText = TranslationHelper.getDirectTranslation("30 Days", activeLang) ?: if (activeLang == "hi") "30 दिन" else "30 Days"
+
+        btnTabToday.text = transTodayText
+        btnTab7Days.text = trans7DaysText
+        btnTab30Days.text = trans30DaysText
+
+        if (tvSheetUnitSub != null) tvSheetUnitSub.text = TranslationHelper.getDirectTranslation("/ quintal", activeLang) ?: if (activeLang == "hi") "/ क्विंटल" else "/ quintal"
+        if (tvSheetHighestSub != null) tvSheetHighestSub.text = TranslationHelper.getDirectTranslation("Highest recorded price", activeLang) ?: if (activeLang == "hi") "उच्चतम दर्ज भाव" else "Highest recorded price"
+        if (tvSheetDiffSub != null) tvSheetDiffSub.text = TranslationHelper.getDirectTranslation("Compared to yesterday", activeLang) ?: if (activeLang == "hi") "कल की तुलना में" else "Compared to yesterday"
+
+        if (tvHighestRateTitle != null) tvHighestRateTitle.text = TranslationHelper.getDirectTranslation("▲ Highest Rate", activeLang) ?: if (activeLang == "hi") "▲ उच्चतम भाव" else "▲ Highest Rate"
+        if (tvHighestRateSub != null) tvHighestRateSub.text = TranslationHelper.getDirectTranslation("per quintal", activeLang) ?: if (activeLang == "hi") "प्रति क्विंटल" else "per quintal"
+        if (tvAvgRateTitle != null) tvAvgRateTitle.text = TranslationHelper.getDirectTranslation("Average Rate", activeLang) ?: if (activeLang == "hi") "औसत भाव" else "Average Rate"
+        if (tvAvgRateSub != null) tvAvgRateSub.text = TranslationHelper.getDirectTranslation("per quintal", activeLang) ?: if (activeLang == "hi") "प्रति क्विंटल" else "per quintal"
+        if (tvLowestRateTitle != null) tvLowestRateTitle.text = TranslationHelper.getDirectTranslation("▼ Lowest Rate", activeLang) ?: if (activeLang == "hi") "▼ न्यूनतम भाव" else "▼ Lowest Rate"
+        if (tvLowestRateSub != null) tvLowestRateSub.text = TranslationHelper.getDirectTranslation("per quintal", activeLang) ?: if (activeLang == "hi") "प्रति क्विंटल" else "per quintal"
+
+        // Emoji & Names (Clean APMC and Exclude State Name)
         val emoji = MandiUtils.getEmoji(item.commodity)
         tvSheetEmoji.text = emoji
 
         val rawCommodity = item.commodity.orEmpty().ifBlank { "Crop" }
-        val marketStr = "${item.market.orEmpty()} • ${item.district.orEmpty()}"
-        tvSheetCommodity.text = rawCommodity
+        val cleanMkt = TranslationHelper.getCleanMarketName(item.market.orEmpty())
+        val cleanDist = TranslationHelper.getCleanMarketName(item.district.orEmpty())
+
+        val transCommodity = if (activeLang == "en") {
+            rawCommodity
+        } else {
+            val t = TranslationHelper.getTranslatedCropName(rawCommodity, "hi")
+            if (t == rawCommodity) MandiUtils.translateFast(rawCommodity).ifBlank { TranslationHelper.getHindiCropName(rawCommodity) } else t
+        }
+
+        val transMkt = if (activeLang == "en") {
+            cleanMkt
+        } else {
+            val t = TranslationHelper.getTranslatedMarketName(cleanMkt, "hi")
+            if (t == cleanMkt) MandiUtils.translateFast(cleanMkt).ifBlank { cleanMkt } else t
+        }
+
+        val transDist = if (activeLang == "en") {
+            cleanDist
+        } else {
+            val t = TranslationHelper.getTranslatedMarketName(cleanDist, "hi")
+            if (t == cleanDist) MandiUtils.translateFast(cleanDist).ifBlank { cleanDist } else t
+        }
+        val marketStr = if (transMkt.equals(transDist, ignoreCase = true) || transDist.isBlank()) transMkt else "$transMkt • $transDist"
+
+        tvSheetCommodity.text = transCommodity
         tvSheetMarket.text = marketStr
 
         // Prices & Differences (Highest price of that day coming from Mandi card)
@@ -650,12 +887,27 @@ class MandiFragment : Fragment() {
                 tvSheetPriceDiff.setTextColor(negColor)
             }
         } else {
-            tvSheetPriceDiff.text = "Stable (₹0)"
+            val stableText = TranslationHelper.getDirectTranslation("Stable", activeLang) ?: if (activeLang == "hi") "स्थिर (₹0)" else "Stable (₹0)"
+            tvSheetPriceDiff.text = stableText
             tvSheetPriceDiff.setTextColor(posColor)
         }
 
         val activeDate = viewModel.mandiDate.value ?: item.formattedDate ?: "Today"
-        tvSheetDateSub.text = activeDate
+        tvSheetDateSub.text = TranslationHelper.getTranslatedDate(activeDate, activeLang)
+
+        val getChartHeaderTitle: (String) -> String = { key ->
+            TranslationHelper.getDirectTranslation(key, activeLang) ?: if (activeLang == "hi") {
+                when (key) {
+                    "Price Trend (Today)" -> "भाव ट्रेंड (आज)"
+                    "Price Trend (Last Day)" -> "भाव ट्रेंड (पिछला दिन)"
+                    "Price Trend (Last 7 Days)" -> "भाव ट्रेंड (पिछले 7 दिन)"
+                    "Price Trend (Last 30 Days)" -> "भाव ट्रेंड (पिछले 30 दिन)"
+                    else -> key
+                }
+            } else key
+        }
+
+        tvChartHeaderTitle.text = getChartHeaderTitle("Price Trend (Last 7 Days)")
 
         // History Chart Data & Dynamic Range Summary Calculation
         var fullHistory = emptyList<PriceDataPoint>()
@@ -710,21 +962,22 @@ class MandiFragment : Fragment() {
 
         // Tab Selection Handlers
         btnTabToday.setOnClickListener {
-            tvChartHeaderTitle.text = if (isAfter4Pm) "Price Trend (Today)" else "Price Trend (Last Day)"
+            val titleKey = if (isAfter4Pm) "Price Trend (Today)" else "Price Trend (Last Day)"
+            tvChartHeaderTitle.text = getChartHeaderTitle(titleKey)
             tvChartHeaderTitle.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
             tvChartHeaderTitle.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
             renderTab(1, btnTabToday)
         }
 
         btnTab7Days.setOnClickListener {
-            tvChartHeaderTitle.text = "Price Trend (Last 7 Days)"
+            tvChartHeaderTitle.text = getChartHeaderTitle("Price Trend (Last 7 Days)")
             tvChartHeaderTitle.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
             tvChartHeaderTitle.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
             renderTab(7, btnTab7Days)
         }
 
         btnTab30Days.setOnClickListener {
-            tvChartHeaderTitle.text = "Price Trend (Last 30 Days)"
+            tvChartHeaderTitle.text = getChartHeaderTitle("Price Trend (Last 30 Days)")
             tvChartHeaderTitle.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
             tvChartHeaderTitle.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
             renderTab(30, btnTab30Days)

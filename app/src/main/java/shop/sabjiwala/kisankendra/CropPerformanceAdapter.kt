@@ -7,6 +7,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -39,8 +41,10 @@ class CropPerformanceAdapter(
     override fun onBindViewHolder(holder: CropViewHolder, position: Int) {
         val item = items[position]
         val context = holder.itemView.context
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
 
-        val displayCropName = getCleanCropName(item.cropName)
+        val cleanCrop = getCleanCropName(item.cropName)
+        val displayCropName = TranslationHelper.getTranslatedCropName(cleanCrop, activeLang, context)
         holder.tvCropName.text = displayCropName
 
         val inrLocale = Locale.Builder().setLanguage("en").setRegion("IN").build()

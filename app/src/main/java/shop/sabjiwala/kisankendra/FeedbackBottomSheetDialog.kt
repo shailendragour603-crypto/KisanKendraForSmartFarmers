@@ -152,11 +152,16 @@ class FeedbackBottomSheetDialog : BottomSheetDialogFragment() {
     }
 
     private fun showSignInPrompt() {
-        MaterialAlertDialogBuilder(requireContext())
+        val ctx = context ?: requireContext()
+        MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.feedback_login_required)
             .setMessage("Please sign in with your phone or Google account to send feedback to the Kisan Kendra team.")
             .setPositiveButton("Sign In") { _, _ ->
-                startActivity(Intent(requireContext(), SignInActivity::class.java))
+                activity?.let {
+                    it.startActivity(Intent(it, SignInActivity::class.java))
+                } ?: ctx.startActivity(Intent(ctx, SignInActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
             }
             .setNegativeButton("Cancel", null)
             .show()

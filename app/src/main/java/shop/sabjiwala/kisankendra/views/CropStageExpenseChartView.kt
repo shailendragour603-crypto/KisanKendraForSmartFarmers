@@ -162,7 +162,7 @@ class CropStageExpenseChartView @JvmOverloads constructor(
 
             // Stage Name below chart
             val activeLang = LocaleHelper.getPersistedLanguage(context)
-            val displayStageName = TranslationHelper.getDirectTranslation(item.stageName, activeLang) ?: item.stageName
+            val displayStageName = TranslationHelper.getTranslatedStageName(item.stageName, activeLang, context)
             canvas.drawText(displayStageName, x, height - 16f, textPaint)
         }
     }
@@ -174,13 +174,9 @@ class CropStageExpenseChartView @JvmOverloads constructor(
     }
 
     private fun formatCompactRupees(amount: Double): String {
-        return when {
-            amount <= 0 -> "₹0"
-            amount >= 100_000 -> String.format(Locale.US, "₹%.1fL", amount / 100_000)
-            amount >= 1_000 -> String.format(Locale.US, "₹%.1fk", amount / 1000)
-            else -> NumberFormat.getCurrencyInstance(Locale.Builder().setLanguage("en").setRegion("IN").build()).apply {
-                maximumFractionDigits = 0
-            }.format(amount)
-        }
+        val inrLocale = Locale.Builder().setLanguage("en").setRegion("IN").build()
+        return NumberFormat.getCurrencyInstance(inrLocale).apply {
+            maximumFractionDigits = 0
+        }.format(amount)
     }
 }

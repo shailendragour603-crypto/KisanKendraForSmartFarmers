@@ -52,7 +52,7 @@ class CompactNewsAdapter(
         }
 
         val activeLang = LocaleHelper.getPersistedLanguage(context)
-        if (activeLang != "en") {
+        if (activeLang != "hi") {
             CoroutineScope(Dispatchers.Main).launch {
                 val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
                 binding.tvCompactNewsTitle.text = translatedTitle

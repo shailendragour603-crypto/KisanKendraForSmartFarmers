@@ -107,11 +107,11 @@ class WeatherFragment : Fragment() {
 
         setupLocationSearch()
 
-        ShimmerHelper.setupSwipeRefresh(binding.swipeRefreshWeather)
-        binding.swipeRefreshWeather.setOnRefreshListener {
-            cachedWeather = null
-            fetchHyperLocalVillageWeather()
-        }
+        // ShimmerHelper.setupSwipeRefresh(binding.swipeRefreshWeather)
+        // binding.swipeRefreshWeather.setOnRefreshListener {
+        //     cachedWeather = null
+        //     fetchHyperLocalVillageWeather()
+        // }
 
         binding.btnRefreshWeather.setOnClickListener {
             cachedWeather = null
@@ -169,12 +169,12 @@ class WeatherFragment : Fragment() {
         val appContext = ctx.applicationContext
 
         binding.pbForecast.visibility = View.VISIBLE
-        binding.swipeRefreshWeather.isRefreshing = true
-        ShimmerHelper.applyShimmer(binding.cardWeatherHero, cornerRadiusDp = 18f)
+        // binding.swipeRefreshWeather.isRefreshing = true
+        ShimmerHelper.applyShimmer(binding.llWeatherHeroBg, cornerRadiusDp = 18f)
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val geocoder = Geocoder(appContext, Locale.getDefault())
+                val geocoder = Geocoder(appContext, Locale.ENGLISH)
                 @Suppress("DEPRECATION")
                 val addresses = geocoder.getFromLocationName(cleanQuery, 1)
                 if (!addresses.isNullOrEmpty()) {
@@ -197,7 +197,7 @@ class WeatherFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (isAdded && _binding != null) {
                             binding.pbForecast.visibility = View.GONE
-                            binding.swipeRefreshWeather.isRefreshing = false
+                            // binding.swipeRefreshWeather.isRefreshing = false
                             Toast.makeText(ctx, "Location not found. Try another city.", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -207,7 +207,7 @@ class WeatherFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     if (isAdded && _binding != null) {
                         binding.pbForecast.visibility = View.GONE
-                        binding.swipeRefreshWeather.isRefreshing = false
+                        // binding.swipeRefreshWeather.isRefreshing = false
                         Toast.makeText(ctx, "Error searching location", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -225,13 +225,13 @@ class WeatherFragment : Fragment() {
         if (cachedWeather != null && (now - lastFetchTime) < CACHE_EXPIRY_MS) {
             applyWeatherToUi(cachedWeather!!)
             binding.pbForecast.visibility = View.GONE
-            binding.swipeRefreshWeather.isRefreshing = false
+            // binding.swipeRefreshWeather.isRefreshing = false
             return
         }
 
         binding.pbForecast.visibility = View.VISIBLE
-        binding.swipeRefreshWeather.isRefreshing = true
-        ShimmerHelper.applyShimmer(binding.cardWeatherHero, cornerRadiusDp = 18f)
+        // binding.swipeRefreshWeather.isRefreshing = true
+        ShimmerHelper.applyShimmer(binding.llWeatherHeroBg, cornerRadiusDp = 18f)
 
         val savedDist = LocationHelper.getSavedDistrict(ctx)
         if (!savedDist.isNullOrBlank()) {
@@ -282,7 +282,7 @@ class WeatherFragment : Fragment() {
             var districtName = ""
 
             try {
-                val geocoder = Geocoder(appContext, Locale.getDefault())
+                val geocoder = Geocoder(appContext, Locale.ENGLISH)
                 @Suppress("DEPRECATION")
                 val addresses = geocoder.getFromLocation(lat, lng, 1)
                 if (!addresses.isNullOrEmpty()) {
@@ -400,8 +400,8 @@ class WeatherFragment : Fragment() {
     private fun applyWeatherToUi(data: CachedWeatherData) {
         if (_binding == null) return
         binding.pbForecast.visibility = View.GONE
-        binding.swipeRefreshWeather.isRefreshing = false
-        ShimmerHelper.stopShimmer(binding.cardWeatherHero)
+        // binding.swipeRefreshWeather.isRefreshing = false
+        ShimmerHelper.stopShimmer(binding.llWeatherHeroBg)
 
         binding.tvTodayTemp.text = "${data.currentTemp}°C"
         binding.tvTodayCondition.text = data.conditionStr
@@ -413,53 +413,90 @@ class WeatherFragment : Fragment() {
         updateWeatherIconAndAnimation(data.conditionStr)
         applyWeatherCardTheme(data.conditionStr, data.currentTemp)
 
+        val activeLang = LocaleHelper.getPersistedLanguage(requireContext())
+        val displayLocation = TranslationHelper.getTranslatedLocationName(data.locationDisplayName, activeLang, requireContext())
+
         val todayDateStr = SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH).format(Date())
         binding.tvTodayDate.text = todayDateStr
-        binding.tvHeroLocationName.text = data.locationDisplayName
-        binding.tvTodayLabel.text = "Current Weather"
+        binding.tvHeroLocationName.text = displayLocation
 
         // 🌾 AUTOMATED REAL-TIME AGRICULTURAL ADVISORY ENGINE
-        if (data.todayRain >= 40 || data.windSpeed >= 20) {
-            binding.tvSprayAdvisory.text = "⚠️ Avoid Chemical Spraying in ${data.locationDisplayName} today (${data.todayRain}% rain chance, ${data.windSpeed} km/h wind). Risk of chemical wash-off and spray drift."
-        } else if (data.todayMax >= 38) {
-            binding.tvSprayAdvisory.text = "⚠️ High Temperature (${data.todayMax}°C). Avoid spraying during peak afternoon heat (12 PM - 3 PM) to prevent leaf scorching. Spray in early morning."
+        if (activeLang == "hi") {
+            binding.tvTodayLabel.text = "वर्तमान मौसम"
+            binding.tvRainHeader.text = "🌧️ बारिश"
+            binding.tvHumidityHeader.text = "💧 आर्द्रता"
+            binding.tvWindHeader.text = "💨 हवा"
+            binding.tvUvHeader.text = "☀️ यूवी"
+
+            binding.tvAdvisorySectionHeader.text = "🌾 कृषि मौसम सलाह"
+            binding.tvSprayAdvisoryHeader.text = "कीटनाशक छिड़काव सलाह"
+            binding.tvIrrigationAdvisoryHeader.text = "फसल सिंचाई सलाह"
+            binding.tvForecastSectionHeader.text = "📅 आगामी 6-दिवसीय मौसम पूर्वानुमान"
+
+            val transCondition = TranslationHelper.getDirectTranslation(data.conditionStr, "hi", requireContext()) ?: data.conditionStr
+            binding.tvTodayCondition.text = transCondition
+
+            if (data.todayRain >= 40 || data.windSpeed >= 20) {
+                binding.tvSprayAdvisory.text = "⚠️ $displayLocation में आज कीटनाशक का छिड़काव करने से बचें (${data.todayRain}% बारिश, ${data.windSpeed} किमी/घंटा हवा)। दवा बहने या उड़ने का खतरा है।"
+            } else if (data.todayMax >= 38) {
+                binding.tvSprayAdvisory.text = "⚠️ उच्च तापमान (${data.todayMax}°C)। दोपहर 12 से 3 बजे के बीच छिड़काव न करें। सुबह जल्दी छिड़काव करें।"
+            } else {
+                binding.tvSprayAdvisory.text = "✅ $displayLocation में आज छिड़काव के लिए अनुकूल मौसम है। हवा की गति कम (${data.windSpeed} किमी/घंटा) और बारिश का जोखिम कम (${data.todayRain}%) है।"
+            }
+
+            if (data.todayRain >= 45) {
+                binding.tvIrrigationAdvisory.text = "🌧️ बारिश की संभावना (${data.todayRain}%)। खेत में जलजमाव से बचने के लिए सिंचाई टालें।"
+            } else if (data.todayMax >= 33 && data.todayRain < 20) {
+                binding.tvIrrigationAdvisory.text = "🌾 गर्मी व कम नमी: $displayLocation में फसलों के लिए शाम के समय हल्की सिंचाई की सलाह दी जाती है।"
+            } else {
+                binding.tvIrrigationAdvisory.text = "🌾 पर्याप्त मिट्टी की नमी: $displayLocation के खेतों के लिए सामान्य सिंचाई शेड्यूल की सलाह दी जाती है।"
+            }
         } else {
-            binding.tvSprayAdvisory.text = "✅ Safe Spraying Window in ${data.locationDisplayName} today. Low wind (${data.windSpeed} km/h) and minimal rain risk (${data.todayRain}%)."
-        }
+            binding.tvTodayLabel.text = "Current Weather"
+            binding.tvRainHeader.text = "🌧️ Rain"
+            binding.tvHumidityHeader.text = "💧 Humidity"
+            binding.tvWindHeader.text = "💨 Wind"
+            binding.tvUvHeader.text = "☀️ UV Index"
 
-        if (data.todayRain >= 45) {
-            binding.tvIrrigationAdvisory.text = "🌧️ Rainfall expected (${data.todayRain}% probability). Postpone field irrigation to avoid soil waterlogging."
-        } else if (data.todayMax >= 33 && data.todayRain < 20) {
-            binding.tvIrrigationAdvisory.text = "🌾 Heat & Low Moisture: Light evening irrigation recommended for standing crops in ${data.locationDisplayName}."
-        } else {
-            binding.tvIrrigationAdvisory.text = "🌾 Adequate Soil Moisture: Normal irrigation schedule recommended for ${data.locationDisplayName} fields."
-        }
+            binding.tvAdvisorySectionHeader.text = "🌾 Agricultural Weather Advisory"
+            binding.tvSprayAdvisoryHeader.text = "Pesticide Spray Advisory"
+            binding.tvIrrigationAdvisoryHeader.text = "Crop Irrigation Advisory"
+            binding.tvForecastSectionHeader.text = "📅 Upcoming 6-Day Weather Forecast"
 
-        val activeLang = LocaleHelper.getPersistedLanguage(requireContext())
-        if (activeLang != "en") {
-            val ctx = requireContext()
-            lifecycleScope.launch(Dispatchers.Main) {
-                val transCondition = TranslationHelper.translateText(ctx, data.conditionStr, activeLang)
-                binding.tvTodayCondition.text = transCondition
+            binding.tvTodayCondition.text = data.conditionStr
 
-                val transLabel = TranslationHelper.translateText(ctx, "Current Weather", activeLang)
-                binding.tvTodayLabel.text = transLabel
+            if (data.todayRain >= 40 || data.windSpeed >= 20) {
+                binding.tvSprayAdvisory.text = "⚠️ Avoid Chemical Spraying in $displayLocation today (${data.todayRain}% rain chance, ${data.windSpeed} km/h wind). Risk of chemical wash-off and spray drift."
+            } else if (data.todayMax >= 38) {
+                binding.tvSprayAdvisory.text = "⚠️ High Temperature (${data.todayMax}°C). Avoid spraying during peak afternoon heat (12 PM - 3 PM) to prevent leaf scorching. Spray in early morning."
+            } else {
+                binding.tvSprayAdvisory.text = "✅ Safe Spraying Window in $displayLocation today. Low wind (${data.windSpeed} km/h) and minimal rain risk (${data.todayRain}%)."
+            }
 
-                val transSpray = TranslationHelper.translateText(ctx, binding.tvSprayAdvisory.text.toString(), activeLang)
-                binding.tvSprayAdvisory.text = transSpray
+            if (data.todayRain >= 45) {
+                binding.tvIrrigationAdvisory.text = "🌧️ Rainfall expected (${data.todayRain}% probability). Postpone field irrigation to avoid soil waterlogging."
+            } else if (data.todayMax >= 33 && data.todayRain < 20) {
+                binding.tvIrrigationAdvisory.text = "🌾 Heat & Low Moisture: Light evening irrigation recommended for standing crops in $displayLocation."
+            } else {
+                binding.tvIrrigationAdvisory.text = "🌾 Adequate Soil Moisture: Normal irrigation schedule recommended for $displayLocation fields."
+            }
 
-                val transIrrigation = TranslationHelper.translateText(ctx, binding.tvIrrigationAdvisory.text.toString(), activeLang)
-                binding.tvIrrigationAdvisory.text = transIrrigation
-
-                binding.tvRainHeader.text = "🌧️ " + TranslationHelper.translateText(ctx, "Rain", activeLang)
-                binding.tvHumidityHeader.text = "💧 " + TranslationHelper.translateText(ctx, "Humidity", activeLang)
-                binding.tvWindHeader.text = "💨 " + TranslationHelper.translateText(ctx, "Wind", activeLang)
-                binding.tvUvHeader.text = "☀️ " + TranslationHelper.translateText(ctx, "UV Index", activeLang)
-
-                binding.tvAdvisorySectionHeader.text = "🌾 " + TranslationHelper.translateText(ctx, "Agricultural Weather Advisory", activeLang)
-                binding.tvSprayAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Pesticide Spray Advisory", activeLang)
-                binding.tvIrrigationAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Crop Irrigation Advisory", activeLang)
-                binding.tvForecastSectionHeader.text = "📅 " + TranslationHelper.translateText(ctx, "Upcoming 6-Day Weather Forecast", activeLang)
+            if (activeLang != "en") {
+                val ctx = requireContext()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    binding.tvTodayCondition.text = TranslationHelper.translateText(ctx, data.conditionStr, activeLang)
+                    binding.tvTodayLabel.text = TranslationHelper.translateText(ctx, "Current Weather", activeLang)
+                    binding.tvSprayAdvisory.text = TranslationHelper.translateText(ctx, binding.tvSprayAdvisory.text.toString(), activeLang)
+                    binding.tvIrrigationAdvisory.text = TranslationHelper.translateText(ctx, binding.tvIrrigationAdvisory.text.toString(), activeLang)
+                    binding.tvRainHeader.text = "🌧️ " + TranslationHelper.translateText(ctx, "Rain", activeLang)
+                    binding.tvHumidityHeader.text = "💧 " + TranslationHelper.translateText(ctx, "Humidity", activeLang)
+                    binding.tvWindHeader.text = "💨 " + TranslationHelper.translateText(ctx, "Wind", activeLang)
+                    binding.tvUvHeader.text = "☀️ " + TranslationHelper.translateText(ctx, "UV Index", activeLang)
+                    binding.tvAdvisorySectionHeader.text = "🌾 " + TranslationHelper.translateText(ctx, "Agricultural Weather Advisory", activeLang)
+                    binding.tvSprayAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Pesticide Spray Advisory", activeLang)
+                    binding.tvIrrigationAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Crop Irrigation Advisory", activeLang)
+                    binding.tvForecastSectionHeader.text = "📅 " + TranslationHelper.translateText(ctx, "Upcoming 6-Day Weather Forecast", activeLang)
+                }
             }
         }
 
@@ -469,8 +506,11 @@ class WeatherFragment : Fragment() {
     private fun loadFallbackWeather(locationDisplayName: String) {
         if (_binding == null) return
         binding.pbForecast.visibility = View.GONE
-        binding.swipeRefreshWeather.isRefreshing = false
-        ShimmerHelper.stopShimmer(binding.cardWeatherHero)
+        // binding.swipeRefreshWeather.isRefreshing = false
+        ShimmerHelper.stopShimmer(binding.llWeatherHeroBg)
+
+        val activeLang = LocaleHelper.getPersistedLanguage(requireContext())
+        val displayLocation = TranslationHelper.getTranslatedLocationName(locationDisplayName, activeLang, requireContext())
 
         val calendar = Calendar.getInstance()
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
@@ -480,7 +520,7 @@ class WeatherFragment : Fragment() {
         val todayDateStr = SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH).format(calendar.time)
 
         binding.tvTodayDate.text = todayDateStr
-        binding.tvHeroLocationName.text = locationDisplayName
+        binding.tvHeroLocationName.text = displayLocation
         binding.tvTodayTemp.text = "29°C"
         binding.tvTodayCondition.text = if (isNight) "🌙 Clear Night" else "⛅ Partly Cloudy"
         binding.tvTodayMinMax.text = "High: 32°C • Low: 21°C"
@@ -491,8 +531,13 @@ class WeatherFragment : Fragment() {
         updateWeatherIconAndAnimation(binding.tvTodayCondition.text.toString())
         applyWeatherCardTheme(binding.tvTodayCondition.text.toString(), 29)
 
-        binding.tvSprayAdvisory.text = "✅ Safe Spraying Window in $locationDisplayName today. Low wind and minimal rain risk."
-        binding.tvIrrigationAdvisory.text = "🌾 Normal moisture. Light evening irrigation recommended for standing crops in $locationDisplayName."
+        if (activeLang == "hi") {
+            binding.tvSprayAdvisory.text = "✅ $displayLocation में आज छिड़काव के लिए अनुकूल मौसम है। हवा की गति कम और बारिश का जोखिम न्यूनतम है।"
+            binding.tvIrrigationAdvisory.text = "🌾 पर्याप्त नमी। $displayLocation में फसलों के लिए शाम को हल्की सिंचाई की सलाह दी जाती है।"
+        } else {
+            binding.tvSprayAdvisory.text = "✅ Safe Spraying Window in $displayLocation today. Low wind and minimal rain risk."
+            binding.tvIrrigationAdvisory.text = "🌾 Normal moisture. Light evening irrigation recommended for standing crops in $displayLocation."
+        }
 
         val fallbackList = mutableListOf<ForecastDay>()
         val conditions = listOf("⛅ Partly Cloudy", "🌧️ Light Rain", "🌩️ Thunderstorm", "☀️ Clear Sunny", "☀️ Clear Sunny", "⛅ Mostly Clear")
@@ -613,7 +658,7 @@ class WeatherFragment : Fragment() {
             else -> ContextCompat.getColor(context, R.color.weather_sunny_text)
         }
 
-        binding.cardWeatherHero.setBackgroundResource(backgroundDrawableRes)
+        binding.llWeatherHeroBg.setBackgroundResource(backgroundDrawableRes)
         binding.cardWeatherHero.setCardBackgroundColor(Color.TRANSPARENT)
         binding.cardWeatherHero.strokeWidth = 0
 

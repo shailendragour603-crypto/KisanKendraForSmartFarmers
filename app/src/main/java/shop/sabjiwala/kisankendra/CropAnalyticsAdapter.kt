@@ -53,7 +53,10 @@ class CropAnalyticsAdapter(
         val context = holder.itemView.context
         val activeLang = LocaleHelper.getPersistedLanguage(context)
 
-        holder.tvTitle.text = "${cycle.cropName} (${cycle.seasonName}) • ${cycle.areaAcres} Acre"
+        val cleanCrop = cycle.cropName
+        val displayCrop = TranslationHelper.getTranslatedCropName(cleanCrop, activeLang, context)
+        val displaySeason = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, context)
+        holder.tvTitle.text = "$displayCrop ($displaySeason) • ${cycle.areaAcres} Acre"
 
         if (cycle.isCompleted) {
             holder.tvStatus.text = "🔵 Harvested"
@@ -99,8 +102,8 @@ class CropAnalyticsAdapter(
 
         if (activeLang != "en") {
             CoroutineScope(Dispatchers.Main).launch {
-                val transCrop = TranslationHelper.translateText(context, cycle.cropName, activeLang)
-                val transSeason = TranslationHelper.translateText(context, cycle.seasonName, activeLang)
+                val transCrop = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, context)
+                val transSeason = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, context)
                 holder.tvTitle.text = "$transCrop ($transSeason) • ${cycle.areaAcres} Acre"
 
                 if (cycle.isCompleted) {

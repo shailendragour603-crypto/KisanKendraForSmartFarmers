@@ -161,7 +161,7 @@ object KhataHelper {
         val pureCropName = if (rawTrimmed.contains("(")) {
             rawTrimmed.substringBefore("(").trim()
         } else {
-            rawTrimmed.ifBlank { "Wheat" }
+            rawTrimmed.ifBlank { "गेहूँ" }
         }
 
         val seasonInText = if (rawTrimmed.contains("(")) {
@@ -170,15 +170,21 @@ object KhataHelper {
             ""
         }
 
-        // 1. Try exact match by "CropName (SeasonName)"
+        val hindiPureCrop = TranslationHelper.getHindiCropName(pureCropName)
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
+
+        // 1. Try exact match by "CropName (SeasonName)" or translated string
         var matching = cropCycles.firstOrNull {
-            "${it.cropName} (${it.seasonName})".equals(rawTrimmed, ignoreCase = true)
+            val cycleTrans = TranslationHelper.getTranslatedCropName("${it.cropName} (${it.seasonName})", activeLang)
+            "${it.cropName} (${it.seasonName})".equals(rawTrimmed, ignoreCase = true) ||
+            cycleTrans.equals(rawTrimmed, ignoreCase = true)
         }
 
-        // 2. Try match by cropName case-insensitively
+        // 2. Try match by cropName or Hindi crop name
         if (matching == null) {
             matching = cropCycles.firstOrNull {
-                it.cropName.equals(pureCropName, ignoreCase = true)
+                it.cropName.equals(pureCropName, ignoreCase = true) ||
+                TranslationHelper.getHindiCropName(it.cropName).equals(hindiPureCrop, ignoreCase = true)
             }
         }
 
@@ -238,7 +244,7 @@ object KhataHelper {
 
         for (item in khataItems) {
             if (item.cropCycleId.isBlank()) {
-                val cropName = item.cropName.trim().ifBlank { "Wheat" }
+                val cropName = item.cropName.trim().ifBlank { "गेहूँ" }
                 var matching = cropCycles.firstOrNull { it.cropName.equals(cropName, ignoreCase = true) }
                 if (matching == null) {
                     val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""

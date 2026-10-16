@@ -88,7 +88,7 @@
                         android:contentDescription="Gallery Media"
                         android:focusable="true"
                         android:padding="8dp"
-                        android:src="@android:drawable/ic_menu_gallery"
+                        android:src="@drawable/ic_gallery_vector"
                         app:tint="#2E7D32" />
 
                     <!-- Camera Capture Button -->
@@ -103,7 +103,7 @@
                         android:contentDescription="Camera Capture"
                         android:focusable="true"
                         android:padding="8dp"
-                        android:src="@android:drawable/ic_menu_camera"
+                        android:src="@drawable/ic_camera_vector"
                         app:tint="#1565C0" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

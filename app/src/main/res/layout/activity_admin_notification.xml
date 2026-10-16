@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_farmer_surface"
+    android:orientation="vertical">
+
+    <!-- Top Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarAdminNotification"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
+        app:title="🔔 Broadcast Notifications"
+        app:titleTextColor="?android:attr/textColorPrimary" />
+
+    <ScrollView
+        android:id="@+id/scrollViewAdminNotification"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:isScrollContainer="true"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Preset Templates Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🚀 High Engagement Quick Templates"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupTemplates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleLine="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTemplateMandi"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌾 Daily Mandi Rates"
+                        app:chipBackgroundColor="@color/card_surface_bg"
+                        app:chipIcon="@drawable/ic_mandi"
+                        app:chipIconTint="@color/farmer_green_primary"
+                        app:chipStrokeColor="@color/green_primary" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTemplateNews"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📢 Breaking News"
+                        app:chipBackgroundColor="@color/card_surface_bg"
+                        app:chipIcon="@drawable/ic_news"
+                        app:chipIconTint="@color/farmer_green_primary"
+                        app:chipStrokeColor="@color/green_primary" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTemplateAdvisory"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️ Special Advisory"
+                        app:chipBackgroundColor="@color/card_surface_bg"
+                        app:chipIcon="@drawable/ic_color_graphs"
+                        app:chipIconTint="@color/farmer_green_primary"
+                        app:chipStrokeColor="@color/green_primary" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <!-- Composer Section -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_surface_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/green_primary"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✍️ Compose Notification Content"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <!-- Title Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilNotificationTitle"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Notification Title (शीर्षक)"
+                        app:counterEnabled="true"
+                        app:counterMaxLength="65">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNotificationTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences"
+                            android:maxLength="65"
+                            android:text="🌾 आज के ताज़ा मंडी भाव (4:00 PM)"
+                            android:textColor="?android:attr/textColorPrimary" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Body / Message Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilNotificationBody"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="Notification Body / Message (संदेश)"
+                        app:counterEnabled="true"
+                        app:counterMaxLength="200">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNotificationBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="top|start"
+                            android:inputType="textMultiLine"
+                            android:lines="3"
+                            android:maxLength="200"
+                            android:text="सोयाबीन, मक्का और चना के ताज़ा भाव अपडेट हो चुके हैं। अभी चेक करें अपनी फसल के भाव!"
+                            android:textColor="?android:attr/textColorPrimary" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Target FCM Topic Dropdown -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="Target Audience Topic (टारगेट ऑडियंस)">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/autoCompleteTopicSelect"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textColor="?android:attr/textColorPrimary" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Target Screen Dropdown -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="On Tap Action / Target Screen (टैप करने पर क्या खुलेगा)">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/autoCompleteScreenSelect"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textColor="?android:attr/textColorPrimary" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Live Notification Preview Card -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👁️ Live System Tray Preview"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#F8FAF8"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#C2D8C2"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_notification"
+                            app:tint="@color/farmer_green_primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="Kisan Kendra • Now"
+                            android:textColor="#555555"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="#888888" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvPreviewTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textColor="#111111"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="🌾 आज के ताज़ा मंडी भाव (4:00 PM)" />
+
+                    <TextView
+                        android:id="@+id/tvPreviewBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="#444444"
+                        android:textSize="13sp"
+                        tools:text="सोयाबीन, मक्का और चना के ताज़ा भाव अपडेट हो चुके हैं। अभी चेक करें!" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Send Notification Action Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSendNotification"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginBottom="24dp"
+                android:text="🚀 Broadcast Notification Now"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/farmer_green_primary"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_send_vector"
+                app:iconGravity="textStart"
+                app:iconSize="20dp"
+                app:iconTint="@color/white" />
+
+            <!-- History Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📜 Previously Sent Notifications History"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvNotificationHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_admin_notification" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

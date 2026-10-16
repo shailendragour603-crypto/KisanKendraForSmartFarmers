@@ -253,61 +253,69 @@
             <!-- Take Live Photo / Camera -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDialogCamera"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:backgroundTint="#FCE4EC"
                 android:paddingHorizontal="10dp"
-                android:text="📷 लाइव फ़ोटो"
+                android:text="लाइव फ़ोटो"
                 android:textColor="#C2185B"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp" />
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_camera_vector"
+                app:iconTint="#C2185B" />
 
             <!-- Record Live Video / Reel -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDialogVideo"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginStart="6dp"
                 android:backgroundTint="#FBE9E7"
                 android:paddingHorizontal="10dp"
-                android:text="📹 वीडियो बनाएं"
+                android:text="वीडियो बनाएं"
                 android:textColor="#D84315"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp" />
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_video_outline"
+                app:iconTint="#D84315" />
 
             <!-- Gallery Photo -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDialogGalleryPhoto"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginStart="6dp"
                 android:backgroundTint="#E8F5E9"
                 android:paddingHorizontal="10dp"
-                android:text="🖼️ गैलरी फ़ोटो"
+                android:text="गैलरी फ़ोटो"
                 android:textColor="#2E7D32"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp" />
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_gallery_vector"
+                app:iconTint="#2E7D32" />
 
             <!-- Gallery Video -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDialogGalleryVideo"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginStart="6dp"
                 android:backgroundTint="#E3F2FD"
                 android:paddingHorizontal="10dp"
-                android:text="🎥 गैलरी वीडियो"
+                android:text="गैलरी वीडियो"
                 android:textColor="#1565C0"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="18dp" />
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_video_library"
+                app:iconTint="#1565C0" />
         </LinearLayout>
     </HorizontalScrollView>
 
@@ -324,7 +332,7 @@
             android:layout_height="44dp"
             android:layout_weight="1"
             android:layout_marginEnd="6dp"
-            android:text="💾 Save Draft"
+            android:text="Save Draft"
             android:textColor="@color/farmer_green_dark"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -339,7 +347,7 @@
             android:layout_weight="1"
             android:layout_marginStart="6dp"
             android:backgroundTint="@color/farmer_green_dark"
-            android:text="🚀 Post"
+            android:text="Post"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:textStyle="bold"

@@ -59,7 +59,17 @@ class SettingsActivity : AppCompatActivity() {
                 }
             } catch (e: ApiException) {
                 hideGoogleLoading()
-                Toast.makeText(this, "Google Sign-In Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                when (e.statusCode) {
+                    12501 -> {
+                        // User cancelled sign-in prompt - no error Toast needed
+                    }
+                    10 -> {
+                        Toast.makeText(this, "Google Sign-In Error (10): Missing SHA-1 fingerprint in Firebase Console.", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        Toast.makeText(this, "Google Sign-In Error (${e.statusCode}): ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                }
             } catch (e: Exception) {
                 hideGoogleLoading()
                 Toast.makeText(this, "Google Sign-In Error: ${e.localizedMessage ?: "Service Unavailable"}", Toast.LENGTH_SHORT).show()
@@ -80,7 +90,8 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleHelper.updateResources(newBase, "en"))
+        val lang = LocaleHelper.getPersistedLanguage(newBase)
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,10 +125,48 @@ class SettingsActivity : AppCompatActivity() {
         setupGoogleSignIn()
         setupToolbar()
         setupAccountSection()
+        setupLanguageSection()
         setupDarkModeSection()
         setupSupportSection()
         setupAdminSection()
         setupBottomNav()
+    }
+
+
+    private fun setupLanguageSection() {
+        val currentCode = LocaleHelper.getPersistedLanguage(this)
+        val isEnglish = currentCode == "en"
+
+        binding.switchEnglish.isChecked = isEnglish
+        updateLanguageDisplay(isEnglish)
+
+        binding.switchEnglish.setOnCheckedChangeListener { _, isChecked ->
+            val targetLang = if (isChecked) "en" else "hi"
+            if (targetLang != LocaleHelper.getPersistedLanguage(this)) {
+                LocaleHelper.setLocale(this, targetLang)
+                Toast.makeText(this, if (isChecked) "Language changed to English" else "भाषा बदलकर हिंदी की गई", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
+
+        binding.tvCurrentLanguage.setOnClickListener {
+            binding.switchEnglish.toggle()
+        }
+    }
+
+    private fun updateLanguageDisplay(isEnglish: Boolean) {
+        if (isEnglish) {
+            binding.tvLanguageStatus.text = "English selected"
+            binding.tvCurrentLanguage.text = "🌐 Active Language: English"
+        } else {
+            binding.tvLanguageStatus.text = "हिंदी (Default) selected"
+            binding.tvCurrentLanguage.text = "🌐 वर्तमान भाषा: हिंदी (Default)"
+        }
     }
 
     private fun setupAdminSection() {

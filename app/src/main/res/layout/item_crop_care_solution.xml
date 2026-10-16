@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeColor="#E2E8F0"
+    app:strokeWidth="1dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header: Category Badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvCategoryBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_green"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="फसल रोग"
+                android:textColor="@color/farmer_green_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Problem Title (Bold & Larger) -->
+        <TextView
+            android:id="@+id/tvProblemTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="गेहूं में पीला रतुआ (Yellow Rust)"
+            android:textColor="#0F172A"
+            android:textSize="17.5sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Problem Description / Details -->
+        <TextView
+            android:id="@+id/tvProblemDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="समस्या का विवरण..."
+            android:textColor="#334155"
+            android:textSize="14.5sp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Solution Container (Expandable / Collapsible) -->
+        <LinearLayout
+            android:id="@+id/layoutSolutionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_rounded_light_gray"
+            android:padding="14dp"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvSolutionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="समाधान"
+                android:textColor="#047857"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tvSolutionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="समाधान का विवरण..."
+                android:textColor="#1E293B"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Footer: Expand / Reduce Action Bar at Bottom -->
+        <LinearLayout
+            android:id="@+id/layoutExpandFooter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="6dp">
+
+            <TextView
+                android:id="@+id/tvExpandToggleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="समाधान देखे "
+                android:textColor="@color/farmer_green_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="6dp" />
+
+            <ImageView
+                android:id="@+id/ivExpandArrow"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_expand_more"
+                app:tint="@color/farmer_green_primary"
+                android:contentDescription="Expand Arrow" />
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,603 +1,778 @@
 package shop.sabjiwala.kisankendra.utils
 
 import android.content.Context
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 object TranslationHelper {
 
     private val translationCache = ConcurrentHashMap<String, String>()
+    private val masterDictCache = ConcurrentHashMap<String, ConcurrentHashMap<String, String>>()
 
-    private val localizedDictionary = mapOf(
-        "hi" to mapOf(
-            "Add New Entry" to "नई एंट्री जोड़ें",
-            "Expense" to "खर्च",
-            "expense" to "खर्च",
-            "Expenses" to "खर्च",
-            "expenses" to "खर्च",
-            "Total Expenses" to "कुल खर्च",
-            "Total Expense" to "कुल खर्च",
-            "Crop Expense" to "फसल खर्च",
-            "Highest Expense Crop" to "सबसे ज्यादा खर्च वाली फसल",
-            "Amount" to "Amount",
-            "amount" to "Amount",
-            "Agri Gyan" to "कृषि ज्ञान",
-            "Govt Scheme" to "सरकारी योजना",
-            "Agri Market" to "कृषि बाज़ार",
-            "Crop Protection" to "फसल सुरक्षा",
-            "Technology" to "कृषि तकनीक",
-            "Success Stories" to "सफलता की कहानियाँ",
-            "All News" to "सभी समाचार",
-            "Kisan Diary" to "किसान डायरी",
-            "Calculator" to "कैलकुलेटर",
-            "Crop Care" to "फसल देखभाल",
-            "Govt Schemes" to "सरकारी योजनाएँ",
-            "Comment your thoughts..." to "अपने विचार कमेंट करें...",
-            "Sign in to comment" to "साइन इन करें",
-            "Spray" to "छिड़काव",
-            "Spraying" to "छिड़काव",
-            "Pesticide Spray" to "कीटनाशक छिड़काव",
-            "Pesticide Spray Advisory" to "कीटनाशक छिड़काव सलाह",
-            "Chemical Spray" to "रासायनिक छिड़काव",
-            "Chemical Spraying" to "रासायनिक छिड़काव",
-            "Organic Spray" to "जैविक छिड़काव",
-            "Pesticides" to "कीटनाशक",
-            "Pesticide" to "कीटनाशक",
-            "Avoid Chemical Spraying" to "रासायनिक छिड़काव से बचें",
-            "Safe Spraying Window" to "सुरक्षित छिड़काव का समय",
-            "Crop Protection & Spray Calculator" to "फसल सुरक्षा और छिड़काव कैलकुलेटर",
-            "Estimated Chemical Spray Cost" to "अनुमानित रासायनिक छिड़काव लागत",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 फसल सुरक्षा और छिड़काव कैलकुलेटर",
-            "Sowing" to "बुआई",
-            "Irrigation" to "सिंचाई",
-            "Harvesting" to "कटाई",
-            "Sale" to "बिक्री",
-            "Seeds" to "बीज",
-            "Fertilizer" to "खाद / उर्वरक",
-            "Fertiliser" to "खाद / उर्वरक",
-            "Labor" to "मजदूरी",
-            "Labour" to "मजदूरी",
-            "Machinery & Fuel" to "मशीनरी और ईंधन",
-            "Machinery & Tractor" to "मशीनरी और ट्रैक्टर",
-            "Diesel & Irrigation" to "डीजल और सिंचाई",
-            "Electricity & Water" to "बिजली और पानी",
-            "General Expense" to "सामान्य खर्च",
-            "Miscellaneous" to "अन्य / विविध"
-        ),
-        "mr" to mapOf(
-            "Agri Gyan" to "कृषी ज्ञान",
-            "Govt Scheme" to "सरकारी योजना",
-            "Agri Market" to "कृषी बाजार",
-            "Crop Protection" to "पीक संरक्षण",
-            "Technology" to "तंत्रज्ञान",
-            "Success Stories" to "यशस्वी गाथा",
-            "All News" to "सर्व बातम्या",
-            "Kisan Diary" to "किसान डायरी",
-            "Calculator" to "कॅल्क्युलेटर",
-            "Crop Care" to "पीक काळजी",
-            "Govt Schemes" to "सरकारी योजना",
-            "Comment your thoughts..." to "तुमचे विचार कमेंट करा...",
-            "Sign in to comment" to "साइन इन करा",
-            "Spray" to "फवारणी",
-            "Spraying" to "फवारणी",
-            "Pesticide Spray" to "कीटकनाशक फवारणी",
-            "Pesticide Spray Advisory" to "कीटकनाशक फवारणी सल्ला",
-            "Chemical Spray" to "रासायनिक फवारणी",
-            "Chemical Spraying" to "रासायनिक फवारणी",
-            "Organic Spray" to "जैविक फवारणी",
-            "Pesticides" to "कीटकनाशके",
-            "Pesticide" to "कीटकनाशक",
-            "Avoid Chemical Spraying" to "रासायनिक फवारणी टाळा",
-            "Safe Spraying Window" to "सुरक्षित फवारणी वेळ",
-            "Crop Protection & Spray Calculator" to "पीक संरक्षण आणि फवारणी कॅल्क्युलेटर",
-            "Estimated Chemical Spray Cost" to "अंदाजित रासायनिक फवारणी खर्च",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 पीक संरक्षण आणि फवारणी कॅल्क्युलेटर",
-            "Sowing" to "पेरणी",
-            "Irrigation" to "सिंचन",
-            "Harvesting" to "कापणी",
-            "Sale" to "विक्री",
-            "Seeds" to "बियाणे",
-            "Fertilizer" to "खते",
-            "Fertiliser" to "खते",
-            "Labor" to "मजुरी",
-            "Labour" to "मजुरी",
-            "Machinery & Fuel" to "यंत्रसामग्री आणि इंधन",
-            "Machinery & Tractor" to "यंत्रसामग्री आणि ट्रॅक्टर",
-            "Diesel & Irrigation" to "डिझेल आणि सिंचन",
-            "Electricity & Water" to "वीज आणि पाणी",
-            "General Expense" to "सामान्य खर्च",
-            "Miscellaneous" to "इतर खर्च"
-        ),
-        "pa" to mapOf(
-            "Agri Gyan" to "ਖੇਤੀ ਗਿਆਨ",
-            "Govt Scheme" to "ਸਰਕਾਰੀ ਸਕੀਮ",
-            "Agri Market" to "ਖੇਤੀ ਬਾਜ਼ਾਰ",
-            "Crop Protection" to "ਫਸਲ ਸੁਰੱਖਿਆ",
-            "Technology" to "ਤਕਨਾਲੋਜੀ",
-            "Success Stories" to "ਸਫਲਤਾ ਦੀਆਂ ਕਹਾਣੀਆਂ",
-            "All News" to "ਸਾਰੀਆਂ ਖ਼ਬਰਾਂ",
-            "Kisan Diary" to "ਕਿਸਾਨ ਡਾਇਰੀ",
-            "Calculator" to "ਕੈਲਕੁਲੇਟਰ",
-            "Crop Care" to "ਫਸਲ ਦੇਖਭਾਲ",
-            "Govt Schemes" to "ਸਰਕਾਰੀ ਸਕੀਮਾਂ",
-            "Comment your thoughts..." to "ਆਪਣੇ ਵਿਚਾਰ ਕਮੈਂਟ ਕਰੋ...",
-            "Sign in to comment" to "ਸਾਈਨ ਇਨ ਕਰੋ",
-            "Spray" to "ਛਿੜਕਾਅ",
-            "Spraying" to "ਛਿੜਕਾਅ",
-            "Pesticide Spray" to "ਕੀਟਨਾਸ਼ਕ ਛਿੜਕਾਅ",
-            "Pesticide Spray Advisory" to "ਕੀਟਨਾਸ਼ਕ ਛਿੜਕਾਅ ਸਲਾਹ",
-            "Chemical Spray" to "ਰਸਾਇਣਕ ਛਿੜਕਾਅ",
-            "Chemical Spraying" to "ਰਸਾਇਣਕ ਛਿੜਕਾਅ",
-            "Organic Spray" to "ਜੈਵਿਕ ਛਿੜਕਾਅ",
-            "Pesticides" to "ਕੀਟਨਾਸ਼ਕ",
-            "Pesticide" to "ਕੀਟਨਾਸ਼ਕ",
-            "Avoid Chemical Spraying" to "ਰਸਾਇਣਕ ਛਿੜਕਾਅ ਤੋਂ ਬਚੋ",
-            "Safe Spraying Window" to "ਸੁਰੱਖਿਅਤ ਛਿੜਕਾਅ ਦਾ ਸਮਾਂ",
-            "Crop Protection & Spray Calculator" to "ਫਸਲ ਸੁਰੱਖਿਆ ਅਤੇ ਛਿੜਕਾਅ ਕੈਲਕੁਲੇਟਰ",
-            "Estimated Chemical Spray Cost" to "ਅਨੁਮਾਨਿਤ ਰਸਾਇਣਕ ਛਿੜਕਾਅ ਲਾਗਤ",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 ਫਸਲ ਸੁਰੱਖਿਆ ਅਤੇ ਛਿੜਕਾਅ ਕੈਲਕੁਲੇਟਰ",
-            "Sowing" to "ਬੀਜਾਈ",
-            "Irrigation" to "ਸਿੰਚਾਈ",
-            "Harvesting" to "ਵਾਢੀ",
-            "Sale" to "ਵੇਚ",
-            "Seeds" to "ਬੀਜ",
-            "Fertilizer" to "ਖਾਦ",
-            "Fertiliser" to "ਖਾਦ",
-            "Labor" to "ਮਜ਼ਦੂਰੀ",
-            "Labour" to "ਮਜ਼ਦੂਰੀ",
-            "Machinery & Fuel" to "ਮਸ਼ੀਨਰੀ ਅਤੇ ਬਾਲਣ",
-            "Machinery & Tractor" to "ਮਸ਼ੀਨਰੀ ਅਤੇ ਟ੍ਰੈਕਟਰ",
-            "Diesel & Irrigation" to "ਡੀਜ਼ਲ ਅਤੇ ਸਿੰਚਾਈ",
-            "Electricity & Water" to "ਬਿਜਲੀ ਅਤੇ ਪਾਣੀ",
-            "General Expense" to "ਆਮ ਖਰਚਾ",
-            "Miscellaneous" to "ਹੋਰ ਖਰਚੇ"
-        ),
-        "gu" to mapOf(
-            "Agri Gyan" to "કૃષિ જ્ઞાન",
-            "Govt Scheme" to "સરકારી યોજના",
-            "Agri Market" to "કૃષિ બજાર",
-            "Crop Protection" to "પાક સુરક્ષા",
-            "Technology" to "ટેકનોલોજી",
-            "Success Stories" to "સફળતાની વાતો",
-            "All News" to "બધા સમાચાર",
-            "Kisan Diary" to "કિસાન ડાયરી",
-            "Calculator" to "કેલ્ક્યુલેટર",
-            "Crop Care" to "પાક સંભાળ",
-            "Govt Schemes" to "સરકારી યોજનાઓ",
-            "Comment your thoughts..." to "તમારા વિચારો કમેન્ટ કરો...",
-            "Sign in to comment" to "સાઇન ઇન કરો",
-            "Spray" to "છંટકાવ",
-            "Spraying" to "છંટકાવ",
-            "Pesticide Spray" to "જંતુનાશક છંટકાવ",
-            "Pesticide Spray Advisory" to "જંતુનાશક છંટકાવ સલાહ",
-            "Chemical Spray" to "રાસાયણિક છંટકાવ",
-            "Chemical Spraying" to "રાસાયણિક છંટકાવ",
-            "Organic Spray" to "જૈવિક છંટકાવ",
-            "Pesticides" to "જંતુનાશકો",
-            "Pesticide" to "જંતુનાશક",
-            "Avoid Chemical Spraying" to "રાસાયણિક છંટકાવ ટાળો",
-            "Safe Spraying Window" to "સુરક્ષિત છંટકાવ સમય",
-            "Crop Protection & Spray Calculator" to "પાક સુરક્ષા અને છંટકાવ કેલ્ક્યુલેટર",
-            "Estimated Chemical Spray Cost" to "અંદાજિત રાસાયણિક છંટકાવ ખર્ચ",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 પાક સુરક્ષા અને છંટકાવ કેલ્ક્યુલેટર",
-            "Sowing" to "વાવણી",
-            "Irrigation" to "પિયત",
-            "Harvesting" to "લણણી",
-            "Sale" to "વેચાણ",
-            "Seeds" to "બિયારણ",
-            "Fertilizer" to "ખાતર",
-            "Fertiliser" to "ખાતર",
-            "Labor" to "મજૂરી",
-            "Labour" to "મજૂરી",
-            "Machinery & Fuel" to "મશીનરી અને બળતણ",
-            "Machinery & Tractor" to "મશીનરી અને ટ્રેક્ટર",
-            "Diesel & Irrigation" to "ડીઝલ અને પિયત",
-            "Electricity & Water" to "વીજળી અને પાણી",
-            "General Expense" to "સામાન્ય ખર્ચ",
-            "Miscellaneous" to "પરચુરણ ખર્ચ"
-        ),
-        "bn" to mapOf(
-            "Agri Gyan" to "কৃষি জ্ঞান",
-            "Govt Scheme" to "সরকারি প্রকল্প",
-            "Agri Market" to "কৃষি বাজার",
-            "Crop Protection" to "শস্য সুরক্ষা",
-            "Technology" to "প্রযুক্তি",
-            "Success Stories" to "সফলতার গল্প",
-            "All News" to "সব খবর",
-            "Kisan Diary" to "কৃষক ডায়েরি",
-            "Calculator" to "ক্যালকুলেটর",
-            "Crop Care" to "শস্য যত্ন",
-            "Govt Schemes" to "সরকারি প্রকল্পসমূহ",
-            "Comment your thoughts..." to "আপনার মতামত কমেন্ট করুন...",
-            "Sign in to comment" to "সাইন ইন করুন",
-            "Spray" to "স্প্রে",
-            "Spraying" to "স্প্রে করা",
-            "Pesticide Spray" to "কীটনাশক স্প্রে",
-            "Pesticide Spray Advisory" to "কীটনাশক স্প্রে পরামর্শ",
-            "Chemical Spray" to "রাসায়নিক স্প্রে",
-            "Chemical Spraying" to "রাসায়নিক স্প্রে",
-            "Organic Spray" to "জৈব স্প্রে",
-            "Pesticides" to "কীটনাশক",
-            "Pesticide" to "কীটনাশক",
-            "Avoid Chemical Spraying" to "রাসায়নিক স্প্রে এড়িয়ে চলুন",
-            "Safe Spraying Window" to "নিরাপদ স্প্রে করার সময়",
-            "Crop Protection & Spray Calculator" to "শস্য সুরক্ষা ও স্প্রে ক্যালকুলেটর",
-            "Estimated Chemical Spray Cost" to "আনুমানিক রাসায়নিক স্প্রে খরচ",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 শস্য সুরক্ষা ও স্প্রে ক্যালকুলেটর",
-            "Sowing" to "বপন",
-            "Irrigation" to "সেচ",
-            "Harvesting" to "ফসল কাটা",
-            "Sale" to "বিক্রয়",
-            "Seeds" to "বীজ",
-            "Fertilizer" to "সার",
-            "Fertiliser" to "সার",
-            "Labor" to "শ্রমিক",
-            "Labour" to "শ্রমিক",
-            "Machinery & Fuel" to "যন্ত্রপাতি ও জ্বালানি",
-            "Machinery & Tractor" to "যন্ত্রপাতি ও ট্রাক্টর",
-            "Diesel & Irrigation" to "ডিজেল ও সেচ",
-            "Electricity & Water" to "বিদ্যুৎ ও জল",
-            "General Expense" to "সাধারণ খরচ",
-            "Miscellaneous" to "অন্যান্য খরচ"
-        ),
-        "ta" to mapOf(
-            "Agri Gyan" to "வேளாண் ஞானம்",
-            "Govt Scheme" to "அரசு திட்டம்",
-            "Agri Market" to "வேளாண் சந்தை",
-            "Crop Protection" to "பயிர் பாதுகாப்பு",
-            "Technology" to "தொழில்நுட்பம்",
-            "Success Stories" to "வெற்றி கதைகள்",
-            "All News" to "அனைத்து செய்திகள்",
-            "Kisan Diary" to "விவசாய டைரி",
-            "Calculator" to "கால்குலேட்டர்",
-            "Crop Care" to "பயிர் பராமரிப்பு",
-            "Govt Schemes" to "அரசு திட்டங்கள்",
-            "Comment your thoughts..." to "உங்கள் கருத்துக்களை தெரிவிக்கவும்...",
-            "Sign in to comment" to "உள்நுழையவும்",
-            "Spray" to "தெளிப்பு",
-            "Spraying" to "தெளித்தல்",
-            "Pesticide Spray" to "பூச்சிக்கொல்லி தெளிப்பு",
-            "Pesticide Spray Advisory" to "பூச்சிக்கொல்லி தெளிப்பு ஆலோசனை",
-            "Chemical Spray" to "ரசாயன தெளிப்பு",
-            "Chemical Spraying" to "ரசாயன தெளிப்பு",
-            "Organic Spray" to "இயற்கை தெளிப்பு",
-            "Pesticides" to "பூச்சிக்கொல்லிகள்",
-            "Pesticide" to "பூச்சிக்கொல்லி",
-            "Avoid Chemical Spraying" to "ரசாயன தெளிப்பைத் தவிர்க்கவும்",
-            "Safe Spraying Window" to "பாதுகாப்பான தெளிப்பு நேரம்",
-            "Crop Protection & Spray Calculator" to "பயிர் பாதுகாப்பு மற்றும் தெளிப்பு கால்குலேட்டர்",
-            "Estimated Chemical Spray Cost" to "மதிப்பிடப்பட்ட ரசாயன தெளிப்பு செலவு",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 பயிர் பாதுகாப்பு மற்றும் தெளிப்பு கால்குலேட்டர்",
-            "Sowing" to "விதைப்பு",
-            "Irrigation" to "பாசனம்",
-            "Harvesting" to "அறுவடை",
-            "Sale" to "விற்பனை",
-            "Seeds" to "விதைகள்",
-            "Fertilizer" to "உரங்கள்",
-            "Fertiliser" to "உரங்கள்",
-            "Labor" to "கூலி",
-            "Labour" to "கூலி",
-            "Machinery & Fuel" to "இயந்திரம் மற்றும் எரிபொருள்",
-            "Machinery & Tractor" to "இயந்திரம் மற்றும் டிராக்டர்",
-            "Diesel & Irrigation" to "டீசல் மற்றும் பாசனம்",
-            "Electricity & Water" to "மின்சாரம் மற்றும் தண்ணீர்",
-            "General Expense" to "பொதுவான செலவு",
-            "Miscellaneous" to "இதர செலவுகள்"
-        ),
-        "te" to mapOf(
-            "Agri Gyan" to "వ్యవసాయ జ్ఞానం",
-            "Govt Scheme" to "ప్రభుత్వ పథకం",
-            "Agri Market" to "వ్యవసాయ మార్కెట్",
-            "Crop Protection" to "పంట సంరక్షణ",
-            "Technology" to "సాంకేతికత",
-            "Success Stories" to "విజయ గాథలు",
-            "All News" to "అన్ని వార్తలు",
-            "Kisan Diary" to "రైతు డైరీ",
-            "Calculator" to "కాల్క్యులేటర్",
-            "Crop Care" to "పంట సంరక్షణ",
-            "Govt Schemes" to "ప్రభుత్వ పథకాలు",
-            "Comment your thoughts..." to "మీ అభిప్రాయాలను కామెంట్ చేయండి...",
-            "Sign in to comment" to "సైన్ ఇన్ చేయండి",
-            "Spray" to "పిచికారీ",
-            "Spraying" to "పిచికారీ",
-            "Pesticide Spray" to "పురుగుమందు పిచికారీ",
-            "Pesticide Spray Advisory" to "పురుగుమందు పిచికారీ సలహా",
-            "Chemical Spray" to "రసాయన పిచికారీ",
-            "Chemical Spraying" to "రసాయన పిచికారీ",
-            "Organic Spray" to "సేంద్రీయ పిచికారీ",
-            "Pesticides" to "పురుగుమందులు",
-            "Pesticide" to "పురుగుమందు",
-            "Avoid Chemical Spraying" to "రసాయన పిచికారీ నివారించండి",
-            "Safe Spraying Window" to "సురక్షిత పిచికారీ సమయం",
-            "Crop Protection & Spray Calculator" to "పంట సంరక్షణ మరియు పిచికారీ కాల్క్యులేటర్",
-            "Estimated Chemical Spray Cost" to "అంచనా వేసిన రసాయన పిచికారీ ఖర్చు",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 పంట సంరక్షణ మరియు పిచికారీ కాల్క్యులేటర్",
-            "Sowing" to "విత్తనం వెయ్యడం",
-            "Irrigation" to "నీటి పారుదల",
-            "Harvesting" to "కోత",
-            "Sale" to "అమ్మకం",
-            "Seeds" to "విత్తనాలు",
-            "Fertilizer" to "ఎరువులు",
-            "Fertiliser" to "ఎరువులు",
-            "Labor" to "కూలీ",
-            "Labour" to "కూలీ",
-            "Machinery & Fuel" to "యంత్రాలు మరియు ఇంధనం",
-            "Machinery & Tractor" to "యంత్రాలు మరియు ట్రాక్టర్",
-            "Diesel & Irrigation" to "డీజిల్ మరియు నీటి పారుదల",
-            "Electricity & Water" to "విద్యుత్ మరియు నీరు",
-            "General Expense" to "సాధారణ ఖర్చు",
-            "Miscellaneous" to "ఇతర ఖర్చులు"
-        ),
-        "kn" to mapOf(
-            "Agri Gyan" to "ಕೃಷಿ ಜ್ಞಾನ",
-            "Govt Scheme" to "ಸರ್ಕಾರಿ ಯೋಜನೆ",
-            "Agri Market" to "ಕೃಷಿ ಮಾರುಕಟ್ಟೆ",
-            "Crop Protection" to "ಬೆಳೆ ರಕ್ಷಣೆ",
-            "Technology" to "ತಂತ್ರಜ್ಞಾನ",
-            "Success Stories" to "ಯಶಸ್ಸಿನ ಕಥೆಗಳು",
-            "All News" to "ಎಲ್ಲಾ ಸುದ್ದಿ",
-            "Kisan Diary" to "ಕಿಸಾನ್ ಡೈರಿ",
-            "Calculator" to "ಕ್ಯಾಲ್ಕುಲೇಟರ್",
-            "Crop Care" to "ಬೆಳೆ ಕಾಳಜಿ",
-            "Govt Schemes" to "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು",
-            "Comment your thoughts..." to "ನಿಮ್ಮ ಅಭಿಪ್ರಾಯಗಳನ್ನು ಕಾಮೆಂಟ್ ಮಾಡಿ...",
-            "Sign in to comment" to "ಸೈನ್ ಇನ್ ಮಾಡಿ",
-            "Spray" to "ಸಿಂಪಡಣೆ",
-            "Spraying" to "ಸಿಂಪಡಣೆ",
-            "Pesticide Spray" to "ಕೀಟನಾಶಕ ಸಿಂಪಡಣೆ",
-            "Pesticide Spray Advisory" to "ಕೀಟನಾಶಕ ಸಿಂಪಡಣೆ ಸಲಹೆ",
-            "Chemical Spray" to "ರಾಸಾಯನಿಕ ಸಿಂಪಡಣೆ",
-            "Chemical Spraying" to "ರಾಸಾಯನಿಕ ಸಿಂಪಡಣೆ",
-            "Organic Spray" to "ಸಾವಯವ ಸಿಂಪಡಣೆ",
-            "Pesticides" to "ಕೀಟನಾಶಕಗಳು",
-            "Pesticide" to "ಕೀಟನಾಶಕ",
-            "Avoid Chemical Spraying" to "ರಾಸಾಯನಿಕ ಸಿಂಪಡಣೆ ತಪ್ಪಿಸಿ",
-            "Safe Spraying Window" to "ಸುರಕ್ಷಿತ ಸಿಂಪಡಣೆ ಸಮಯ",
-            "Crop Protection & Spray Calculator" to "ಬೆಳೆ ರಕ್ಷಣೆ ಮತ್ತು ಸಿಂಪಡಣೆ ಕ್ಯಾಲ್ಕುಲೇಟರ್",
-            "Estimated Chemical Spray Cost" to "ಅಂದಾಜು ರಾಸಾಯನಿಕ ಸಿಂಪಡಣೆ ವೆಚ್ಚ",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 ಬೆಳೆ ರಕ್ಷಣೆ ಮತ್ತು ಸಿಂಪಡಣೆ ಕ್ಯಾಲ್ಕುಲೇಟರ್",
-            "Sowing" to "ಬಿತ್ತನೆ",
-            "Irrigation" to "ನೀರಾವರಿ",
-            "Harvesting" to "ಕೊಯ್ಲು",
-            "Sale" to "ಮಾರಾಟ",
-            "Seeds" to "ಬೀಜಗಳು",
-            "Fertilizer" to "ರಸಗೊಬ್ಬರ",
-            "Fertiliser" to "ರಸಗೊಬ್ಬರ",
-            "Labor" to "ಕೂಲಿ",
-            "Labour" to "ಕೂಲಿ",
-            "Machinery & Fuel" to "ಯಂತ್ರೋಪಕರಣ ಮತ್ತು ಇಂಧನ",
-            "Machinery & Tractor" to "ಯಂತ್ರೋಪಕರಣ ಮತ್ತು ಟ್ರ್ಯಾಕ್ಟರ್",
-            "Diesel & Irrigation" to "ಡೀಸಲ್ ಮತ್ತು ನೀರಾವರಿ",
-            "Electricity & Water" to "ವಿದ್ಯುತ್ ಮತ್ತು ನೀರು",
-            "General Expense" to "ಸಾಮಾನ್ಯ ವೆಚ್ಚ",
-            "Miscellaneous" to "ಇತರ ವೆಚ್ಚಗಳು"
-        ),
-        "ml" to mapOf(
-            "Agri Gyan" to "കാർഷിക ജ്ഞാനം",
-            "Govt Scheme" to "സർക്കാർ പദ്ധതി",
-            "Agri Market" to "കാർഷിക മാർക്കറ്റ്",
-            "Crop Protection" to "വിള സംരക്ഷണം",
-            "Technology" to "സാങ്കേതികവിദ്യ",
-            "Success Stories" to "വിജയഗാഥകൾ",
-            "All News" to "എല്ലാ വാർത്തകളും",
-            "Kisan Diary" to "കർഷക ഡയറി",
-            "Calculator" to "കാൽക്കുലേറ്റർ",
-            "Crop Care" to "വിള പരിപാലനം",
-            "Govt Schemes" to "സർക്കാർ പദ്ധതികൾ",
-            "Comment your thoughts..." to "നിങ്ങളുടെ അഭിപ്രായങ്ങൾ കമന്റ് ചെയ്യുക...",
-            "Sign in to comment" to "സൈൻ ഇൻ ചെയ്യുക",
-            "Spray" to "തളിക്കൽ",
-            "Spraying" to "തളിക്കൽ",
-            "Pesticide Spray" to "കീടനാശിനി തളിക്കൽ",
-            "Pesticide Spray Advisory" to "കീടനാശിനി തളിക്കൽ ഉപദേശം",
-            "Chemical Spray" to "രാസതളിക്കൽ",
-            "Chemical Spraying" to "രാസതളിക്കൽ",
-            "Organic Spray" to "ജൈവ തളിക്കൽ",
-            "Pesticides" to "കീടനാശിനികൾ",
-            "Pesticide" to "കീടനാശിനി",
-            "Avoid Chemical Spraying" to "രാസതളിക്കൽ ഒഴിവാക്കുക",
-            "Safe Spraying Window" to "സുരക്ഷിത തളിക്കൽ സമയം",
-            "Crop Protection & Spray Calculator" to "വിള സംരക്ഷണവും തളിക്കൽ കാൽക്കുലേറ്ററും",
-            "Estimated Chemical Spray Cost" to "ഏകദേശ രാസതളിക്കൽ ചെലവ്",
-            "5. 💊 Crop Protection & Spray Calculator" to "5. 💊 വിള സംരക്ഷണവും തളിക്കൽ കാൽക്കുലേറ്ററും",
-            "Sowing" to "വിത",
-            "Irrigation" to "നനയ്ക്കൽ",
-            "Harvesting" to "വിളവെടുപ്പ്",
-            "Sale" to "വില്പന",
-            "Seeds" to "വിത്തുകൾ",
-            "Fertilizer" to "വളങ്ങൾ",
-            "Fertiliser" to "വളങ്ങൾ",
-            "Labor" to "തൊഴിൽ കൂലി",
-            "Labour" to "തൊഴിൽ കൂലി",
-            "Machinery & Fuel" to "യന്ത്രസാമഗ്രികളും ഇന്ധനവും",
-            "Machinery & Tractor" to "യന്ത്രസാമഗ്രികളും ട്രാക്ടറും",
-            "Diesel & Irrigation" to "ഡീസലും നനയ്ക്കലും",
-            "Electricity & Water" to "വൈദ്യുതിയും വെള്ളവും",
-            "General Expense" to "പൊതുവായ ചെലവ്",
-            "Miscellaneous" to "മറ്റു ചെലവുകൾ"
-        )
+    val DEFAULT_HINDI_CROPS_LIST = listOf(
+        "✍️ कोई अन्य फसल लिखें...",
+        "--- 🌾 फसलें व अनाज ---",
+        "गेहूँ", "धान / चावल", "सोयाबीन", "कपास", "सरसों", "चना", "मक्का", "गन्ना", "बाजरा", "ज्वार", "जौ", "अरहर / तुअर", "मूंग", "उड़द", "मूंगफली", "तिल", "सूरजमुखी",
+        "--- 🥬 सब्जियाँ ---",
+        "प्याज़", "आलू", "लहसुन", "टमाटर", "हरी मिर्च", "बैंगन", "भिंडी", "फूलगोभी", "पत्तागोभी", "हरी मटर", "गाजर", "मूली", "पालक", "करेला", "लौकी", "तोरई", "कद्दू", "खीरा", "शिमला मिर्च", "धनिया", "अदरक", "हल्दी", "शकरकंद", "चुकंदर", "अरबी",
+        "--- 🍎 फल ---",
+        "आम", "केला", "सेब", "पपीता", "अमरूद", "अनार", "तरबूज", "खरबूजा", "संतरा", "नींबू", "अंगूर", "ड्रैगन फ्रूट", "स्ट्रॉबेरी", "कटहल", "लीची", "चीकू"
     )
 
-    private val protectedActionWords = setOf(
-        "my farming dashboard",
-        "amount",
-        "save",
-        "submit",
-        "update",
-        "save draft",
-        "post",
-        "share",
-        "cancel",
-        "confirm",
-        "back",
-        "next",
-        "skip",
-        "done",
-        "apply",
-        "search",
-        "clear",
-        "reset",
-        "retry",
-        "refresh",
-        "close",
-        "ok",
-        "yes",
-        "no",
-        "view",
-        "delete",
-        "edit",
-        "download",
-        "upload",
-        "start",
-        "stop",
-        "select",
-        "filter",
-        "sort",
-        "save entry",
-        "update entry",
-        "save name",
-        "save key",
-        "submit question",
-        "submit otp",
-        "post question",
-        "share app",
-        "share news",
-        "share dashboard",
-        "share price chart",
-        "start season",
-        "edit entry",
-        "see translation",
-        "see original",
-        "send sms otp",
-        "verify otp & continue",
-        "login with email",
-        "sign up",
-        "sign in",
-        "logout",
-        "central (all india)",
-        "all states",
-        "select category",
-        "select category:"
-    )
+    private var cachedLocalizedDict: Map<String, Map<String, String>>? = null
 
-    private fun isProtectedActionWord(text: String): Boolean {
-        val cleaned = text.replace(Regex("[\\p{So}\\p{Cn}]"), "").trim().lowercase()
-        return protectedActionWords.contains(cleaned)
+    fun getLocalizedDictionary(context: Context?): Map<String, Map<String, String>> {
+        if (cachedLocalizedDict != null) return cachedLocalizedDict!!
+        if (context == null) return emptyMap()
+
+        return try {
+            val jsonStr = context.assets.open("local_translation_dictionary.json").bufferedReader().use { it.readText() }
+            val type = object : TypeToken<Map<String, Map<String, String>>>() {}.type
+            val map: Map<String, Map<String, String>>? = Gson().fromJson(jsonStr, type)
+            if (map != null) {
+                cachedLocalizedDict = map
+                map
+            } else emptyMap()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyMap()
+        }
     }
 
-    fun getDirectTranslation(text: String, targetLangCode: String): String? {
-        if (text.isBlank() || targetLangCode == "en") return text
-        val cleanKey = text.trim()
+    suspend fun syncMasterDictionaryFromFirestore(context: Context, langCode: String = "hi") = withContext(Dispatchers.IO) {
+        try {
+            val langCache = masterDictCache.getOrPut(langCode) { ConcurrentHashMap() }
+            val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
+            val cachedJson = prefs.getString("dict_$langCode", null)
 
-        localizedDictionary[targetLangCode]?.get(cleanKey)?.let { return it }
+            if (!cachedJson.isNullOrBlank()) {
+                val type = object : TypeToken<Map<String, String>>() {}.type
+                val map: Map<String, String>? = Gson().fromJson(cachedJson, type)
+                if (!map.isNullOrEmpty()) {
+                    for ((k, v) in map) {
+                        if (!v.contains("महिलाओं", ignoreCase = true) && !v.contains("उंगलियां", ignoreCase = true)) {
+                            val lKey = k.lowercase().trim()
+                            langCache[lKey] = v
+                            langCache[k] = v
+                        }
+                    }
+                }
+            }
 
-        // Case-insensitive lookup
-        localizedDictionary[targetLangCode]?.entries?.firstOrNull {
-            it.key.equals(cleanKey, ignoreCase = true)
-        }?.value?.let { return it }
+            val doc = FirebaseFirestore.getInstance()
+                .collection("app_translations")
+                .document(langCode)
+                .get()
+                .await()
+
+            if (doc.exists()) {
+                val remoteMap = (doc.get("dictionary") as? Map<String, String>)?.toMutableMap() ?: mutableMapOf()
+
+                // Recover any top-level "dictionary.xyz" fields from legacy buggy saves
+                val docData = doc.data
+                var legacyRootFieldsFound = false
+                if (docData != null) {
+                    for ((fKey, fVal) in docData) {
+                        if (fKey.startsWith("dictionary.") && fVal is String) {
+                            val cleanKey = fKey.removePrefix("dictionary.")
+                            if (cleanKey.isNotBlank()) {
+                                remoteMap[cleanKey] = fVal
+                                legacyRootFieldsFound = true
+                            }
+                        }
+                    }
+                }
+
+                val keysToCheck = listOf(
+                    "ladies finger", "lady finger", "ladies-finger", "lady-finger",
+                    "ladies_finger", "lady_finger", "lady's finger", "ladies' finger",
+                    "lady's fingers", "ladies' fingers", "bhindi", "okra"
+                )
+
+                var needsUpdate = false
+
+                val badKeys = remoteMap.filter { it.value.contains("महिलाओं", ignoreCase = true) || it.value.contains("उंगलियां", ignoreCase = true) }.keys
+                for (bk in badKeys) {
+                    remoteMap.remove(bk)
+                    needsUpdate = true
+                }
+
+                for (k in keysToCheck) {
+                    if (remoteMap.containsKey(k)) {
+                        val currentVal = remoteMap[k].orEmpty()
+                        if (currentVal.contains("महिलाओं", ignoreCase = true) || currentVal.contains("उंगलियां", ignoreCase = true)) {
+                            val correctVal = if (langCode == "hi") "भिंडी" else "Ladies Finger"
+                            remoteMap[k] = correctVal
+                            needsUpdate = true
+                        }
+                    } else {
+                        val correctVal = if (langCode == "hi") "भिंडी" else "Ladies Finger"
+                        remoteMap[k] = correctVal
+                        needsUpdate = true
+                    }
+                }
+
+                if (needsUpdate || legacyRootFieldsFound) {
+                    try {
+                        val docRef = FirebaseFirestore.getInstance().collection("app_translations").document(langCode)
+                        docRef.set(
+                            hashMapOf(
+                                "dictionary" to remoteMap,
+                                "updatedAt" to com.google.firebase.Timestamp.now()
+                            ),
+                            SetOptions.merge()
+                        ).await()
+
+                        if (legacyRootFieldsFound && docData != null) {
+                            val deleteUpdates = hashMapOf<String, Any>()
+                            for ((fKey, _) in docData) {
+                                if (fKey.startsWith("dictionary.")) {
+                                    deleteUpdates[fKey] = com.google.firebase.firestore.FieldValue.delete()
+                                }
+                            }
+                            if (deleteUpdates.isNotEmpty()) {
+                                docRef.update(deleteUpdates).await()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+                if (remoteMap.isNotEmpty()) {
+                    for ((k, v) in remoteMap) {
+                        val lKey = k.lowercase().trim()
+                        langCache[lKey] = v
+                        langCache[k] = v
+                    }
+                    val json = Gson().toJson(remoteMap)
+                    prefs.edit().putString("dict_$langCode", json).apply()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun updateMasterCache(key: String, value: String, langCode: String = "hi") {
+        if (key.isBlank() || value.isBlank()) return
+        if (value.contains("महिलाओं", ignoreCase = true) || value.contains("उंगलियां", ignoreCase = true)) {
+            return
+        }
+        val langCache = masterDictCache.getOrPut(langCode) { ConcurrentHashMap() }
+        val lKey = key.lowercase().trim()
+        langCache[lKey] = value
+        langCache[key] = value
+    }
+
+    fun removeFromMasterCache(key: String, langCode: String = "hi") {
+        if (key.isBlank()) return
+        val langCache = masterDictCache[langCode]
+        if (langCache != null) {
+            langCache.remove(key.lowercase().trim())
+            langCache.remove(key)
+        }
+    }
+
+    fun updateMasterCacheAndPrefs(context: Context, key: String, value: String, langCode: String = "hi") {
+        if (key.isBlank() || value.isBlank()) return
+        updateMasterCache(key, value, langCode)
+        try {
+            val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
+            val cachedJson = prefs.getString("dict_$langCode", null)
+            val type = object : TypeToken<Map<String, String>>() {}.type
+            val map: MutableMap<String, String> = if (!cachedJson.isNullOrBlank()) {
+                Gson().fromJson<Map<String, String>>(cachedJson, type)?.toMutableMap() ?: mutableMapOf()
+            } else {
+                mutableMapOf()
+            }
+            map[key.lowercase().trim()] = value
+            map[key] = value
+            prefs.edit().putString("dict_$langCode", Gson().toJson(map)).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun removeMasterCacheAndPrefs(context: Context, key: String, langCode: String = "hi") {
+        if (key.isBlank()) return
+        removeFromMasterCache(key, langCode)
+        try {
+            val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
+            val cachedJson = prefs.getString("dict_$langCode", null)
+            if (!cachedJson.isNullOrBlank()) {
+                val type = object : TypeToken<Map<String, String>>() {}.type
+                val map: MutableMap<String, String>? = Gson().fromJson<Map<String, String>>(cachedJson, type)?.toMutableMap()
+                if (map != null) {
+                    map.remove(key.lowercase().trim())
+                    map.remove(key)
+                    prefs.edit().putString("dict_$langCode", Gson().toJson(map)).apply()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun getDirectTranslation(text: String, targetLangCode: String, context: Context? = null): String? {
+        if (text.isBlank()) return null
+        val cleanText = text.trim()
+        val cleanKey = cleanText.lowercase()
+
+        // 1. Check Language-Specific Master Remote Dictionary Cache from Firebase
+        val langCache = masterDictCache[targetLangCode]
+        if (langCache != null) {
+            langCache[cleanKey]?.let { return it }
+            langCache[cleanText]?.let { return it }
+            if (cleanKey.contains("ladies")) {
+                langCache[cleanKey.replace("ladies", "lady")]?.let { return it }
+            }
+            if (cleanKey.contains("lady")) {
+                langCache[cleanKey.replace("lady", "ladies")]?.let { return it }
+            }
+        }
+
+        // 2. Check Localized Asset Dictionary
+        if (context != null) {
+            val dict = getLocalizedDictionary(context)
+            val langDict = dict[targetLangCode]
+            if (langDict != null) {
+                langDict[cleanText]?.let { return it }
+                langDict.entries.firstOrNull { it.key.equals(cleanText, ignoreCase = true) }?.value?.let { return it }
+            }
+
+            if (targetLangCode != "en") {
+                // Inverse lookup: if text is English or alternative, find corresponding key in "en" or target dict
+                val sourceKey = dict["en"]?.entries?.firstOrNull { it.value.equals(cleanText, ignoreCase = true) }?.key
+                if (sourceKey != null) {
+                    dict[targetLangCode]?.get(sourceKey)?.let { return it }
+                    dict[targetLangCode]?.entries?.firstOrNull { it.key.equals(sourceKey, ignoreCase = true) }?.value?.let { return it }
+                }
+            } else {
+                val valMatch = dict["en"]?.entries?.firstOrNull { it.key.equals(cleanText, ignoreCase = true) }?.value
+                if (valMatch != null) return valMatch
+                val keyMatch = dict["en"]?.entries?.firstOrNull { it.value.equals(cleanText, ignoreCase = true) }?.value
+                if (keyMatch != null) return keyMatch
+                if (!hasNonEnglishCharacters(cleanText)) {
+                    return cleanText
+                }
+            }
+        }
 
         return null
     }
 
-    private fun sanitizeAgriTranslation(text: String, targetLangCode: String): String {
-        if (text.isBlank()) return text
-        var result = text
+    fun getEnglishCropName(crop: String): String {
+        if (crop.isBlank()) return crop
+        val lower = crop.trim().lowercase(Locale.ENGLISH)
+        return when {
+            lower.contains("wheat") || lower.contains("गेहूँ") -> "Wheat"
+            lower.contains("paddy") || lower.contains("rice") || lower.contains("धान") || lower.contains("चावल") -> "Paddy / Rice"
+            lower.contains("soybean") || lower.contains("soyabean") || lower.contains("सोयाबीन") -> "Soybean"
+            lower.contains("cotton") || lower.contains("कपास") -> "Cotton"
+            lower.contains("mustard") || lower.contains("सरसों") -> "Mustard"
+            lower.contains("gram") || lower.contains("chana") || lower.contains("chickpea") || lower.contains("चना") -> "Gram / Chana"
+            lower.contains("maize") || lower.contains("मक्का") -> "Maize"
+            lower.contains("sugarcane") || lower.contains("गन्ना") -> "Sugarcane"
+            lower.contains("bajra") || lower.contains("pearl millet") || lower.contains("बाजरा") -> "Pearl Millet / Bajra"
+            lower.contains("jowar") || lower.contains("sorghum") || lower.contains("ज्वार") -> "Sorghum / Jowar"
+            lower.contains("barley") || lower.contains("जौ") -> "Barley"
+            lower.contains("arhar") || lower.contains("tur") || lower.contains("pigeon pea") || lower.contains("तुअर") -> "Arhar / Pigeon Pea"
+            lower.contains("moong") || lower.contains("green gram") || lower.contains("मूंग") -> "Green Gram / Moong"
+            lower.contains("urad") || lower.contains("black gram") || lower.contains("उड़द") -> "Black Gram / Urad"
+            lower.contains("groundnut") || lower.contains("peanut") || lower.contains("मूंगफली") -> "Groundnut / Peanut"
+            lower.contains("til") || lower.contains("sesame") || lower.contains("तिल") -> "Sesame / Til"
+            lower.contains("sunflower") || lower.contains("सूरजमुखी") -> "Sunflower"
+            lower.contains("onion") || lower.contains("प्याज़") || lower.contains("प्याज") || lower.contains("pyaz") || lower.contains("pyaaz") || lower.contains("kanda") || lower.contains("कांदा") -> "Onion"
+            lower.contains("potato") || lower.contains("आलू") -> "Potato"
+            lower.contains("garlic") || lower.contains("लहसुन") -> "Garlic"
+            lower.contains("tomato") || lower.contains("टमाटर") -> "Tomato"
+            lower.contains("chilli") || lower.contains("मिर्च") -> "Green Chilli"
+            lower.contains("brinjal") || lower.contains("eggplant") || lower.contains("बैंगन") -> "Brinjal"
+            lower.contains("bhindi") || lower.contains("okra") || lower.contains("lady finger") -> "Okra / Bhindi"
+            lower.contains("cauliflower") || lower.contains("फूलगोभी") -> "Cauliflower"
+            lower.contains("cabbage") || lower.contains("पत्तागोभी") -> "Cabbage"
+            lower.contains("peas") || lower.contains("मटर") -> "Green Peas"
+            lower.contains("carrot") || lower.contains("गाजर") -> "Carrot"
+            lower.contains("radish") || lower.contains("मूली") -> "Radish"
+            lower.contains("spinach") || lower.contains("पालक") -> "Spinach"
+            lower.contains("bitter gourd") || lower.contains("करेला") -> "Bitter Gourd"
+            lower.contains("bottle gourd") || lower.contains("लौकी") -> "Bottle Gourd"
+            lower.contains("ridge gourd") || lower.contains("तोरई") -> "Ridge Gourd"
+            lower.contains("pumpkin") || lower.contains("कद्दू") -> "Pumpkin"
+            lower.contains("cucumber") || lower.contains("खीरा") -> "Cucumber"
+            lower.contains("capsicum") || lower.contains("शिमला") -> "Capsicum"
+            lower.contains("coriander") || lower.contains("धनिया") -> "Coriander"
+            lower.contains("ginger") || lower.contains("अदरक") -> "Ginger"
+            lower.contains("turmeric") || lower.contains("हल्दी") -> "Turmeric"
+            lower.contains("sweet potato") || lower.contains("शकरकंद") -> "Sweet Potato"
+            lower.contains("beetroot") || lower.contains("चुकंदर") -> "Beetroot"
+            lower.contains("arbi") || lower.contains("taro") || lower.contains("अरबी") -> "Taro / Arbi"
+            lower.contains("mango") || lower.contains("आम") -> "Mango"
+            lower.contains("banana") || lower.contains("केला") -> "Banana"
+            lower.contains("apple") || lower.contains("सेब") -> "Apple"
+            lower.contains("papaya") || lower.contains("पपीता") -> "Papaya"
+            lower.contains("guava") || lower.contains("अमरूद") -> "Guava"
+            lower.contains("pomegranate") || lower.contains("अनार") -> "Pomegranate"
+            lower.contains("watermelon") || lower.contains("तरबूज") -> "Watermelon"
+            lower.contains("muskmelon") || lower.contains("खरबूजा") -> "Muskmelon"
+            lower.contains("orange") || lower.contains("संतरा") -> "Orange"
+            lower.contains("lemon") || lower.contains("नींबू") -> "Lemon"
+            lower.contains("grapes") || lower.contains("अंगूर") -> "Grapes"
+            lower.contains("dragon fruit") || lower.contains("ड्रैगन") -> "Dragon Fruit"
+            lower.contains("strawberry") || lower.contains("स्ट्रॉबेरी") -> "Strawberry"
+            lower.contains("jackfruit") || lower.contains("कटहल") -> "Jackfruit"
+            lower.contains("litchi") || lower.contains("लीची") -> "Litchi"
+            lower.contains("chikoo") || lower.contains("sapodilla") || lower.contains("चीकू") -> "Sapodilla / Chikoo"
+            else -> crop
+        }
+    }
 
-        when (targetLangCode) {
-            "hi" -> {
-                result = result
-                    .replace("फुहार बहाव", "छिड़काव बहाव")
-                    .replace("फुहार ड्रिफ्ट", "छिड़काव बहाव")
-                    .replace("केमिकल फुहार", "रासायनिक छिड़काव")
-                    .replace("रासायनिक फुहार", "रासायनिक छिड़काव")
-                    .replace("कीटनाशक फुहार", "कीटनाशक छिड़काव")
-                    .replace("सुरक्षित फुहार", "सुरक्षित छिड़काव")
-                    .replace("फुहार सलाह", "छिड़काव सलाह")
-                    .replace("फुहार समय", "छिड़काव समय")
-                    .replace("फुहार की आवश्यकता", "छिड़काव की आवश्यकता")
-                    .replace("फुहार से बचें", "छिड़काव से बचें")
-                    .replace("फुहार", "छिड़काव")
-                    .replace("फुआरा", "छिड़काव")
-                    .replace("बौछार", "छिड़काव")
+    fun getHindiCropName(crop: String): String {
+        if (crop.isBlank()) return crop
+        val lower = crop.trim().lowercase(Locale.ENGLISH)
+        return when {
+            lower.contains("wheat") || lower.contains("गेहूँ") -> "गेहूँ"
+            lower.contains("paddy") || lower.contains("rice") || lower.contains("धान") || lower.contains("चावल") -> "धान / चावल"
+            lower.contains("soybean") || lower.contains("soyabean") || lower.contains("सोयाबीन") -> "सोयाबीन"
+            lower.contains("cotton") || lower.contains("कपास") -> "कपास"
+            lower.contains("mustard") || lower.contains("सरसों") -> "सरसों"
+            lower.contains("gram") || lower.contains("chana") || lower.contains("chickpea") || lower.contains("चना") -> "चना"
+            lower.contains("maize") || lower.contains("मक्का") -> "मक्का"
+            lower.contains("sugarcane") || lower.contains("गन्ना") -> "गन्ना"
+            lower.contains("bajra") || lower.contains("pearl millet") || lower.contains("बाजरा") -> "बाजरा"
+            lower.contains("jowar") || lower.contains("sorghum") || lower.contains("ज्वार") -> "ज्वार"
+            lower.contains("barley") || lower.contains("जौ") -> "जौ"
+            lower.contains("arhar") || lower.contains("tur") || lower.contains("pigeon pea") || lower.contains("तुअर") -> "अरहर / तुअर"
+            lower.contains("moong") || lower.contains("green gram") || lower.contains("मूंग") -> "मूंग"
+            lower.contains("urad") || lower.contains("black gram") || lower.contains("उड़द") -> "उड़द"
+            lower.contains("groundnut") || lower.contains("peanut") || lower.contains("मूंगफली") -> "मूंगफली"
+            lower.contains("til") || lower.contains("sesame") || lower.contains("तिल") -> "तिल"
+            lower.contains("sunflower") || lower.contains("सूरजमुखी") -> "सूरजमुखी"
+            lower.contains("onion") || lower.contains("प्याज़") || lower.contains("प्याज") || lower.contains("pyaz") || lower.contains("pyaaz") || lower.contains("kanda") || lower.contains("कांदा") -> "प्याज़"
+            lower.contains("potato") || lower.contains("आलू") -> "आलू"
+            lower.contains("garlic") || lower.contains("लहसुन") -> "लहसुन"
+            lower.contains("tomato") || lower.contains("टमाटर") -> "टमाटर"
+            lower.contains("chilli") || lower.contains("मिर्च") -> "हरी मिर्च"
+            lower.contains("brinjal") || lower.contains("eggplant") || lower.contains("बैंगन") -> "बैंगन"
+            lower.contains("bhindi") || lower.contains("okra") || lower.contains("lady finger") -> "भिंडी"
+            lower.contains("cauliflower") || lower.contains("फूलगोभी") -> "फूलगोभी"
+            lower.contains("cabbage") || lower.contains("पत्तागोभी") -> "पत्तागोभी"
+            lower.contains("peas") || lower.contains("मटर") -> "हरी मटर"
+            lower.contains("carrot") || lower.contains("गाजर") -> "गाजर"
+            lower.contains("radish") || lower.contains("मूली") -> "मूली"
+            lower.contains("spinach") || lower.contains("पालक") -> "पालक"
+            lower.contains("bitter gourd") || lower.contains("करेला") -> "करेला"
+            lower.contains("bottle gourd") || lower.contains("लौकी") -> "लौकी"
+            lower.contains("ridge gourd") || lower.contains("तोरई") -> "तोरई"
+            lower.contains("pumpkin") || lower.contains("कद्दू") -> "कद्दू"
+            lower.contains("cucumber") || lower.contains("खीरा") -> "खीरा"
+            lower.contains("capsicum") || lower.contains("शिमला") -> "शिमला मिर्च"
+            lower.contains("coriander") || lower.contains("धनिया") -> "धनिया"
+            lower.contains("ginger") || lower.contains("अदरक") -> "अदरक"
+            lower.contains("turmeric") || lower.contains("हल्दी") -> "हल्दी"
+            lower.contains("sweet potato") || lower.contains("शकरकंद") -> "शकरकंद"
+            lower.contains("beetroot") || lower.contains("चुकंदर") -> "चुकंदर"
+            lower.contains("arbi") || lower.contains("taro") || lower.contains("अरबी") -> "अरबी"
+            lower.contains("mango") || lower.contains("आम") -> "आम"
+            lower.contains("banana") || lower.contains("केला") -> "केला"
+            lower.contains("apple") || lower.contains("सेब") -> "सेब"
+            lower.contains("papaya") || lower.contains("पपीता") -> "पपीता"
+            lower.contains("guava") || lower.contains("अमरूद") -> "अमरूद"
+            lower.contains("pomegranate") || lower.contains("अनार") -> "अनार"
+            lower.contains("watermelon") || lower.contains("तरबूज") -> "तरबूज"
+            lower.contains("muskmelon") || lower.contains("खरबूजा") -> "खरबूजा"
+            lower.contains("orange") || lower.contains("संतरा") -> "संतरा"
+            lower.contains("lemon") || lower.contains("नींबू") -> "नींबू"
+            lower.contains("grapes") || lower.contains("अंगूर") -> "अंगूर"
+            lower.contains("dragon fruit") || lower.contains("ड्रैगन") -> "ड्रैगन फ्रूट"
+            lower.contains("strawberry") || lower.contains("स्ट्रॉबेरी") -> "स्ट्रॉबेरी"
+            lower.contains("jackfruit") || lower.contains("कटहल") -> "कटहल"
+            lower.contains("litchi") || lower.contains("लीची") -> "लीची"
+            lower.contains("chikoo") || lower.contains("sapodilla") || lower.contains("चीकू") -> "चीकू"
+            else -> crop
+        }
+    }
+
+    fun getTranslatedCropName(cropName: String, targetLangCode: String, context: Context? = null): String {
+        if (cropName.isBlank()) return cropName
+
+        val parentheticalRegex = "(.*)\\((.*)\\)".toRegex()
+        val match = parentheticalRegex.matchEntire(cropName.trim())
+        if (match != null) {
+            val rawCrop = match.groupValues[1].trim()
+            val rawSeason = match.groupValues[2].trim()
+            val transCrop = getTranslatedCropName(rawCrop, targetLangCode, context)
+            val transSeason = getTranslatedSeasonName(rawSeason, targetLangCode, context)
+            return "$transCrop ($transSeason)"
+        }
+
+        val cleanName = cropName.split("/").firstOrNull()?.trim() ?: cropName
+
+        if (targetLangCode == "en") {
+            val directMatch = getDirectTranslation(cleanName, targetLangCode, context)
+            if (directMatch != null && !hasNonEnglishCharacters(directMatch)) return directMatch
+            return getEnglishCropName(cropName)
+        }
+
+        if (targetLangCode == "hi") {
+            val directMatch = getDirectTranslation(cleanName, targetLangCode, context)
+            if (directMatch != null) return directMatch
+            return getHindiCropName(cleanName)
+        }
+
+        val directMatch = getDirectTranslation(cleanName, targetLangCode, context)
+        if (directMatch != null) return directMatch
+
+        return getEnglishCropName(cleanName)
+    }
+
+    fun getTranslatedSeasonName(seasonName: String, targetLangCode: String, context: Context? = null): String {
+        if (seasonName.isBlank()) return seasonName
+        val kharifTrans = getDirectTranslation("Kharif", targetLangCode, context) ?: if (targetLangCode == "hi") "खरीफ" else "Kharif"
+        val rabiTrans = getDirectTranslation("Rabi", targetLangCode, context) ?: if (targetLangCode == "hi") "रबी" else "Rabi"
+        val zaidTrans = getDirectTranslation("Zaid", targetLangCode, context) ?: if (targetLangCode == "hi") "जायद" else "Zaid"
+
+        return seasonName
+            .replace("Kharif", kharifTrans, ignoreCase = true)
+            .replace("खरीफ", kharifTrans, ignoreCase = true)
+            .replace("Rabi", rabiTrans, ignoreCase = true)
+            .replace("रबी", rabiTrans, ignoreCase = true)
+            .replace("Zaid", zaidTrans, ignoreCase = true)
+            .replace("जायद", zaidTrans, ignoreCase = true)
+    }
+
+    fun getCleanMarketName(rawMarket: String): String {
+        if (rawMarket.isBlank()) return rawMarket
+        var cleaned = rawMarket
+            .replace("A.P.M.C.", "", ignoreCase = true)
+            .replace("a.p.m.c.", "", ignoreCase = true)
+            .replace("APMC", "", ignoreCase = true)
+            .replace("apmc", "", ignoreCase = true)
+            .replace(Regex("\\s*\\((?:F&V|Fruit & Vegetable|Vegetable|Grain|Krishi Upaj Mandi|Krishi Upaj|Market|Ag Market|Fruits|Vegetables)\\s*\\)", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*\\([^)]*\\)\\s*$"), "")
+            .replace("()", "")
+            .replace("( )", "")
+            .trim()
+        cleaned = cleaned.replace(Regex("^[,\\s-]+|[,\\s-]+$"), "").trim()
+        cleaned = cleaned.replace(Regex("\\s+"), " ")
+        return cleaned.ifBlank { rawMarket }
+    }
+
+    private val commonMandiNamesHindi = mapOf(
+        "indore" to "इंदौर", "ujjain" to "उज्जैन", "bhopal" to "भोपाल", "dewas" to "देवास", "ratlam" to "रतलाम",
+        "neemuch" to "नीमच", "mandsaur" to "मंदसौर", "dhar" to "धार", "khargone" to "खरगोन", "khandwa" to "खंडवा",
+        "badnawar" to "बदनावर", "badnagar" to "बड़नगर", "jaora" to "जावरा", "shajapur" to "शाजापुर", "sehore" to "सीहोर",
+        "raisen" to "रायसेन", "vidisha" to "विदिशा", "sagar" to "सागर", "satna" to "सतना", "rewa" to "रीवा",
+        "chhindwara" to "छिंदवाड़ा", "burhanpur" to "बुरहानपुर", "harda" to "हरदा", "hoshangabad" to "होशंगाबाद", "narsinghpur" to "नरसिंहपुर",
+        "gwalior" to "ग्वालियर", "jabalpur" to "जबलपुर", "katni" to "कटनी", "seoni" to "सिवनी", "balaghat" to "बालाघाट",
+        "mandla" to "मंडला", "dindori" to "डिंडौरी", "umaria" to "उमरिया", "shahdol" to "शहडोल", "anuppur" to "अनूपपुर",
+        "sidhi" to "सीधी", "singrauli" to "सिंगरौली", "panna" to "पन्ना", "chhatarpur" to "छतरपुर", "tikamgarh" to "टीकमगढ़",
+        "niwari" to "निवाड़ी", "damoh" to "दमोह", "bhind" to "भिंड", "morena" to "मुरैना", "sheopur" to "श्योपुर",
+        "shivpuri" to "शिवपुरी", "guna" to "गुणा", "ashoknagar" to "अशोकनगर", "datia" to "दतिया", "betul" to "बैतूल",
+        "agar malwa" to "आगर मालवा", "rajgarh" to "राजगढ़", "jhabua" to "झाबुआ", "alirajpur" to "अलीराजपुर", "barwani" to "बड़वानी",
+        "sanwer" to "सांवेर", "mhow" to "महू", "depalpur" to "देपालपुर", "tarana" to "तराना", "nagda" to "नागदा",
+        "khachrod" to "खाचरौद", "mahidpur" to "महिदपुर", "anjad" to "अंजड़", "sendhwa" to "सेंधवा", "alot" to "आलोट",
+        "sailana" to "सैलाना", "manawar" to "मनावर", "kukshi" to "कुक्षी", "gautampura" to "गौतमपुरा", "malthone" to "मल्थोन",
+        "bina" to "बीना", "gadarwara" to "गाडरवारा", "gotegaon" to "गोटेगांव", "multai" to "मुलताई", "pandhurna" to "पांढुर्णा",
+        "sausar" to "सौसर", "piploda" to "पिपलोदा", "shujalpur" to "शुजालपुर", "ashta" to "आष्टा", "ganj basoda" to "गंज बासोदा",
+        "khategaon" to "खातेगांव", "bagli" to "बागली", "kannod" to "कन्नौद", "hatpipalya" to "हाटपिपल्या", "sonkatch" to "सोनकच्छ",
+        "ichhawar" to "इच्छावर", "budhni" to "बुधनी", "bareli" to "बरेली", "silwani" to "सिलवानी", "udaipura" to "उदयपुरा",
+        "gyaraspur" to "ग्यारसपुर", "sironj" to "सिरोंज", "basoda" to "बासोदा", "khurai" to "खुरई", "banda" to "बंडा",
+        "rehli" to "रहली", "deori" to "देवरी", "shahgarh" to "शाहगढ़", "agra" to "आगरा", "kanpur" to "कानपुर", "lucknow" to "लखनऊ",
+        "jaipur" to "जयपुर", "kota" to "कोटा", "jodhpur" to "जोधपुर", "bikaner" to "बीकानेर", "udaipur" to "उदयपुर",
+        "ahmedabad" to "अहमदाबाद", "surat" to "सूरत", "rajkot" to "राजकोट", "vadodara" to "वडोदरा", "nagpur" to "नागपुर",
+        "nashik" to "नाशिक", "pune" to "पुणे", "mumbai" to "मुंबई", "delhi" to "दिल्ली", "mathura" to "मथुरा", "bareilly" to "बरेली",
+        "aligarh" to "अलीगढ़", "meerut" to "मेरठ", "varanasi" to "वाराणसी", "prayagraj" to "प्रयागराज", "gorakhpur" to "गोरखपुर",
+        "samastipur" to "समस्तीपुर", "patna" to "पटना", "muzaffarpur" to "मुजफ्फरपुर", "gaya" to "गया", "bhagalpur" to "भागलपुर",
+        "purnia" to "पूर्णिया", "darbhanga" to "दरभंगा"
+    )
+
+    fun getTranslatedMarketName(marketName: String, targetLangCode: String, context: Context? = null): String {
+        if (marketName.isBlank()) return marketName
+        val cleanMarket = getCleanMarketName(marketName)
+
+        // 1. Check Master Remote Dictionary Cache from Firebase / Assets first
+        getDirectTranslation(cleanMarket, targetLangCode, context)?.let { return it }
+
+        if (targetLangCode == "hi") {
+            val lower = cleanMarket.lowercase(Locale.ENGLISH)
+            for ((eng, hindi) in commonMandiNamesHindi) {
+                if (lower == eng || lower.contains(eng)) {
+                    return cleanMarket.replace(eng, hindi, ignoreCase = true)
+                }
             }
-            "mr" -> {
-                result = result
-                    .replace("कारंजे", "फवारणी")
-                    .replace("तुषार", "फवारणी")
-                    .replace("धुकं", "फवारणी")
-                    .replace("फुवारा", "फवारणी")
+            return cleanMarket
+        }
+
+        if (targetLangCode == "en") {
+            var result = cleanMarket
+            for ((eng, hindi) in commonMandiNamesHindi) {
+                if (result.contains(hindi, ignoreCase = true)) {
+                    val formattedEng = eng.split(" ").joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+                    result = result.replace(hindi, formattedEng, ignoreCase = true)
+                }
             }
-            "pa" -> {
-                result = result
-                    .replace("ਫੁਹਾਰਾ", "ਛਿੜਕਾਅ")
-                    .replace("ਫੁਹਾਰ", "ਛਿੜਕਾਅ")
-            }
-            "gu" -> {
-                result = result
-                    .replace("ફુવારો", "છંટકાવ")
-                    .replace("બૌછાર", "છંટકાવ")
-            }
-            "bn" -> {
-                result = result
-                    .replace("ফোয়ারা", "স্প্রে")
-                    .replace("জল ছেটানো", "স্প্রে করা")
-            }
-            "ta" -> {
-                result = result
-                    .replace("நீர் தெளிப்பு", "தெளிப்பு")
-            }
-            "te" -> {
-                result = result
-                    .replace("తుంపర", "పిచికారీ")
-            }
-            "kn" -> {
-                result = result
-                    .replace("ನೀರಿನ ಸಿಂಪಣೆ", "ಸಿಂಪಡಣೆ")
-            }
-            "ml" -> {
-                result = result
-                    .replace("വെള്ളം തളിക്കൽ", "തളിക്കൽ")
+            return result
+        }
+
+        return getDirectTranslation(cleanMarket, targetLangCode, context) ?: cleanMarket
+    }
+
+    fun getTranslatedLocationName(locationName: String, targetLangCode: String, context: Context? = null): String {
+        if (locationName.isBlank()) return locationName
+        return getTranslatedMarketName(locationName, targetLangCode, context)
+    }
+
+    fun getNormalizedCategoryName(rawCategory: String): String {
+        val lower = rawCategory.trim().lowercase(Locale.ENGLISH)
+        return when {
+            lower.contains("seed") || lower.contains("बीज") -> "Seeds"
+            lower.contains("fertilis") || lower.contains("fertiliz") || lower.contains("खाद") || lower.contains("उर्वरक") -> "Fertilizer"
+            lower.contains("pesticid") || lower.contains("spray") || lower.contains("कीटनाशक") -> "Pesticide"
+            lower.contains("irrig") || lower.contains("water") || lower.contains("सिंचाई") || lower.contains("सिंचन") || lower.contains("सिंचाइ") -> "Irrigation"
+            lower.contains("machin") || lower.contains("मशीनरी") -> "Machinery"
+            lower.contains("fuel") || lower.contains("diesel") || lower.contains("ईंधन") -> "Fuel"
+            lower.contains("labour") || lower.contains("labor") || lower.contains("मजदूरी") || lower.contains("मजुरी") -> "Labour"
+            lower.contains("till") || lower.contains("जुताई") || lower.contains("नांगरणी") -> "Tillage"
+            lower.contains("stor") || lower.contains("भंडारण") || lower.contains("साठवणूक") -> "Storage"
+            lower.contains("transport") || lower.contains("परिवहन") || lower.contains("वाहतूक") -> "Transport"
+            lower.contains("insur") || lower.contains("बीमा") || lower.contains("विमा") -> "Insurance"
+            lower.contains("loan") || lower.contains("interest") || lower.contains("ऋण") || lower.contains("कर्ज") -> "Loan Interest"
+            lower.contains("crop sale") || lower.contains("फसल बिक्री") -> "Crop Sale"
+            lower.contains("vegetable sale") || lower.contains("सब्जी बिक्री") -> "Vegetable Sale"
+            lower.contains("rental") || lower.contains("किराया") || lower.contains("भाडे") -> "Tractor / Equipment Rental"
+            lower.contains("fodder") || lower.contains("चारा") -> "Fodder Sale"
+            else -> rawCategory.trim()
+        }
+    }
+
+    fun getNormalizedStageName(rawStage: String): String {
+        val lower = rawStage.trim().lowercase(Locale.ENGLISH)
+        return when {
+            lower.contains("sow") || lower.contains("बुआई") || lower.contains("पेरणी") || lower.contains("વાવણી") || lower.contains("ਬਿਜਾਈ") || lower.contains("বপন") -> "Sowing"
+            lower.contains("irrig") || lower.contains("water") || lower.contains("सिंचाई") || lower.contains("सिंचन") || lower.contains("સિંચાઈ") || lower.contains("ਸਿੰਚਾਈ") || lower.contains("সেচ") -> "Irrigation"
+            lower.contains("spray") || lower.contains("pesticide") || lower.contains("छिड़काव") || lower.contains("फवारणी") || lower.contains("છંટકાવ") || lower.contains("ਛਿੜਕਾਅ") || lower.contains("স্প্রে") -> "Spray"
+            lower.contains("harvest") || lower.contains("cut") || lower.contains("कटाई") || lower.contains("काढणी") || lower.contains("કાપણી") || lower.contains("ਵਾਢੀ") || lower.contains("ফসল কাটা") -> "Harvesting"
+            lower.contains("sale") || lower.contains("बिक्री") || lower.contains("विक्री") || lower.contains("વેચાણ") || lower.contains("ਵਿਕਰੀ") -> "Sale"
+            else -> "Other"
+        }
+    }
+
+    private val hindiCategoryMap = mapOf(
+        "Seeds" to "बीज",
+        "Fertilizer" to "उर्वरक",
+        "Fertiliser" to "उर्वरक",
+        "Pesticides" to "कीटनाशक",
+        "Pesticide" to "कीटनाशक",
+        "Irrigation" to "सिंचाई",
+        "Machinery" to "मशीनरी",
+        "Machinery & Fuel" to "मशीनरी व ईंधन",
+        "Fuel" to "ईंधन",
+        "Labour" to "मजदूरी",
+        "Tillage" to "जुताई",
+        "Storage" to "भंडारण",
+        "Transport" to "परिवहन",
+        "Insurance" to "बीमा",
+        "Loan Interest" to "ऋण ब्याज",
+        "Crop Sale" to "फसल बिक्री",
+        "Vegetable Sale" to "सब्जी बिक्री",
+        "Tractor / Equipment Rental" to "ट्रैक्टर/उपकरण किराया",
+        "Fodder Sale" to "चारा बिक्री",
+        "General" to "सामान्य"
+    )
+
+    private val hindiStageMap = mapOf(
+        "Sowing" to "बुआई",
+        "Irrigation" to "सिंचाई",
+        "Spray" to "छिड़काव",
+        "Harvesting" to "कटाई",
+        "Sale" to "बिक्री",
+        "Land Preparation" to "खेत तैयारी",
+        "Other" to "अन्य",
+        "General" to "सामान्य"
+    )
+
+    private val englishCategoryMap = mapOf(
+        "बीज" to "Seeds",
+        "Seeds" to "Seeds",
+        "उर्वरक" to "Fertilizer",
+        "खाद" to "Fertilizer",
+        "Fertilizer" to "Fertilizer",
+        "Fertiliser" to "Fertilizer",
+        "कीटनाशक" to "Pesticides",
+        "दवा" to "Pesticides",
+        "Pesticide" to "Pesticides",
+        "Pesticides" to "Pesticides",
+        "सिंचाई" to "Irrigation",
+        "Irrigation" to "Irrigation",
+        "मशीनरी" to "Machinery",
+        "मशीनरी व ईंधन" to "Machinery & Fuel",
+        "Machinery" to "Machinery",
+        "Fuel" to "Fuel",
+        "ईंधन" to "Fuel",
+        "मजदूरी" to "Labour",
+        "Labour" to "Labour",
+        "जुताई" to "Tillage",
+        "Tillage" to "Tillage",
+        "भंडारण" to "Storage",
+        "Storage" to "Storage",
+        "परिवहन" to "Transport",
+        "Transport" to "Transport",
+        "बीमा" to "Insurance",
+        "Insurance" to "Insurance",
+        "ऋण ब्याज" to "Loan Interest",
+        "ऋण" to "Loan Interest",
+        "ब्याज" to "Loan Interest",
+        "Loan Interest" to "Loan Interest",
+        "फसल बिक्री" to "Crop Sale",
+        "Crop Sale" to "Crop Sale",
+        "सब्जी बिक्री" to "Vegetable Sale",
+        "Vegetable Sale" to "Vegetable Sale",
+        "ट्रैक्टर/उपकरण किराया" to "Tractor / Equipment Rental",
+        "किराया" to "Tractor / Equipment Rental",
+        "Tractor / Equipment Rental" to "Tractor / Equipment Rental",
+        "चारा बिक्री" to "Fodder Sale",
+        "Fodder Sale" to "Fodder Sale",
+        "सामान्य" to "General",
+        "General" to "General"
+    )
+
+    private val englishStageMap = mapOf(
+        "बुआई" to "Sowing",
+        "Sowing" to "Sowing",
+        "सिंचाई" to "Irrigation",
+        "Irrigation" to "Irrigation",
+        "छिड़काव" to "Spray",
+        "Spray" to "Spray",
+        "कटाई" to "Harvesting",
+        "Harvesting" to "Harvesting",
+        "बिक्री" to "Sale",
+        "Sale" to "Sale",
+        "खेत तैयारी" to "Land Preparation",
+        "Land Preparation" to "Land Preparation",
+        "अन्य" to "Other",
+        "Other" to "Other",
+        "सामान्य" to "General",
+        "General" to "General"
+    )
+
+    fun getHindiCategoryName(category: String): String {
+        return getTranslatedCategoryName(category, "hi")
+    }
+
+    fun getTranslatedCategoryName(category: String, targetLangCode: String, context: Context? = null): String {
+        if (category.isBlank()) return category
+        val normalized = getNormalizedCategoryName(category)
+        if (targetLangCode == "hi") {
+            return getDirectTranslation(normalized, targetLangCode, context)
+                ?: getDirectTranslation(category.trim(), targetLangCode, context)
+                ?: hindiCategoryMap[normalized]
+                ?: hindiCategoryMap[category.trim()]
+                ?: category.trim()
+        }
+        if (targetLangCode == "en") {
+            return englishCategoryMap[category.trim()]
+                ?: englishCategoryMap[normalized]
+                ?: getDirectTranslation(normalized, targetLangCode, context)
+                ?: getDirectTranslation(category.trim(), targetLangCode, context)
+                ?: normalized
+        }
+        return getDirectTranslation(normalized, targetLangCode, context)
+            ?: getDirectTranslation(category.trim(), targetLangCode, context)
+            ?: normalized
+    }
+
+    fun getTranslatedStageName(stage: String, targetLangCode: String, context: Context? = null): String {
+        if (stage.isBlank()) return stage
+        val normalized = getNormalizedStageName(stage)
+        if (targetLangCode == "hi") {
+            return getDirectTranslation(normalized, targetLangCode, context)
+                ?: getDirectTranslation(stage.trim(), targetLangCode, context)
+                ?: hindiStageMap[normalized]
+                ?: hindiStageMap[stage.trim()]
+                ?: stage.trim()
+        }
+        if (targetLangCode == "en") {
+            return englishStageMap[stage.trim()]
+                ?: englishStageMap[normalized]
+                ?: getDirectTranslation(normalized, targetLangCode, context)
+                ?: getDirectTranslation(stage.trim(), targetLangCode, context)
+                ?: normalized
+        }
+        return getDirectTranslation(normalized, targetLangCode, context)
+            ?: getDirectTranslation(stage.trim(), targetLangCode, context)
+            ?: stage.trim()
+    }
+
+    fun getTranslatedTypeBadge(isIncome: Boolean, targetLangCode: String, context: Context? = null): String {
+        if (targetLangCode == "hi") {
+            return if (isIncome) "💰 आय (+)" else "💸 खर्च (-)"
+        } else if (targetLangCode == "en") {
+            return if (isIncome) "💰 Income (+)" else "💸 Expense (-)"
+        }
+        val key = if (isIncome) "Income" else "Expense"
+        val trans = getDirectTranslation(key, targetLangCode, context)
+        return if (isIncome) "💰 ${trans ?: "Income"} (+)" else "💸 ${trans ?: "Expense"} (-)"
+    }
+
+    fun getTranslatedDate(dateStr: String, targetLangCode: String): String {
+        if (dateStr.isBlank() || targetLangCode == "en") return dateStr
+        var result = dateStr
+        val monthMap = mapOf(
+            "Jan" to "जनवरी", "Feb" to "फरवरी", "Mar" to "मार्च", "Apr" to "अप्रैल",
+            "May" to "मई", "Jun" to "जून", "Jul" to "जुलाई", "Aug" to "अगस्त",
+            "Sep" to "सितंबर", "Oct" to "अक्टूबर", "Nov" to "नवंबर", "Dec" to "दिसंबर"
+        )
+        for ((eng, hi) in monthMap) {
+            if (result.contains(eng, ignoreCase = true)) {
+                result = result.replace(eng, hi, ignoreCase = true)
             }
         }
         return result
     }
 
-    fun getLanguageName(code: String): String {
-        return when (code) {
-            "te" -> "Telugu (తెలుగు)"
-            "mr" -> "Marathi (मराठी)"
-            "pa" -> "Punjabi (ਪੰਜਾਬੀ)"
-            "gu" -> "Gujarati (ગુજરાતી)"
-            "bn" -> "Bengali (বাংলা)"
-            "ta" -> "Tamil (தமிழ்)"
-            "kn" -> "Kannada (ಕನ್ನಡ)"
-            "ml" -> "Malayalam (മലയാളം)"
-            "hi" -> "Hindi (हिंदी)"
-            else -> "English"
+    fun hasNonEnglishCharacters(text: String): Boolean {
+        for (char in text) {
+            val code = char.code
+            if (code in 0x0900..0x097F || (Character.UnicodeBlock.of(char) != Character.UnicodeBlock.BASIC_LATIN && Character.UnicodeBlock.of(char) != Character.UnicodeBlock.LATIN_1_SUPPLEMENT)) {
+                return true
+            }
         }
+        return false
     }
 
-    suspend fun translateText(context: Context, text: String, targetLangCode: String): String {
-        if (text.isBlank() || targetLangCode == "en" || isProtectedActionWord(text)) return text
+    suspend fun translateText(context: Context, text: String, targetLangCode: String): String = withContext(Dispatchers.IO) {
+        if (text.isBlank() || isProtectedActionWord(text)) return@withContext text
 
-        getDirectTranslation(text, targetLangCode)?.let { return it }
+        getDirectTranslation(text, targetLangCode, context)?.let { return@withContext it }
+
+        if (targetLangCode == "en" && !hasNonEnglishCharacters(text)) {
+            return@withContext text
+        }
 
         val cacheKey = "$targetLangCode:$text"
-        translationCache[cacheKey]?.let { return it }
+        translationCache[cacheKey]?.let { return@withContext it }
 
         val translated = translateWithGoogle(text, targetLangCode)
         if (translated.isNotBlank() && translated != text) {
             val sanitized = sanitizeAgriTranslation(translated, targetLangCode)
             translationCache[cacheKey] = sanitized
-            return sanitized
+            return@withContext sanitized
         }
 
-        return text
+        return@withContext text
     }
 
     private suspend fun translateWithGoogle(text: String, targetLangCode: String): String = withContext(Dispatchers.IO) {
@@ -607,7 +782,6 @@ object TranslationHelper {
             val protectedList = mutableListOf<String>()
             var protectedText = text
 
-            // 1. Protect URLs, Markdown links, and HTML tags
             val linkPattern = "(?i)(\\[.*?\\]\\(https?://.*?\\)|<a\\s+href=[\"'].*?[\"']>.*?</a>|https?://[a-zA-Z0-9./_\\-?=%&#]+)".toRegex()
             val matches = linkPattern.findAll(protectedText).toList()
 
@@ -617,9 +791,8 @@ object TranslationHelper {
                 protectedText = protectedText.replace(match.value, token)
             }
 
-            // 2. Protect Technical Keywords, Acronyms, and Short Names (PM-Kisan, DAP, NPK, Urea, Mandi, FTO, SBI, IFFCO, NABARD, etc.)
             val termProtectedList = mutableListOf<String>()
-            val termPattern = "\\b(?:PM-Kisan|PMKisan|DAP|NPK|Urea|FTO|SBI|IFFCO|NABARD|KCC|MSP|AQI|hPa|km/h|m/s|Mandi|Jaora|Khandwa|Ratlam|Indore|Ujjain|[A-Z]{2,10})\\b".toRegex()
+            val termPattern = "\\b(?:PM-Kisan|PMKisan|DAP|NPK|Urea|FTO|SBI|IFFCO|NABARD|KCC|MSP|AQI|hPa|km/h|m/s|[A-Z]{2,10})\\b".toRegex()
             val termMatches = termPattern.findAll(protectedText).toList()
 
             for ((index, match) in termMatches.withIndex()) {
@@ -655,7 +828,6 @@ object TranslationHelper {
 
                 var result = sb.toString().trim()
 
-                // Restore protected Technical Keywords & Short Names
                 for ((index, originalTerm) in termProtectedList.withIndex()) {
                     val token = "___TERM_${index}___"
                     result = result.replace(token, originalTerm)
@@ -664,7 +836,6 @@ object TranslationHelper {
                         .replace("___TERM _ ${index}___", originalTerm)
                 }
 
-                // Restore protected URLs and HTML links
                 for ((index, originalLink) in protectedList.withIndex()) {
                     val token = "___LINK_${index}___"
                     result = result.replace(token, originalLink)
@@ -673,12 +844,49 @@ object TranslationHelper {
                         .replace("___LINK _ ${index}___", originalLink)
                 }
 
-                if (result.isNotBlank()) return@withContext result
+                return@withContext result
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         return@withContext text
+    }
+
+    private fun sanitizeAgriTranslation(text: String, targetLangCode: String): String {
+        if (text.isBlank()) return text
+        var result = text
+
+        when (targetLangCode) {
+            "hi" -> {
+                result = result
+                    .replace("इंदूर", "इंदौर")
+                    .replace("उज्जयिनी", "उज्जैन")
+                    .replace("फुहार बहाव", "छिड़काव बहाव")
+                    .replace("फुहार ड्रिफ्ट", "छिड़काव बहाव")
+                    .replace("केमिकल फुहार", "रासायनिक छिड़काव")
+                    .replace("रासायनिक फुहार", "रासायनिक छिड़काव")
+                    .replace("कीटनाशक फुहार", "कीटनाशक छिड़काव")
+                    .replace("सुरक्षित फुहार", "सुरक्षित छिड़काव")
+                    .replace("फुहार सलाह", "छिड़काव सलाह")
+                    .replace("फुहार समय", "छिड़काव समय")
+                    .replace("फुहार की आवश्यकता", "छिड़काव की आवश्यकता")
+                    .replace("फुहार से बचें", "छिड़काव से बचें")
+                    .replace("फुहार", "छिड़काव")
+                    .replace("फुआरा", "छिड़काव")
+                    .replace("बौछार", "छिड़काव")
+            }
+        }
+
+        return result
+    }
+
+    private val protectedActionWords = setOf(
+        "sign in", "sign up", "log in", "log out", "cancel", "save", "delete", "edit", "submit", "share"
+    )
+
+    private fun isProtectedActionWord(text: String): Boolean {
+        val cleaned = text.replace(Regex("[\\p{So}\\p{Cn}]"), "").trim().lowercase()
+        return protectedActionWords.contains(cleaned)
     }
 }

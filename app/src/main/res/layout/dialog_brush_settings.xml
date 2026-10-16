@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#212121"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Brush &amp; Drawing Tools"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Mode Toggle: Brush vs Eraser -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnModeDraw"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/farmer_green_primary"
+            android:text="Draw Brush"
+            android:textColor="@android:color/white" />
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnModeEraser"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Eraser"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Brush Color Palette -->
+    <TextView
+        android:id="@+id/tvBrushColorLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Brush Color"
+        android:textColor="#CCCCCC"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:id="@+id/scrollBrushColors"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/layoutBrushColors"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <!-- Size Slider -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Size:"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seekBarBrushSize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="25" />
+
+        <TextView
+            android:id="@+id/tvBrushSizeVal"
+            android:layout_width="36dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="25"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDoneBrush"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/farmer_green_primary"
+        android:text="Start Drawing"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

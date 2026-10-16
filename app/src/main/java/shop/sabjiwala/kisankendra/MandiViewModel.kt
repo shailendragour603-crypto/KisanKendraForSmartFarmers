@@ -1,13 +1,12 @@
 package shop.sabjiwala.kisankendra
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import shop.sabjiwala.kisankendra.model.MandiRecord
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import shop.sabjiwala.kisankendra.utils.MandiCacheHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -25,15 +24,17 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private var autoRefreshJob: Job? = null
     private val apiKey = "579b464db66ec23bdd000001f0acdf7b0b4943fe5b9998c1304ba55f"
 
     fun getDisplayDate(): String {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
         val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH)
 
-        return if (currentHour < 16) {
+        // Fresh daily mandi rates land on data.gov.in starting after 1:30 PM IST (13:30)
+        val isBefore130PM = currentHour < 13 || (currentHour == 13 && currentMinute < 30)
+        return if (isBefore130PM) {
             calendar.add(Calendar.DAY_OF_YEAR, -1)
             dateFormat.format(calendar.time)
         } else {
@@ -41,69 +42,83 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
         }
     }
 
-    fun loadMandiRates(forceRefresh: Boolean = false) {
+    private fun parseAndFormatDate(dateStr: String): String {
+        val formats = listOf(
+            SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH),
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH),
+            SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH),
+            SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH),
+            SimpleDateFormat("yyyy/MM/dd", Locale.ENGLISH)
+        )
+        for (fmt in formats) {
+            try {
+                val parsed = fmt.parse(dateStr.trim())
+                if (parsed != null) {
+                    val outFmt = SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH)
+                    return outFmt.format(parsed)
+                }
+            } catch (_: Exception) {}
+        }
+        return dateStr
+    }
+
+    fun loadMandiRates(preferredStateName: String? = null, forceRefresh: Boolean = false, context: Context? = null) {
         if (!forceRefresh && !_mandiData.value.isNullOrEmpty()) {
             _isLoading.value = false
             return
         }
 
         viewModelScope.launch {
-            val (todayStr, yesterdayStr, _) = getDailySnapshotDates()
+            _isLoading.value = true
+            if (forceRefresh && context != null) {
+                if (!preferredStateName.isNullOrBlank() && preferredStateName != "All States" && preferredStateName != "⭐ Saved") {
+                    MandiCacheHelper.clearMandiStateCache(context, MandiRepository.getCleanStateKey(preferredStateName))
+                } else {
+                    MandiCacheHelper.clearMandiStateCache(context, "latest_cache")
+                }
+            }
 
-            // ⚡ INSTANT PRE-LOAD: Load mandi_rates from Firestore instantly (<0.1s)
-            val initialFirestoreList = repository.fetchMandiRatesFromFirestore(forceRefresh)
-            if (initialFirestoreList.isNotEmpty()) {
-                _mandiData.value = initialFirestoreList
-                // Set the date based on the cached data's arrival date, or fallback to today
-                val cachedDate = initialFirestoreList.firstOrNull()?.arrivalDate
-                _mandiDate.value = cachedDate ?: getDisplayDate()
-                
-                _isLoading.value = false
+            // Load preferred user state document directly (<0.1s) for 100% complete rates and markets
+            val listToLoad = if (!preferredStateName.isNullOrBlank() && preferredStateName != "All States" && preferredStateName != "⭐ Saved") {
+                repository.fetchMandiRatesByStateFromFirestore(preferredStateName, context, forceRefresh)
+            } else {
+                repository.fetchMandiRatesFromFirestore(context, forceRefresh)
+            }
+
+            if (listToLoad.isNotEmpty()) {
+                _mandiData.value = listToLoad
+                val cachedDate = listToLoad.firstOrNull()?.arrivalDate
+                if (!cachedDate.isNullOrBlank()) {
+                    _mandiDate.value = parseAndFormatDate(cachedDate)
+                } else {
+                    _mandiDate.value = getDisplayDate()
+                }
             } else {
                 _mandiDate.value = getDisplayDate()
-                _isLoading.value = true
             }
+            _isLoading.value = false
+        }
+    }
 
-            val currentHour = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata")).get(Calendar.HOUR_OF_DAY)
-
-            if (currentHour < 16) {
-                val snapshot = repository.fetchDailySnapshotFromFirestore(yesterdayStr)
-                val displayList = if (snapshot.isNotEmpty()) {
-                    snapshot
-                } else {
-                    initialFirestoreList.ifEmpty { repository.fetchMandiRatesFromFirestore() }
-                }
-
-                if (displayList.isNotEmpty()) {
-                    _mandiData.value = displayList
-                }
-                _isLoading.value = false
-                return@launch
+    fun loadMandiRatesByState(stateName: String, context: Context? = null, forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            if (forceRefresh && context != null) {
+                MandiCacheHelper.clearMandiStateCache(context, MandiRepository.getCleanStateKey(stateName))
             }
-
-            try {
-                val currentList = repository.fetchMandiRatesFromApi(apiKey = apiKey, limit = 2500)
-                if (currentList.isNotEmpty()) {
-                    val mappedList = processPriceDifferences(currentList, initialFirestoreList)
-                    _mandiData.value = mappedList
-                    _mandiDate.value = getDisplayDate() // Update to today's date ONLY on success
-                    _isLoading.value = false
-
-                    // Save to Firestore in background without delaying UI render
-                    viewModelScope.launch(Dispatchers.IO) {
-                        repository.saveMandiRatesToFirestore(mappedList)
-                        repository.saveDailySnapshotToFirestore(todayStr, mappedList)
-                    }
-                } else {
-                    // API returned empty/failed, keep showing cached data and its date
-                    _isLoading.value = false
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _isLoading.value = false
+            val stateRecords = repository.fetchMandiRatesByStateFromFirestore(stateName, context, forceRefresh)
+            if (stateRecords.isNotEmpty()) {
+                _mandiData.value = stateRecords
+            } else {
+                _mandiData.value = emptyList()
             }
-
-            scheduleAutoRefresh()
+            val cachedDate = stateRecords.firstOrNull()?.arrivalDate
+            if (!cachedDate.isNullOrBlank()) {
+                _mandiDate.value = parseAndFormatDate(cachedDate)
+            } else {
+                _mandiDate.value = getDisplayDate()
+            }
+            _isLoading.value = false
         }
     }
 
@@ -134,8 +149,8 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
             val key = "${current.state.orEmpty().trim()}_${current.market.orEmpty().trim()}_${current.commodity.orEmpty().trim()}_${current.variety.orEmpty().trim()}".lowercase()
             val previousRecord = previousPriceMap[key]
 
-            val currentPrice = current.modalPrice?.toDoubleOrNull() ?: 0.0
-            val previousPrice = previousRecord?.modalPrice?.toDoubleOrNull()
+            val currentPrice = current.maxPrice?.toDoubleOrNull() ?: current.modalPrice?.toDoubleOrNull() ?: 0.0
+            val previousPrice = previousRecord?.maxPrice?.toDoubleOrNull() ?: previousRecord?.modalPrice?.toDoubleOrNull()
 
             val computedDiff = if (previousPrice != null && previousPrice > 0.0) {
                 currentPrice - previousPrice
@@ -152,25 +167,5 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
         }
     }
 
-    private fun scheduleAutoRefresh() {
-        autoRefreshJob?.cancel()
-        autoRefreshJob = viewModelScope.launch {
-            while (true) {
-                val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
-                val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
 
-                if (currentHour in 16..23) {
-                    delay(15 * 60 * 1000L)
-                    loadMandiRates(forceRefresh = true)
-                } else {
-                    break
-                }
-            }
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        autoRefreshJob?.cancel()
-    }
 }
