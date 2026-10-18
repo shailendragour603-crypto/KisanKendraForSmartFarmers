@@ -22,10 +22,10 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests firebase-admin
+          pip install requests firebase-admin beautifulsoup4
 
       - name: Run Mandi Auto-Sync Script
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          python mandi_auto_sync.py
+          python scraper.py

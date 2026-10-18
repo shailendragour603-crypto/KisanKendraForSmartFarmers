@@ -91,6 +91,10 @@ class AdminDashboardActivity : AppCompatActivity() {
         binding.cardManageNotifications.setOnClickListener {
             startActivity(Intent(this, AdminNotificationActivity::class.java))
         }
+
+        binding.cardManageGeminiApiKey.setOnClickListener {
+            shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.showManageApiKeyDialog(this)
+        }
     }
 
     private fun triggerEmergencyApiSync() {

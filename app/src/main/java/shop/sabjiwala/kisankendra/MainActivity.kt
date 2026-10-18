@@ -112,6 +112,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 🔹 Silently sync central Gemini API key from Cloud
+        shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.fetchRemoteApiKey(this)
+
         // 🔹 2. Start Animated Extended Splash Screen
         val skipSplash = intent.getBooleanExtra("skip_splash", false)
         if (skipSplash || savedInstanceState != null) {

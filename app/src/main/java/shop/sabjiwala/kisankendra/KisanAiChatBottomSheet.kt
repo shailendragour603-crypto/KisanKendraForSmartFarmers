@@ -55,7 +55,6 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
     private var selectedBitmap: Bitmap? = null
 
     private val PREFS_NAME = "kisan_ai_prefs"
-    private val KEY_GEMINI_API_KEY = "gemini_api_key"
     private val MAX_QUESTIONS_PER_DAY = 5
 
     private val speechLauncher = registerForActivityResult(
@@ -116,6 +115,7 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
         updateRemainingQuestionsCount()
 
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.fetchRemoteApiKey(ctx)
 
         // Setup localized prompt chips, query hint, and initial welcome message
         setupQuickPromptChips(activeLang)
@@ -386,10 +386,8 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun getStoredApiKey(): String {
-        val ctx = context ?: return "AQ.Ab8RN6J0nMCAVWg_2QmNCqWuk6HtX0A8z28nluvAtBGEEE5NGg"
-        val prefs = ctx.getSharedPreferences(PREFS_NAME, Activity.MODE_PRIVATE)
-        val key = prefs.getString(KEY_GEMINI_API_KEY, "").orEmpty()
-        return if (key.isBlank()) "AQ.Ab8RN6J0nMCAVWg_2QmNCqWuk6HtX0A8z28nluvAtBGEEE5NGg" else key
+        val ctx = context ?: return ""
+        return shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.getStoredApiKey(ctx)
     }
 
     private fun cleanAiResponse(rawText: String): String {
@@ -526,10 +524,11 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
                 1. Provide accurate, practical, and direct advice on crops, pest control, plant diseases, fertilizers, weather, and market rates.
                 2. Keep the answer clean, direct to the point, and easy to understand.
 
-                STRICT FORMATTING RULES:
+                STRICT FORMATTING & TOKEN EFFICIENCY RULES:
                 1. DO NOT use markdown bold formatting like double asterisks (** or *).
                 2. DO NOT use markdown headings (# or ##).
                 3. Provide output strictly in clean plain text. Use bullet dots (•) for list items.
+                4. POINT-TO-POINT ANSWERS: Be strictly direct and concise. Avoid introductory greetings, repetitive polite filler, or token-wasting summaries. Give actionable answers immediately.
             """.trimIndent()
 
             val promptText = if (query.isNotBlank()) {
@@ -578,25 +577,29 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
 
     private fun selectModelsForQuery(hasImage: Boolean, query: String): List<String> {
         return when {
-            // Tier 1: Leaf disease photos need high visual accuracy
+            // Tier 1: Leaf disease photo diagnosis & deep research queries
             hasImage -> listOf(
-                "gemini-2.0-flash",
-                "gemini-2.0-flash-lite",
-                "gemini-flash-latest"
+                "gemini-3.8-flash",
+                "gemini-3.7-flash",
+                "gemini-3.6-flash",
+                "gemini-3.5-flash-lite",
+                "gemini-3.1-flash-lite"
             )
 
-            // Tier 2: Complex dosage, chemical mixing, calculation queries
+            // Tier 2: Complex dosage, chemical mixing, technical calculations & treatment schedules
             isComplexQuery(query) -> listOf(
-                "gemini-2.0-flash",
-                "gemini-2.0-flash-lite",
-                "gemini-flash-latest"
+                "gemini-3.8-flash",
+                "gemini-3.7-flash",
+                "gemini-3.6-flash",
+                "gemini-3.5-flash-lite",
+                "gemini-3.1-flash-lite"
             )
 
-            // Tier 3: Everyday farming Q&A, weather, mandi rates, sowing dates
+            // Tier 3: General farmer queries, weather, mandi rates, sowing dates, article rewrites (High RPM/RPD)
             else -> listOf(
-                "gemini-2.0-flash-lite",
-                "gemini-2.0-flash",
-                "gemini-flash-latest"
+                "gemini-3.5-flash-lite",
+                "gemini-3.1-flash-lite",
+                "gemini-3.8-flash"
             )
         }
     }
@@ -611,30 +614,8 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun showApiKeyDialog() {
-        val ctx = context ?: return
-        val input = EditText(ctx).apply {
-            hint = "Paste Gemini API Key (AIzaSy...)"
-            setText(getStoredApiKey())
-            setPadding(40, 30, 40, 30)
-        }
-
-        MaterialAlertDialogBuilder(ctx)
-            .setTitle("🔑 Gemini API Key Required")
-            .setMessage("To use Kisan AI Chatbot, please enter your free Gemini API Key.\n\n👉 Get a free key in 1 click at:\nhttps://aistudio.google.com/app/apikey")
-            .setView(input)
-            .setPositiveButton("Save Key") { _, _ ->
-                val newKey = input.text.toString().trim().replace("\"", "").replace("'", "")
-                val c = context ?: return@setPositiveButton
-                if (newKey.isNotBlank()) {
-                    c.getSharedPreferences(PREFS_NAME, Activity.MODE_PRIVATE)
-                        .edit().putString(KEY_GEMINI_API_KEY, newKey).apply()
-                    Toast.makeText(c, "API Key saved successfully!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(c, "API Key cannot be empty", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        val ctx = getContext() ?: return
+        shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.showManageApiKeyDialog(ctx)
     }
 
     private fun startVoiceRecognition() {

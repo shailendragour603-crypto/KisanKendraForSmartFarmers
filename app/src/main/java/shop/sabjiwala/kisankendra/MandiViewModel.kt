@@ -62,6 +62,38 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
         return dateStr
     }
 
+    private fun getLatestArrivalDate(records: List<MandiRecord>): String? {
+        val formats = listOf(
+            SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH),
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH),
+            SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH),
+            SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH),
+            SimpleDateFormat("yyyy/MM/dd", Locale.ENGLISH)
+        )
+
+        var latestDate: java.util.Date? = null
+        var latestRawDateStr: String? = null
+
+        for (record in records.take(100)) {
+            val rawDate = record.arrivalDate?.trim() ?: continue
+            if (rawDate.isBlank()) continue
+
+            for (fmt in formats) {
+                try {
+                    val parsed = fmt.parse(rawDate)
+                    if (parsed != null) {
+                        if (latestDate == null || parsed.after(latestDate)) {
+                            latestDate = parsed
+                            latestRawDateStr = rawDate
+                        }
+                        break
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+        return latestRawDateStr ?: records.firstOrNull()?.arrivalDate
+    }
+
     fun loadMandiRates(preferredStateName: String? = null, forceRefresh: Boolean = false, context: Context? = null) {
         if (!forceRefresh && !_mandiData.value.isNullOrEmpty()) {
             _isLoading.value = false
@@ -87,7 +119,7 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
 
             if (listToLoad.isNotEmpty()) {
                 _mandiData.value = listToLoad
-                val cachedDate = listToLoad.firstOrNull()?.arrivalDate
+                val cachedDate = getLatestArrivalDate(listToLoad)
                 if (!cachedDate.isNullOrBlank()) {
                     _mandiDate.value = parseAndFormatDate(cachedDate)
                 } else {
@@ -112,7 +144,7 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
             } else {
                 _mandiData.value = emptyList()
             }
-            val cachedDate = stateRecords.firstOrNull()?.arrivalDate
+            val cachedDate = getLatestArrivalDate(stateRecords)
             if (!cachedDate.isNullOrBlank()) {
                 _mandiDate.value = parseAndFormatDate(cachedDate)
             } else {

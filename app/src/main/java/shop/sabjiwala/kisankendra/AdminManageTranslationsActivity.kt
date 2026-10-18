@@ -254,17 +254,13 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
             try {
                 val docRef = firestore.collection("app_translations").document(currentLangCode)
 
-                // 1. Save as nested field inside dictionary map
+                // 1. Save as nested field inside dictionary map using dot notation to prevent overwriting
                 val updateMap = hashMapOf<String, Any>(
                     "updatedAt" to Timestamp.now(),
-                    "dictionary" to hashMapOf(key to value)
+                    "dictionary.$key" to value
                 )
-                docRef.set(updateMap, SetOptions.merge()).await()
-
-                // 2. Also cleanup legacy root field "dictionary.$key" if it existed
-                try {
-                    docRef.update("dictionary.$key", com.google.firebase.firestore.FieldValue.delete()).await()
-                } catch (_: Exception) {}
+                // Use update() instead of set() to safely append the nested field
+                docRef.update(updateMap).await()
 
                 // 3. Update memory cache and SharedPreferences for current selected language
                 shop.sabjiwala.kisankendra.utils.TranslationHelper.updateMasterCacheAndPrefs(
@@ -280,10 +276,32 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
                     loadMasterDictionaryFromFirestore()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    binding.pbAdminTranslations.visibility = View.GONE
-                    Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                // If update fails because the document doesn't exist yet, we create it
+                if (e.message?.contains("NOT_FOUND") == true) {
+                    try {
+                        val docRef = firestore.collection("app_translations").document(currentLangCode)
+                        val initialMap = hashMapOf<String, Any>(
+                            "updatedAt" to Timestamp.now(),
+                            "dictionary" to hashMapOf(key to value)
+                        )
+                        docRef.set(initialMap).await()
+                        withContext(Dispatchers.Main) {
+                            binding.pbAdminTranslations.visibility = View.GONE
+                            Toast.makeText(this@AdminManageTranslationsActivity, "✅ Translation saved successfully!", Toast.LENGTH_SHORT).show()
+                            loadMasterDictionaryFromFirestore()
+                        }
+                    } catch (innerE: Exception) {
+                         withContext(Dispatchers.Main) {
+                            binding.pbAdminTranslations.visibility = View.GONE
+                            Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${innerE.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    e.printStackTrace()
+                    withContext(Dispatchers.Main) {
+                        binding.pbAdminTranslations.visibility = View.GONE
+                        Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

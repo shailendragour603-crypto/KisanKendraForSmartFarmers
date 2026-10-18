@@ -62,7 +62,6 @@ class AdminCreateNewsActivity : AppCompatActivity() {
 
     companion object {
         private const val PREFS_NAME = "admin_prefs"
-        private const val KEY_GEMINI_API_KEY = "gemini_api_key"
 
         const val EXTRA_EDIT_NEWS_ID = "extra_edit_news_id"
         const val EXTRA_TITLE = "extra_title"
@@ -128,6 +127,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
         setupListeners()
         setupFocusListeners()
         checkEditModeIntent()
+        shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.fetchRemoteApiKey(this)
     }
 
     private fun setupFocusListeners() {
@@ -227,38 +227,11 @@ class AdminCreateNewsActivity : AppCompatActivity() {
     }
 
     private fun getStoredApiKey(): String {
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        val key = prefs.getString(KEY_GEMINI_API_KEY, "").orEmpty()
-        return if (key.isBlank()) "AQ.Ab8RN6J0nMCAVWg_2QmNCqWuk6HtX0A8z28nluvAtBGEEE5NGg" else key
-    }
-
-    private fun saveApiKey(key: String) {
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        prefs.edit { putString(KEY_GEMINI_API_KEY, key.trim()) }
+        return shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.getStoredApiKey(this)
     }
 
     private fun showApiKeyDialog() {
-        val input = EditText(this).apply {
-            hint = "Paste Gemini API Key (e.g. AIzaSy...)"
-            setText(getStoredApiKey())
-            setPadding(40, 30, 40, 30)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("🔑 Gemini API Key Required")
-            .setMessage("To use AI Content Generation & Article Rewriting, please enter your free Gemini API Key.\n\n👉 Get a free key in 1 click at:\nhttps://aistudio.google.com/app/apikey")
-            .setView(input)
-            .setPositiveButton("Save Key") { _, _ ->
-                val newKey = input.text.toString().trim().replace("\"", "").replace("'", "")
-                if (newKey.isNotBlank()) {
-                    saveApiKey(newKey)
-                    Toast.makeText(this, "API Key saved successfully!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "API Key cannot be empty", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.showManageApiKeyDialog(this)
     }
 
     private fun extractJsonObject(text: String): String {
@@ -315,7 +288,8 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                     1. ALWAYS WRITE AND OUTPUT ALL FIELDS (title, category, description) STRICTLY IN CASUAL HINDI ONLY.
                     2. Structure the article with a clear title, subtitle headings starting with ### (e.g. ### 🌾 मुख्य बातें, ### 📋 जरूरी बातें या लाभ), and well-written informative paragraphs.
                     3. EXCLUDE ALL EXTERNAL LINKS, source URLs, or website references. Do NOT include any website links or web URLs in the text.
-                    4. CRITICAL: DO NOT OUTPUT ANY PREAMBLE, COMMENTARY, THINKING PROCESS, OR TEXT BEFORE OR AFTER THE JSON. OUTPUT ONLY THE RAW JSON OBJECT STARTING WITH '{' AND ENDING WITH '}'.
+                    4. TOKEN EFFICIENCY: Be strictly point-to-point, highly informative, and direct without filler text or unnecessary words.
+                    5. CRITICAL: DO NOT OUTPUT ANY PREAMBLE, COMMENTARY, THINKING PROCESS, OR TEXT BEFORE OR AFTER THE JSON. OUTPUT ONLY THE RAW JSON OBJECT STARTING WITH '{' AND ENDING WITH '}'.
 
                     Format your response PRECISELY as a JSON object with the following fields:
                     {
@@ -328,9 +302,9 @@ class AdminCreateNewsActivity : AppCompatActivity() {
 
                 var responseText = ""
                 val modelNames = listOf(
-                    "gemini-2.0-flash",
-                    "gemini-2.0-flash-lite",
-                    "gemini-flash-latest"
+                    "gemini-3.5-flash-lite",
+                    "gemini-3.1-flash-lite",
+                    "gemini-3.8-flash"
                 )
 
                 for (modelName in modelNames) {
@@ -341,8 +315,8 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                             responseText = text
                             break
                         }
-                    } catch (_: Exception) {
-                        // try next model
+                    } catch (e: Exception) {
+                        Log.e("AdminCreateNewsActivity", "GenerativeModel $modelName exception: ${e.localizedMessage}")
                     }
                 }
 
@@ -462,9 +436,9 @@ class AdminCreateNewsActivity : AppCompatActivity() {
     private fun callGeminiRestApi(apiKey: String, prompt: String): String {
         val cleanKey = apiKey.trim().replace("\"", "").replace("'", "")
         val models = listOf(
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-flash-latest"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.8-flash"
         )
 
         val jsonRequest = JSONObject().apply {
@@ -477,6 +451,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
 
         for (model in models) {
             val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$cleanKey"
+
             try {
                 val url = URL(endpoint)
                 val conn = url.openConnection() as HttpURLConnection

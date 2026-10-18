@@ -55,6 +55,34 @@ PAGE_LIMIT = 10000  # Maximum page limit allowed by data.gov.in
 MAX_PAGES = 10      # Up to 10 x 10,000 = 100,000 records max
 MAX_DOC_RECORDS = 2000 # Keep document payload safely under Firestore 1 MB (1,048,576 bytes) limit
 
+# Load Hindi Translations (Admin Source of Truth from Firebase)
+HINDI_TRANSLATIONS = {}
+if db:
+    try:
+        print("Fetching latest translations from Firebase Admin Panel...")
+        trans_doc = db.collection("app_translations").document("hi").get()
+        if trans_doc.exists:
+            dict_data = trans_doc.to_dict() or {}
+
+            # 1. First, load everything from the nested "dictionary" map (Correct format)
+            if "dictionary" in dict_data and isinstance(dict_data["dictionary"], dict):
+                HINDI_TRANSLATIONS.update(dict_data["dictionary"])
+
+            # 2. Second, scan for any buggy flat fields like "dictionary.pandhana" and extract them
+            for key, value in dict_data.items():
+                if key.startswith("dictionary.") and isinstance(value, str):
+                    clean_key = key.replace("dictionary.", "").strip()
+                    HINDI_TRANSLATIONS[clean_key] = value
+    except Exception as e:
+        print(f"Warning: Could not load translations from Firebase: {e}")
+
+def get_hindi_name(english_name: str) -> str:
+    """Returns Hindi translation if available in Admin Translations dictionary, else original."""
+    if not english_name:
+        return english_name
+    key = english_name.lower().strip()
+    return HINDI_TRANSLATIONS.get(key, english_name.title())
+
 def get_clean_state_key(state_name: str) -> str:
     if not state_name or not state_name.strip():
         return "unknown_state"
@@ -88,6 +116,8 @@ def fetch_all_mandi_records_from_api() -> list:
         }
 
         success = False
+        is_last_page = False
+
         for attempt in range(1, 4):  # Up to 3 retries
             try:
                 print(f"Fetching Page {page_index} (Offset: {current_offset}, Limit: {PAGE_LIMIT}, Attempt: {attempt})...")
@@ -102,15 +132,18 @@ def fetch_all_mandi_records_from_api() -> list:
                     if not records:
                         print("Reached end of available records.")
                         success = True
+                        is_last_page = True
                         break
 
                     all_records.extend(records)
+                    current_offset += batch_len
+
                     if batch_len < PAGE_LIMIT:
                         print(f"Final batch received ({batch_len} < {PAGE_LIMIT}).")
                         success = True
+                        is_last_page = True
                         break
 
-                    current_offset += PAGE_LIMIT
                     success = True
                     break
                 else:
@@ -120,14 +153,10 @@ def fetch_all_mandi_records_from_api() -> list:
                 print(f"❌ Error fetching Page {page_index} (Attempt {attempt}): {e}")
                 time.sleep(2 * attempt)
 
-        if not success:
-            print(f"Failed to fetch Page {page_index} after 3 attempts. Proceeding with {len(all_records)} fetched records.")
+        if not success or is_last_page:
             break
 
-        if current_offset > 0 and len(all_records) % PAGE_LIMIT != 0:
-            break
-
-    print(f"🎉 Total Mandi Records Fetched from API: {len(all_records)}")
+    print(f"🎉 Total Unique Mandi Records Fetched from API: {len(all_records)}")
     return all_records
 
 # ---------------------------------------------------------------------------
@@ -157,7 +186,9 @@ def normalize_record(raw: dict) -> dict:
     rec = {
         "state": state,
         "district": district,
+        "district_hi": get_hindi_name(district),
         "market": market,
+        "market_hi": get_hindi_name(market),
         "commodity": commodity,
         "variety": variety,
         "minPrice": min_price,
