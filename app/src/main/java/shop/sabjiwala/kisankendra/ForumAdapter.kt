@@ -170,15 +170,24 @@ class ForumAdapter(
         val timeStr = item.timestamp?.toDate()?.let { dateFormat.format(it) } ?: "Recently"
         postHolder.tvPostTime.text = timeStr
 
-        postHolder.tvCategoryBadge.text = item.category.ifBlank { "General" }
+        val rawCategory = item.category.ifBlank { "General" }
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
+        val transCategory = TranslationHelper.getDirectTranslation(rawCategory, activeLang, context)
+            ?: TranslationHelper.getDirectTranslation(rawCategory.trim(), activeLang, context)
+            ?: rawCategory
+
+        postHolder.tvCategoryBadge.text = transCategory
         postHolder.tvDesc.text = item.description
 
-        // Dynamic AI Translation for non-English active languages
-        val activeLang = LocaleHelper.getPersistedLanguage(context)
-        if (activeLang != "en") {
-            CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
+            if (activeLang != "en") {
                 val translatedDesc = TranslationHelper.translateText(context, item.description, activeLang)
                 postHolder.tvDesc.text = translatedDesc
+            }
+
+            val asyncCat = TranslationHelper.translateText(context, rawCategory, activeLang)
+            if (asyncCat.isNotBlank()) {
+                postHolder.tvCategoryBadge.text = asyncCat
             }
         }
 

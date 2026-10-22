@@ -147,79 +147,32 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Crop Cycle Selector Bar & Full Dashboard Button Row -->
-            <LinearLayout
+            <!-- Crop Cycle Selector Bar -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="10dp">
+                android:hint="Season"
+                android:layout_marginBottom="8dp"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="0dp"
+                <AutoCompleteTextView
+                    android:id="@+id/actvCropCycleSelector"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Season"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp">
+                    android:inputType="none"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:paddingVertical="8dp"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                    <AutoCompleteTextView
-                        android:id="@+id/actvCropCycleSelector"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:singleLine="true"
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        android:paddingVertical="10dp"
-                        android:textSize="12.5sp"
-                        android:textStyle="bold" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Full Dashboard Launch Button (Right Side) -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/btnOpenVisualDashboard"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="0dp">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="12dp"
-                        android:gravity="center">
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginEnd="6dp"
-                            android:src="@drawable/ic_colorful_graphs"
-                            android:contentDescription="Colorful Graph Icon" />
-
-                        <TextView
-                            android:id="@+id/tvBtnFullDashboard"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Report ➔"
-                            android:textColor="@android:color/white"
-                            android:textSize="12.5sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
-            <!-- Top Action Buttons Row: Add Entry & View All Entries -->
+            <!-- Top Action Buttons Row: Add Entry, View All Entries & Report -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -230,38 +183,77 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAddKhataEntry"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
                     android:backgroundTint="@color/harvest_gold"
-                    android:paddingVertical="8dp"
+                    android:paddingVertical="0dp"
+                    android:paddingHorizontal="2dp"
                     android:text="Add Entry"
                     android:textColor="@android:color/white"
-                    android:textSize="12sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold"
-                    app:cornerRadius="14dp"
+                    app:cornerRadius="12dp"
                     app:elevation="2dp"
                     app:icon="@drawable/ic_add"
                     app:iconTint="@android:color/white"
                     app:iconGravity="textStart"
-                    app:iconPadding="6dp" />
+                    app:iconPadding="4dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnViewAllHistory"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
                     android:layout_marginStart="6dp"
                     android:backgroundTint="@color/kisan_diary_view_all_bg"
-                    android:paddingVertical="10dp"
+                    android:paddingVertical="0dp"
+                    android:paddingHorizontal="2dp"
                     android:text="Diary History"
                     android:textColor="@color/kisan_diary_view_all_text"
-                    android:textSize="13sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold"
-                    app:cornerRadius="16dp"
+                    app:cornerRadius="12dp"
                     app:elevation="2dp"
-                    app:rippleColor="@color/kisan_diary_view_all_ripple"
-                    app:iconTint="@color/kisan_diary_view_all_text" />
+                    app:rippleColor="@color/kisan_diary_view_all_ripple" />
+
+                <!-- Full Dashboard Launch Button (Report) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnOpenVisualDashboard"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="2dp"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/ic_colorful_graphs"
+                            android:contentDescription="Colorful Graph Icon" />
+
+                        <TextView
+                            android:id="@+id/tvBtnFullDashboard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Report ➔"
+                            android:textColor="@android:color/white"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <!-- NEW USER ONBOARDING BANNER (Visible when 0 crop cycles exist) -->
@@ -516,7 +508,7 @@
                         android:id="@+id/tvHeaderCalc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🌾 किसान केंद्र — कृषि कैलकुलेटर"
+                        android:text="किसान केंद्र — कृषि कैलकुलेटर"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="17sp"
                         android:textStyle="bold"
@@ -524,6 +516,7 @@
 
                     <!-- Plant Life Stage Selector Chips -->
                     <TextView
+                        android:id="@+id/tvCalcStageHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="फसल का चरण चुनें:"
@@ -595,6 +588,7 @@
 
                         <!-- Crop Selector -->
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilCalcCrop"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -617,6 +611,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilCalcArea"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -633,6 +628,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilCalcUnit"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -667,6 +663,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFieldPrepOperation"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -682,6 +679,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFieldPrepMachine"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -705,6 +703,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFieldPrepRate"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -721,12 +720,13 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFieldPrepPricingType"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                android:hint="दर का प्रकार">
+                                android:hint="घंटा / एकड़">
 
                                 <AutoCompleteTextView
                                     android:id="@+id/actvFieldPrepPricingType"
@@ -747,6 +747,7 @@
                         android:visibility="gone">
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilSowingVariety"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -768,6 +769,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSowingMethod"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -783,6 +785,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSowingPrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -810,6 +813,7 @@
                         android:visibility="gone">
 
                         <TextView
+                            android:id="@+id/tvFertilizerHeader"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="खाद के बाजार भाव (₹/बोरी या ₹/किलो):"
@@ -825,6 +829,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFertUreaPrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -841,6 +846,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFertDapPrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -865,6 +871,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFertMopPrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -881,6 +888,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilFertZincPrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -914,6 +922,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilIrrigationMethod"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -929,6 +938,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilIrrigationCount"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -953,6 +963,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilIrrigationPump"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -968,6 +979,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilIrrigationHours"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1001,6 +1013,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSprayProblem"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1016,6 +1029,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSprayProduct"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1039,6 +1053,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSprayTankCap"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1055,6 +1070,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSprayDosePerL"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1082,6 +1098,7 @@
                         android:visibility="gone">
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilLabourWorkType"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -1103,6 +1120,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilLabourWorkers"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1119,6 +1137,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilLabourDuration"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1136,6 +1155,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilLabourWage"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1163,6 +1183,7 @@
                         android:visibility="gone">
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilHarvestMethod"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -1184,6 +1205,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilHarvestRate"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1200,6 +1222,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilHarvestCount"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1233,6 +1256,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilTransportQty"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1249,6 +1273,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilTransportRate"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1273,6 +1298,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilTransportLoading"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1289,6 +1315,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilTransportStorage"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1322,6 +1349,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSaleQty"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1338,6 +1366,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSalePrice"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1362,6 +1391,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSaleTransport"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1378,6 +1408,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSaleDeductions"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1411,6 +1442,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitYieldPerAcre"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1427,6 +1459,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitPricePerQ"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1445,6 +1478,7 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvProfitCostHeader"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="लागत और खर्च का विवरण (₹):"
@@ -1460,6 +1494,7 @@
                             android:layout_marginBottom="4dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitSeedCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1476,6 +1511,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitMachineryCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1500,6 +1536,7 @@
                             android:layout_marginBottom="4dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitFertilizerCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1516,6 +1553,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitIrrigationCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1540,6 +1578,7 @@
                             android:layout_marginBottom="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitLabourCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1556,6 +1595,7 @@
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilProfitHarvestCost"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -1580,7 +1620,7 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/farmer_green_dark"
                         android:paddingVertical="10dp"
-                        android:text="⚡ हिसाब लगाएं"
+                        android:text="हिसाब लगाएं"
                         android:textColor="@android:color/white"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -1611,7 +1651,7 @@
                         android:id="@+id/tvCalcResultTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🌾 हिसाब का परिणाम"
+                        android:text="हिसाब का परिणाम"
                         android:textColor="#1B5E20"
                         android:textSize="17sp"
                         android:textStyle="bold"
@@ -1672,7 +1712,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:paddingVertical="8dp"
-                        android:text="💾 किसान डायरी में सेव करें"
+                        android:text="किसान डायरी में सेव करें"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="14sp"
                         android:textStyle="bold"

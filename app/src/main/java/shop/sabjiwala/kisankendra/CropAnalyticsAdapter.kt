@@ -34,7 +34,9 @@ class CropAnalyticsAdapter(
         val tvTitle: TextView = view.findViewById(R.id.tvAnalyticsCropTitle)
         val tvStatus: TextView = view.findViewById(R.id.tvAnalyticsStatusBadge)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteCropCycle)
+        val tvExpenseLabel: TextView = view.findViewById(R.id.tvAnalyticsExpenseLabel)
         val tvExpense: TextView = view.findViewById(R.id.tvAnalyticsExpense)
+        val tvIncomeLabel: TextView = view.findViewById(R.id.tvAnalyticsIncomeLabel)
         val tvIncome: TextView = view.findViewById(R.id.tvAnalyticsIncome)
         val tvNetProfit: TextView = view.findViewById(R.id.tvAnalyticsNetProfit)
         val tvNetProfitLabel: TextView = view.findViewById(R.id.tvAnalyticsNetProfitLabel)
@@ -58,16 +60,21 @@ class CropAnalyticsAdapter(
         val displaySeason = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, context)
         holder.tvTitle.text = "$displayCrop ($displaySeason) • ${cycle.areaAcres} Acre"
 
+        val transActiveDirect = TranslationHelper.getDirectTranslation("Active", activeLang, context) ?: if (activeLang == "hi") "सक्रिय" else "Active"
+        val transHarvestedDirect = TranslationHelper.getDirectTranslation("Harvested", activeLang, context) ?: if (activeLang == "hi") "कटाई हो गई" else "Harvested"
+        val transBtnActiveDirect = TranslationHelper.getDirectTranslation("Mark Active", activeLang, context) ?: if (activeLang == "hi") "सक्रिय करें" else "Mark Active"
+        val transBtnHarvestedDirect = TranslationHelper.getDirectTranslation("Mark Harvested", activeLang, context) ?: if (activeLang == "hi") "कटाई अंकित करें" else "Mark Harvested"
+
         if (cycle.isCompleted) {
-            holder.tvStatus.text = "🔵 Harvested"
+            holder.tvStatus.text = transHarvestedDirect
             holder.tvStatus.setTextColor(Color.parseColor("#1565C0"))
             holder.tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
-            holder.btnToggleStatus.text = "Mark Active"
+            holder.btnToggleStatus.text = transBtnActiveDirect
         } else {
-            holder.tvStatus.text = "🟢 Active"
+            holder.tvStatus.text = transActiveDirect
             holder.tvStatus.setTextColor(Color.parseColor("#2E7D32"))
             holder.tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
-            holder.btnToggleStatus.text = "Mark Harvested"
+            holder.btnToggleStatus.text = transBtnHarvestedDirect
         }
 
         val cycleItems = khataItems.filter { it.cropCycleId == cycle.id || (it.cropCycleId.isBlank() && it.cropName.equals(cycle.cropName, ignoreCase = true)) }
@@ -78,17 +85,38 @@ class CropAnalyticsAdapter(
         holder.tvExpense.text = numberFormat.format(totalExpense)
         holder.tvIncome.text = numberFormat.format(totalIncome)
 
+        val transExpenseDirect = TranslationHelper.getDirectTranslation("Expense", activeLang, context)
+            ?: TranslationHelper.getDirectTranslation("Total Expenses", activeLang, context)
+            ?: if (activeLang == "hi") "खर्च" else "Expense"
+
+        val transIncomeDirect = TranslationHelper.getDirectTranslation("Income", activeLang, context)
+            ?: TranslationHelper.getDirectTranslation("Total Income", activeLang, context)
+            ?: if (activeLang == "hi") "आय" else "Income"
+
+        val transNetProfitDirect = TranslationHelper.getDirectTranslation("Net Profit", activeLang, context)
+            ?: if (activeLang == "hi") "शुद्ध मुनाफा" else "Net Profit"
+
+        val transNetLossDirect = TranslationHelper.getDirectTranslation("Net Loss", activeLang, context)
+            ?: if (activeLang == "hi") "शुद्ध नुकसान" else "Net Loss"
+
+        val transPpaDirect = TranslationHelper.getDirectTranslation("Profit/Acre", activeLang, context)
+            ?: TranslationHelper.getDirectTranslation("Profit / Acre", activeLang, context)
+            ?: if (activeLang == "hi") "मुनाफा/एकड़" else "Profit/Acre"
+
+        holder.tvExpenseLabel.text = transExpenseDirect
+        holder.tvIncomeLabel.text = transIncomeDirect
+
         if (netProfit >= 0) {
             holder.tvNetProfit.text = "+ ${numberFormat.format(netProfit)}"
             holder.tvNetProfit.setTextColor(ContextCompat.getColor(context, R.color.price_max_text))
-            holder.tvNetProfitLabel.text = "Net Profit"
+            holder.tvNetProfitLabel.text = transNetProfitDirect
             holder.tvNetProfitLabel.setTextColor(ContextCompat.getColor(context, R.color.price_max_text))
             holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
             holder.tvNetProfitLabel.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
         } else {
             holder.tvNetProfit.text = "- ${numberFormat.format(-netProfit)}"
             holder.tvNetProfit.setTextColor(ContextCompat.getColor(context, R.color.price_min_text))
-            holder.tvNetProfitLabel.text = "Net Loss"
+            holder.tvNetProfitLabel.text = transNetLossDirect
             holder.tvNetProfitLabel.setTextColor(ContextCompat.getColor(context, R.color.price_min_text))
             holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
             holder.tvNetProfitLabel.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
@@ -96,33 +124,45 @@ class CropAnalyticsAdapter(
 
         val profitPerAcre = if (cycle.areaAcres > 0) netProfit / cycle.areaAcres else netProfit
         val ppaFormatted = numberFormat.format(profitPerAcre)
-        holder.tvProfitPerAcre.text = "Profit/Acre: $ppaFormatted / Acre"
+        holder.tvProfitPerAcre.text = "$transPpaDirect: $ppaFormatted / Acre"
         holder.tvProfitPerAcre.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
         holder.tvProfitPerAcre.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
 
-        if (activeLang != "en") {
-            CoroutineScope(Dispatchers.Main).launch {
-                val transCrop = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, context)
-                val transSeason = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, context)
-                holder.tvTitle.text = "$transCrop ($transSeason) • ${cycle.areaAcres} Acre"
+        CoroutineScope(Dispatchers.Main).launch {
+            val transCrop = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, context)
+            val transSeason = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, context)
+            holder.tvTitle.text = "$transCrop ($transSeason) • ${cycle.areaAcres} Acre"
 
-                if (cycle.isCompleted) {
-                    val transHarv = TranslationHelper.translateText(context, "Harvested", activeLang)
-                    val transBtnActive = TranslationHelper.translateText(context, "Mark Active", activeLang)
-                    holder.tvStatus.text = "🔵 $transHarv"
-                    holder.btnToggleStatus.text = transBtnActive
-                } else {
-                    val transAct = TranslationHelper.translateText(context, "Active", activeLang)
-                    val transBtnHarv = TranslationHelper.translateText(context, "Mark Harvested", activeLang)
-                    holder.tvStatus.text = "🟢 $transAct"
-                    holder.btnToggleStatus.text = transBtnHarv
-                }
+            val transExp = TranslationHelper.translateText(context, "Expense", activeLang)
+            val transInc = TranslationHelper.translateText(context, "Income", activeLang)
+            val transNP = TranslationHelper.translateText(context, "Net Profit", activeLang)
+            val transNL = TranslationHelper.translateText(context, "Net Loss", activeLang)
+            val transPpaLabel = TranslationHelper.translateText(context, "Profit/Acre", activeLang)
 
-                val transPpaLabel = TranslationHelper.translateText(context, "Profit/Acre", activeLang)
-                holder.tvProfitPerAcre.text = "$transPpaLabel: $ppaFormatted / Acre"
-                holder.tvProfitPerAcre.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
-                holder.tvProfitPerAcre.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
+            holder.tvExpenseLabel.text = transExp
+            holder.tvIncomeLabel.text = transInc
+
+            if (cycle.isCompleted) {
+                val transHarv = TranslationHelper.translateText(context, "Harvested", activeLang)
+                val transBtnActive = TranslationHelper.translateText(context, "Mark Active", activeLang)
+                holder.tvStatus.text = transHarv
+                holder.btnToggleStatus.text = transBtnActive
+            } else {
+                val transAct = TranslationHelper.translateText(context, "Active", activeLang)
+                val transBtnHarv = TranslationHelper.translateText(context, "Mark Harvested", activeLang)
+                holder.tvStatus.text = transAct
+                holder.btnToggleStatus.text = transBtnHarv
             }
+
+            if (netProfit >= 0) {
+                holder.tvNetProfitLabel.text = transNP
+            } else {
+                holder.tvNetProfitLabel.text = transNL
+            }
+
+            holder.tvProfitPerAcre.text = "$transPpaLabel: $ppaFormatted / Acre"
+            holder.tvProfitPerAcre.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
+            holder.tvProfitPerAcre.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
         }
 
         holder.btnToggleStatus.setOnClickListener {

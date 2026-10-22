@@ -31,7 +31,7 @@
                     android:id="@+id/tvHeaderCropCare"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🛡️ फसल सुरक्षा और समाधान"
+                    android:text="फसल सुरक्षा और समाधान"
                     android:textColor="#0F172A"
                     android:textSize="17sp"
                     android:textStyle="bold"

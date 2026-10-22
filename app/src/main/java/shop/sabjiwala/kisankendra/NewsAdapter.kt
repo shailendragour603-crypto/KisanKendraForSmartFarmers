@@ -108,17 +108,28 @@ class NewsAdapter(
 
         binding.tvNewsTitle.text = item.title
         binding.tvNewsDescription.text = RichTextHelper.formatRichText(descriptionExcerpt)
-        binding.tvCategoryBadge.text = item.category.ifBlank { "Agriculture" }
 
-        // Dynamic AI translation for non-Hindi active languages
-        if (activeLang != "hi") {
-            CoroutineScope(Dispatchers.Main).launch {
+        val rawCategory = item.category.ifBlank { "Agriculture" }
+        val transCategory = TranslationHelper.getDirectTranslation(rawCategory, activeLang, context)
+            ?: TranslationHelper.getDirectTranslation(rawCategory.trim(), activeLang, context)
+            ?: rawCategory
+
+        binding.tvCategoryBadge.text = transCategory
+
+        // Dynamic AI translation for categories, title, and description
+        CoroutineScope(Dispatchers.Main).launch {
+            if (activeLang != "en") {
                 val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
                 binding.tvNewsTitle.text = translatedTitle
 
                 val translatedDesc = TranslationHelper.translateText(context, descriptionExcerpt, activeLang)
                 val cleanTranslatedDesc = RichTextHelper.getExcerptWithoutFirstSubtitle(translatedDesc)
                 binding.tvNewsDescription.text = RichTextHelper.formatRichText(cleanTranslatedDesc)
+            }
+
+            val asyncCat = TranslationHelper.translateText(context, rawCategory, activeLang)
+            if (asyncCat.isNotBlank()) {
+                binding.tvCategoryBadge.text = asyncCat
             }
         }
 

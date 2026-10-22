@@ -27,6 +27,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.content.Context
 import shop.sabjiwala.kisankendra.databinding.DialogAddCropCareBinding
 import shop.sabjiwala.kisankendra.databinding.FragmentCropCareBinding
 import shop.sabjiwala.kisankendra.model.CropCareItem
@@ -126,20 +128,40 @@ class CropCareFragment : Fragment() {
     private fun setupDynamicTranslations() {
         val ctx = context ?: return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
-        if (activeLang != "hi") {
-            lifecycleScope.launch(Dispatchers.Main) {
-                if (_binding == null || !isAdded) return@launch
-                val transHeader = TranslationHelper.translateText(ctx, "🛡️ फसल सुरक्षा और समाधान", activeLang)
-                val transHint = TranslationHelper.translateText(ctx, "अपनी समस्या यहाँ खोजें...", activeLang)
-                val transEmpty = TranslationHelper.translateText(ctx, "कोई समस्या या समाधान नहीं मिला।", activeLang)
-                val transFab = TranslationHelper.translateText(ctx, "समस्या और समाधान जोड़ें", activeLang)
 
-                if (_binding != null && isAdded) {
-                    binding.tvHeaderCropCare.text = transHeader
-                    binding.etSearchProblem.hint = transHint
-                    binding.tvEmptyState.text = transEmpty
-                    binding.fabAddCropCare.text = transFab
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                TranslationHelper.syncMasterDictionaryFromFirestore(ctx, activeLang)
+                withContext(Dispatchers.Main) {
+                    if (_binding != null && isAdded) {
+                        applyCropCareTranslations(ctx, activeLang)
+                    }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        applyCropCareTranslations(ctx, activeLang)
+    }
+
+    private fun applyCropCareTranslations(ctx: Context, activeLang: String) {
+        lifecycleScope.launch(Dispatchers.Main) {
+            if (_binding == null || !isAdded) return@launch
+            val transHeader = TranslationHelper.getDirectTranslation("फसल सुरक्षा और समाधान", activeLang, ctx)
+                ?: TranslationHelper.translateText(ctx, "फसल सुरक्षा और समाधान", activeLang)
+            val transHint = TranslationHelper.getDirectTranslation("अपनी समस्या यहाँ खोजें...", activeLang, ctx)
+                ?: TranslationHelper.translateText(ctx, "अपनी समस्या यहाँ खोजें...", activeLang)
+            val transEmpty = TranslationHelper.getDirectTranslation("कोई समस्या या समाधान नहीं मिला।", activeLang, ctx)
+                ?: TranslationHelper.translateText(ctx, "कोई समस्या या समाधान नहीं मिला।", activeLang)
+            val transFab = TranslationHelper.getDirectTranslation("समस्या और समाधान जोड़ें", activeLang, ctx)
+                ?: TranslationHelper.translateText(ctx, "समस्या और समाधान जोड़ें", activeLang)
+
+            if (_binding != null && isAdded) {
+                binding.tvHeaderCropCare.text = transHeader
+                binding.etSearchProblem.hint = transHint
+                binding.tvEmptyState.text = transEmpty
+                binding.fabAddCropCare.text = transFab
             }
         }
     }

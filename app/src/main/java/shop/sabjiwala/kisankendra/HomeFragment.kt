@@ -270,33 +270,46 @@ class HomeFragment : Fragment() {
         val ctx = context ?: return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
 
-        if (activeLang != "en") {
-            lifecycleScope.launch(Dispatchers.Main) {
-                val safeCtx = context ?: return@launch
-                if (!isAdded || _binding == null) return@launch
-                val transKhata = TranslationHelper.translateText(safeCtx, "Kisan Diary", activeLang)
-                val transCalc = TranslationHelper.translateText(safeCtx, "Calculator", activeLang)
-                val transSchemes = TranslationHelper.translateText(safeCtx, "Govt Schemes", activeLang)
-                val transWeather = TranslationHelper.translateText(safeCtx, "Weather", activeLang)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                TranslationHelper.syncMasterDictionaryFromFirestore(ctx, activeLang)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
-                if (_binding != null && isAdded) {
-                    binding.chipToolKhata.text = transKhata
-                    binding.chipToolCalculator.text = transCalc
-                    binding.chipToolSchemes.text = transSchemes
-                    binding.chipToolWeather.text = transWeather
-                }
+        lifecycleScope.launch(Dispatchers.Main) {
+            val safeCtx = context ?: return@launch
+            if (!isAdded || _binding == null) return@launch
+            val transKhata = TranslationHelper.getDirectTranslation("Kisan Diary", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Kisan Diary", activeLang)
+            val transCalc = TranslationHelper.getDirectTranslation("Calculator", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Calculator", activeLang)
+            val transSchemes = TranslationHelper.getDirectTranslation("Govt Schemes", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Govt Schemes", activeLang)
+            val transWeather = TranslationHelper.getDirectTranslation("Weather", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Weather", activeLang)
 
-                val transBestHeader = TranslationHelper.translateText(safeCtx, "Most Profitable Crop", activeLang)
-                val transCostlyHeader = TranslationHelper.translateText(safeCtx, "Highest Expense Crop", activeLang)
-                val transComparisonHeader = TranslationHelper.translateText(safeCtx, "Crop Performance Comparison:", activeLang)
+            if (_binding != null && isAdded) {
+                binding.chipToolKhata.text = transKhata
+                binding.chipToolCalculator.text = transCalc
+                binding.chipToolSchemes.text = transSchemes
+                binding.chipToolWeather.text = transWeather
+            }
 
-                if (_binding != null && isAdded) {
-                    binding.tvHeaderMostProfitable.text = "🚀 $transBestHeader"
-                    binding.tvHeaderHighestExpense.text = "💸 $transCostlyHeader"
-                    binding.tvHeaderCropComparison.text = transComparisonHeader
-                    binding.tvHeaderCropComparison.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
-                    binding.tvHeaderCropComparison.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
-                }
+            val transBestHeader = TranslationHelper.getDirectTranslation("Most Profitable Crop", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Most Profitable Crop", activeLang)
+            val transCostlyHeader = TranslationHelper.getDirectTranslation("Highest Expense Crop", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Highest Expense Crop", activeLang)
+            val transComparisonHeader = TranslationHelper.getDirectTranslation("Crop Performance Comparison:", activeLang, safeCtx)
+                ?: TranslationHelper.translateText(safeCtx, "Crop Performance Comparison:", activeLang)
+
+            if (_binding != null && isAdded) {
+                binding.tvHeaderMostProfitable.text = "🚀 $transBestHeader"
+                binding.tvHeaderHighestExpense.text = "💸 $transCostlyHeader"
+                binding.tvHeaderCropComparison.text = transComparisonHeader
+                binding.tvHeaderCropComparison.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
+                binding.tvHeaderCropComparison.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
             }
         }
 
@@ -494,18 +507,27 @@ class HomeFragment : Fragment() {
         if (!isAdded || _binding == null) return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
 
-        val placeholder = if (activeLang == "hi") "सेलेक्ट सीजन" else if (activeLang == "en") "Select Season" else TranslationHelper.getDirectTranslation("Select Season", activeLang) ?: "Select Season"
+        if (selectedCropCycleIds.isEmpty() && cropCycles.isNotEmpty()) {
+            selectedCropCycleIds.add(cropCycles.first().id)
+        }
+
         if (selectedCropCycleIds.isEmpty()) {
+            val placeholder = if (activeLang == "hi") "सेलेक्ट सीजन" else "Select Season"
             binding.actvCropCycleSelector.setText(placeholder, false)
+        } else if (selectedCropCycleIds.size == 1) {
+            val cycle = cropCycles.firstOrNull { it.id == selectedCropCycleIds.first() }
+            if (cycle != null) {
+                val cropTrans = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, ctx)
+                val seasonTrans = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, ctx)
+                binding.actvCropCycleSelector.setText("$cropTrans ($seasonTrans)", false)
+            } else {
+                val placeholder = if (activeLang == "hi") "1 सीजन चुना गया" else "1 Season Selected"
+                binding.actvCropCycleSelector.setText(placeholder, false)
+            }
         } else {
-            val selectedNames = cropCycles
-                .filter { selectedCropCycleIds.contains(it.id) }
-                .map { cycle ->
-                    val cropTrans = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, ctx)
-                    val seasonTrans = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, ctx)
-                    "$cropTrans ($seasonTrans)"
-                }
-            binding.actvCropCycleSelector.setText(selectedNames.joinToString(", "), false)
+            val count = selectedCropCycleIds.size
+            val text = if (activeLang == "hi") "$count सीजन चुने गए" else "$count Seasons Selected"
+            binding.actvCropCycleSelector.setText(text, false)
         }
     }
 
@@ -533,12 +555,12 @@ class HomeFragment : Fragment() {
         val btnAddSeason = dialogView.findViewById<MaterialButton>(R.id.btnAddSeasonInDialog)
         val btnApply = dialogView.findViewById<MaterialButton>(R.id.btnApplySeasonFilter)
 
-        val transTitle = TranslationHelper.getDirectTranslation("Select Seasons (Max 4)", activeLang) ?: if (activeLang == "hi") "सीजन फ़िल्टर (अधिकतम 4)" else "Select Seasons (Max 4)"
-        val transSubtitle = TranslationHelper.getDirectTranslation("Select up to 4 seasons to filter your Kisan Diary", activeLang) ?: if (activeLang == "hi") "किसान डायरी फ़िल्टर करने के लिए अधिकतम 4 सीजन चुनें" else "Select up to 4 seasons to filter your Kisan Diary"
+        val transTitle = TranslationHelper.getDirectTranslation("Select Seasons", activeLang) ?: if (activeLang == "hi") "सीजन चुनें" else "Select Seasons"
+        val transSubtitle = TranslationHelper.getDirectTranslation("Select seasons to filter your Kisan Diary", activeLang) ?: if (activeLang == "hi") "किसान डायरी फ़िल्टर करने के लिए सीजन चुनें" else "Select seasons to filter your Kisan Diary"
         val transBtnApply = TranslationHelper.getDirectTranslation("Apply", activeLang) ?: if (activeLang == "hi") "लागू करें" else "Apply"
         val transBtnAdd = TranslationHelper.getDirectTranslation("Add New Season", activeLang) ?: if (activeLang == "hi") "नया सीजन जोड़े" else "Add New Season"
         val transBtnClear = TranslationHelper.getDirectTranslation("Clear All", activeLang) ?: if (activeLang == "hi") "सभी साफ़ करें" else "Clear All"
-        val maxLimitMsg = if (activeLang == "hi") "अधिकतम 4 सीजन ही चुनें" else if (activeLang == "en") "Select maximum 4 seasons" else TranslationHelper.getDirectTranslation("Select maximum 4 seasons", activeLang) ?: "Select maximum 4 seasons"
+        val maxLimitMsg = if (activeLang == "hi") "आप अधिकतम 10 सीजन चुन सकते हैं" else "You can select up to 10 seasons"
 
         tvTitle.text = transTitle
         tvSubtitle.text = transSubtitle
@@ -556,11 +578,11 @@ class HomeFragment : Fragment() {
         fun updateRowVisualState(card: MaterialCardView, cbCheck: com.google.android.material.checkbox.MaterialCheckBox, isChecked: Boolean) {
             cbCheck.isChecked = isChecked
             if (isChecked) {
-                card.setCardBackgroundColor(Color.parseColor("#1C3822"))
+                card.setCardBackgroundColor(Color.parseColor("#153A21"))
                 card.strokeColor = Color.parseColor("#2E7D32")
             } else {
-                card.setCardBackgroundColor(Color.parseColor("#28282C"))
-                card.strokeColor = Color.parseColor("#38383C")
+                card.setCardBackgroundColor(Color.parseColor("#1E293B"))
+                card.strokeColor = Color.parseColor("#334155")
             }
         }
 
@@ -576,7 +598,7 @@ class HomeFragment : Fragment() {
 
             val cropTrans = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, ctx)
             val seasonTrans = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, ctx)
-            tvLabel.text = "🌾 $cropTrans ($seasonTrans)"
+            tvLabel.text = "$cropTrans ($seasonTrans)"
 
             updateRowVisualState(card, cbCheck, checkedItems[index])
 
@@ -584,7 +606,7 @@ class HomeFragment : Fragment() {
                 val isCurrentlyChecked = checkedItems[index]
                 if (!isCurrentlyChecked) {
                     val count = checkedItems.count { it }
-                    if (count >= 4) {
+                    if (count >= 10) {
                         Toast.makeText(ctx, maxLimitMsg, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
@@ -1374,22 +1396,39 @@ class HomeFragment : Fragment() {
         binding.actvHarvestMethod.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, harvestMethods))
         binding.actvHarvestMethod.setText(harvestMethods[0], false)
 
-        // Setup Stage & Calculator Selector lists in Casual Hindi
+        // Setup Stage & Calculator Selector lists in Casual Hindi and English
         val productionCalcs = listOf(
-            "1. 🚜 खेत तैयारी व जुताई खर्च",
-            "2. 🌱 बीज व बुआई कैलकुलेटर",
-            "3. 🧪 खाद और उर्वरक की मात्रा",
-            "4. 💧 सिंचाई और पानी का हिसाब",
-            "5. 💊 दवाई व स्प्रे छिड़काव",
-            "6. 👨‍🌾 मजदूरी और मजदूर खर्च",
-            "7. 🌾 फसल कटाई का हिसाब"
+            "1. खेत तैयारी कैलकुलेटर",
+            "2. बीज व बुआई कैलकुलेटर",
+            "3. खाद व उर्वरक कैलकुलेटर",
+            "4. सिंचाई कैलकुलेटर",
+            "5. स्प्रे व कीटनाशक कैलकुलेटर",
+            "6. मजदूरी कैलकुलेटर",
+            "7. फसल कटाई कैलकुलेटर"
         )
         val postHarvestCalcs = listOf(
-            "8. 📦 भाड़ा, ढोआई व भंडारण",
-            "9. 🏪 मंडी बिक्री व रेट हिसाब"
+            "8. भाड़ा व भंडारण कैलकुलेटर",
+            "9. मंडी बिक्री कैलकुलेटर"
         )
         val financialCalcs = listOf(
-            "10. 📊 कुल मुनाफा और बचत हिसाब"
+            "10. कुल मुनाफा कैलकुलेटर"
+        )
+
+        val productionCalcsEn = listOf(
+            "1. Field Prep Calculator",
+            "2. Seed & Sowing Calculator",
+            "3. Fertilizer Calculator",
+            "4. Irrigation Calculator",
+            "5. Spray & Pesticide Calculator",
+            "6. Labor & Wages Calculator",
+            "7. Harvesting Calculator"
+        )
+        val postHarvestCalcsEn = listOf(
+            "8. Transport & Storage Calculator",
+            "9. Mandi Sale Calculator"
+        )
+        val financialCalcsEn = listOf(
+            "10. Crop Profit & ROI Calculator"
         )
 
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
@@ -1409,15 +1448,15 @@ class HomeFragment : Fragment() {
         if (activeLang != "hi") {
             lifecycleScope.launch(Dispatchers.Main) {
                 if (_binding == null || !isAdded) return@launch
-                val transHeader = TranslationHelper.translateText(ctx, "🌾 किसान केंद्र — कृषि कैलकुलेटर", activeLang)
+                val transHeader = TranslationHelper.translateText(ctx, "किसान केंद्र — कृषि कैलकुलेटर", activeLang)
                 val transStageHeader = TranslationHelper.translateText(ctx, "फसल का चरण चुनें:", activeLang)
                 val transProd = TranslationHelper.translateText(ctx, "1. फसल बुआई व देखरेख", activeLang)
                 val transPost = TranslationHelper.translateText(ctx, "2. कटाई और भंडारण", activeLang)
                 val transFin = TranslationHelper.translateText(ctx, "3. कुल कमाई और मुनाफा", activeLang)
                 val transSelectCalc = TranslationHelper.translateText(ctx, "कैलकुलेटर चुनें", activeLang)
-                val transCalcBtn = TranslationHelper.translateText(ctx, "⚡ हिसाब लगाएं", activeLang)
-                val transResultTitle = TranslationHelper.translateText(ctx, "🌾 हिसाब का परिणाम", activeLang)
-                val transSaveBtn = TranslationHelper.translateText(ctx, "💾 किसान डायरी में सेव करें", activeLang)
+                val transCalcBtn = TranslationHelper.translateText(ctx, "हिसाब लगाएं", activeLang)
+                val transResultTitle = TranslationHelper.translateText(ctx, "हिसाब का परिणाम", activeLang)
+                val transSaveBtn = TranslationHelper.translateText(ctx, "किसान डायरी में सेव करें", activeLang)
 
                 val transCrops = FarmingCalculatorUtils.crops.map { TranslationHelper.translateText(ctx, it, activeLang) }
                 val transUnits = FarmingCalculatorUtils.units.map { TranslationHelper.translateText(ctx, it, activeLang) }
@@ -1431,12 +1470,13 @@ class HomeFragment : Fragment() {
                 val transWorkTypes = workTypes.map { TranslationHelper.translateText(ctx, it, activeLang) }
                 val transHarvestMethods = harvestMethods.map { TranslationHelper.translateText(ctx, it, activeLang) }
 
-                val transProdCalcs = productionCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
-                val transPostCalcs = postHarvestCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
-                val transFinCalcs = financialCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                val transProdCalcs = if (activeLang == "en") productionCalcsEn else productionCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                val transPostCalcs = if (activeLang == "en") postHarvestCalcsEn else postHarvestCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
+                val transFinCalcs = if (activeLang == "en") financialCalcsEn else financialCalcs.map { TranslationHelper.translateText(ctx, it, activeLang) }
 
                 if (_binding != null && isAdded) {
                     binding.tvHeaderCalc.text = transHeader
+                    binding.tvCalcStageHeader.text = transStageHeader
                     binding.chipStageProduction.text = transProd
                     binding.chipStagePostHarvest.text = transPost
                     binding.chipStageFinancial.text = transFin
@@ -1444,6 +1484,65 @@ class HomeFragment : Fragment() {
                     binding.btnCalculateFertilizer.text = transCalcBtn
                     binding.tvCalcResultTitle.text = transResultTitle
                     binding.btnSaveCalcToKisanDiary.text = transSaveBtn
+
+                    // Translate Calculator Entry Field Titles and Hints
+                    binding.tilCalcCrop.hint = TranslationHelper.translateText(ctx, "फसल चुनें", activeLang)
+                    binding.tilCalcArea.hint = TranslationHelper.translateText(ctx, "ज़मीन का क्षेत्रफल", activeLang)
+                    binding.tilCalcUnit.hint = TranslationHelper.translateText(ctx, "इकाई", activeLang)
+
+                    binding.tilFieldPrepOperation.hint = TranslationHelper.translateText(ctx, "कार्य / जुताई प्रकार", activeLang)
+                    binding.tilFieldPrepMachine.hint = TranslationHelper.translateText(ctx, "मशीन / साधन", activeLang)
+                    binding.tilFieldPrepRate.hint = TranslationHelper.translateText(ctx, "किराया / रेट (₹)", activeLang)
+                    binding.tilFieldPrepPricingType.hint = if (activeLang == "en") "Hour / Acre" else TranslationHelper.translateText(ctx, "घंटा / एकड़", activeLang)
+
+                    binding.tilSowingVariety.hint = TranslationHelper.translateText(ctx, "बीज की किस्म / वैरायटी (ऐच्छिक)", activeLang)
+                    binding.tilSowingMethod.hint = TranslationHelper.translateText(ctx, "बुआई का तरीका", activeLang)
+                    binding.tilSowingPrice.hint = TranslationHelper.translateText(ctx, "बीज दर (₹/किलो)", activeLang)
+
+                    binding.tvFertilizerHeader.text = TranslationHelper.translateText(ctx, "खाद के बाजार भाव (₹/बोरी या ₹/किलो):", activeLang)
+                    binding.tilFertUreaPrice.hint = TranslationHelper.translateText(ctx, "यूरिया (₹/बोरी)", activeLang)
+                    binding.tilFertDapPrice.hint = TranslationHelper.translateText(ctx, "डीएपी (₹/बोरी)", activeLang)
+                    binding.tilFertMopPrice.hint = TranslationHelper.translateText(ctx, "एमओपी (₹/बोरी)", activeLang)
+                    binding.tilFertZincPrice.hint = TranslationHelper.translateText(ctx, "जिंक (₹/किलो)", activeLang)
+
+                    binding.tilIrrigationMethod.hint = TranslationHelper.translateText(ctx, "सिंचाई का तरीका", activeLang)
+                    binding.tilIrrigationCount.hint = TranslationHelper.translateText(ctx, "कुल सिंचाई की संख्या", activeLang)
+                    binding.tilIrrigationPump.hint = TranslationHelper.translateText(ctx, "पानी का साधन / पंप", activeLang)
+                    binding.tilIrrigationHours.hint = TranslationHelper.translateText(ctx, "पंप HP / चलने के घंटे", activeLang)
+
+                    binding.tilSprayProblem.hint = TranslationHelper.translateText(ctx, "समस्या का प्रकार", activeLang)
+                    binding.tilSprayProduct.hint = TranslationHelper.translateText(ctx, "दवाई का नाम", activeLang)
+                    binding.tilSprayTankCap.hint = TranslationHelper.translateText(ctx, "टंकी की क्षमता (लीटर)", activeLang)
+                    binding.tilSprayDosePerL.hint = TranslationHelper.translateText(ctx, "दवाई की मात्रा (मिली/लीटर)", activeLang)
+
+                    binding.tilLabourWorkType.hint = TranslationHelper.translateText(ctx, "कार्य का प्रकार", activeLang)
+                    binding.tilLabourWorkers.hint = TranslationHelper.translateText(ctx, "मजदूरों की संख्या", activeLang)
+                    binding.tilLabourDuration.hint = TranslationHelper.translateText(ctx, "दिन / घंटे", activeLang)
+                    binding.tilLabourWage.hint = TranslationHelper.translateText(ctx, "मजदूरी दर (₹/दिन)", activeLang)
+
+                    binding.tilHarvestMethod.hint = TranslationHelper.translateText(ctx, "कटाई का तरीका", activeLang)
+                    binding.tilHarvestRate.hint = TranslationHelper.translateText(ctx, "मशीन या मजदूरी रेट (₹)", activeLang)
+                    binding.tilHarvestCount.hint = TranslationHelper.translateText(ctx, "दिन / मजदूर संख्या", activeLang)
+
+                    binding.tilTransportQty.hint = TranslationHelper.translateText(ctx, "कुल उपज (क्विंटल)", activeLang)
+                    binding.tilTransportRate.hint = TranslationHelper.translateText(ctx, "गाड़ी भाड़ा (₹/क्विंटल)", activeLang)
+                    binding.tilTransportLoading.hint = TranslationHelper.translateText(ctx, "हमाली व लोड-अनलोड (₹)", activeLang)
+                    binding.tilTransportStorage.hint = TranslationHelper.translateText(ctx, "गोदाम / भंडारण खर्च (₹)", activeLang)
+
+                    binding.tilSaleQty.hint = TranslationHelper.translateText(ctx, "बेची गई उपज (क्विंटल)", activeLang)
+                    binding.tilSalePrice.hint = TranslationHelper.translateText(ctx, "मंडी भाव (₹/क्विंटल)", activeLang)
+                    binding.tilSaleTransport.hint = TranslationHelper.translateText(ctx, "गाड़ी भाड़ा (₹)", activeLang)
+                    binding.tilSaleDeductions.hint = TranslationHelper.translateText(ctx, "कमीशन व मंडी टैक्स (₹)", activeLang)
+
+                    binding.tilProfitYieldPerAcre.hint = TranslationHelper.translateText(ctx, "अनुमानित पैदावार (क्विंटल/एकड़)", activeLang)
+                    binding.tilProfitPricePerQ.hint = TranslationHelper.translateText(ctx, "अनुमानित मंडी भाव (₹/क्विंटल)", activeLang)
+                    binding.tvProfitCostHeader.text = TranslationHelper.translateText(ctx, "लागत और खर्च का विवरण (₹):", activeLang)
+                    binding.tilProfitSeedCost.hint = TranslationHelper.translateText(ctx, "बीज का खर्च", activeLang)
+                    binding.tilProfitMachineryCost.hint = TranslationHelper.translateText(ctx, "जुताई व मशीन खर्च", activeLang)
+                    binding.tilProfitFertilizerCost.hint = TranslationHelper.translateText(ctx, "खाद व उर्वरक खर्च", activeLang)
+                    binding.tilProfitIrrigationCost.hint = TranslationHelper.translateText(ctx, "सिंचाई का खर्च", activeLang)
+                    binding.tilProfitLabourCost.hint = TranslationHelper.translateText(ctx, "मजदूरी का खर्च", activeLang)
+                    binding.tilProfitHarvestCost.hint = TranslationHelper.translateText(ctx, "कटाई व ढोआई खर्च (₹)", activeLang)
 
                     binding.actvCalcCrop.setAdapter(ArrayAdapter(ctx, R.layout.item_compact_dropdown_single, transCrops))
                     binding.actvCalcCrop.setText(transCrops[0], false)
@@ -1599,6 +1698,45 @@ class HomeFragment : Fragment() {
         binding.cardCalcResult.visibility = View.GONE
     }
 
+    private fun displayCalculatorResults(
+        resSeed: String,
+        resUrea: String,
+        resDap: String,
+        resZinc: String,
+        resNote: String
+    ) {
+        val ctx = context ?: return
+        if (_binding == null) return
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+        if (activeLang != "hi") {
+            lifecycleScope.launch(Dispatchers.Main) {
+                if (_binding == null || !isAdded) return@launch
+                val tSeed = TranslationHelper.translateText(ctx, resSeed, activeLang)
+                val tUrea = TranslationHelper.translateText(ctx, resUrea, activeLang)
+                val tDap = TranslationHelper.translateText(ctx, resDap, activeLang)
+                val tZinc = TranslationHelper.translateText(ctx, resZinc, activeLang)
+                val tNote = TranslationHelper.translateText(ctx, resNote, activeLang)
+
+                if (_binding != null && isAdded) {
+                    binding.tvCalcResultSeed.text = tSeed
+                    binding.tvCalcResultUrea.text = tUrea
+                    binding.tvCalcResultDap.text = tDap
+                    binding.tvCalcResultZinc.text = tZinc
+                    binding.tvCalcResultNote.text = tNote
+                    binding.cardCalcResult.visibility = View.VISIBLE
+                }
+            }
+        } else {
+            binding.tvCalcResultSeed.text = resSeed
+            binding.tvCalcResultUrea.text = resUrea
+            binding.tvCalcResultDap.text = resDap
+            binding.tvCalcResultZinc.text = resZinc
+            binding.tvCalcResultNote.text = resNote
+            binding.cardCalcResult.visibility = View.VISIBLE
+        }
+    }
+
     private fun performSelectedCalculation() {
         val ctx = context ?: return
         if (_binding == null) return
@@ -1640,11 +1778,13 @@ class HomeFragment : Fragment() {
                     fuelPrice = 0.0
                 )
 
-                binding.tvCalcResultSeed.text = "🚜 खेत तैयारी कार्य: ${res.operationName} (${res.machineName})"
-                binding.tvCalcResultUrea.text = "📐 कुल ज़मीन: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़"
-                binding.tvCalcResultDap.text = "💵 दर / किराया: ${res.rateText}"
-                binding.tvCalcResultZinc.text = "💰 कुल मशीन खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)"
-                binding.tvCalcResultNote.text = "💡 $crop की फसल के लिए खेत तैयारी का अनुमानित खर्च।"
+                displayCalculatorResults(
+                    "खेत तैयारी कार्य: ${res.operationName} (${res.machineName})",
+                    "कुल ज़मीन: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़",
+                    "दर / किराया: ${res.rateText}",
+                    "कुल मशीन खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)",
+                    "$crop की फसल के लिए खेत तैयारी का अनुमानित खर्च।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1674,11 +1814,13 @@ class HomeFragment : Fragment() {
                     seedPricePerKg = price
                 )
 
-                binding.tvCalcResultSeed.text = "🌱 बुआई योजना: ${res.cropName} (${res.variety}) — ${res.sowingMethod}"
-                binding.tvCalcResultUrea.text = "📐 अनुशंसित बीज दर: ${String.format(Locale.ENGLISH, "%.1f", res.seedRatePerAcre)} किग्रा/एकड़"
-                binding.tvCalcResultDap.text = "📦 कुल आवश्यक बीज: ${String.format(Locale.ENGLISH, "%.1f", res.totalSeedKg)} किग्रा"
-                binding.tvCalcResultZinc.text = "💰 अनुमानित बीज खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalSeedCost)} (@ ₹${String.format(Locale.ENGLISH, "%.0f", res.seedPricePerKg)}/किग्रा)"
-                binding.tvCalcResultNote.text = "💡 अच्छी पैदावार और पौधों की सही संख्या के लिए बीज की मात्रा।"
+                displayCalculatorResults(
+                    "बुआई योजना: ${res.cropName} (${res.variety}) — ${res.sowingMethod}",
+                    "अनुशंसित बीज दर: ${String.format(Locale.ENGLISH, "%.1f", res.seedRatePerAcre)} किग्रा/एकड़",
+                    "कुल आवश्यक बीज: ${String.format(Locale.ENGLISH, "%.1f", res.totalSeedKg)} किग्रा",
+                    "अनुमानित बीज खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalSeedCost)} (@ ₹${String.format(Locale.ENGLISH, "%.0f", res.seedPricePerKg)}/किग्रा)",
+                    "अच्छी पैदावार और पौधों की सही संख्या के लिए बीज की मात्रा।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1709,11 +1851,13 @@ class HomeFragment : Fragment() {
                     zincPriceKg = zincP
                 )
 
-                binding.tvCalcResultSeed.text = "🧪 यूरिया: ${String.format(Locale.ENGLISH, "%.1f", res.ureaKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.ureaBags)} बोरी)"
-                binding.tvCalcResultUrea.text = "🧪 डीएपी: ${String.format(Locale.ENGLISH, "%.1f", res.dapKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.dapBags)} बोरी)"
-                binding.tvCalcResultDap.text = "🧪 एमओपी: ${String.format(Locale.ENGLISH, "%.1f", res.mopKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.mopBags)} बोरी) | जिंक: ${String.format(Locale.ENGLISH, "%.1f", res.zincKg)} किग्रा"
-                binding.tvCalcResultZinc.text = "💰 अनुमानित खाद खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
-                binding.tvCalcResultNote.text = "🗓️ खाद देने का सही समय व शेड्यूल:\n${res.applicationSchedule}"
+                displayCalculatorResults(
+                    "यूरिया: ${String.format(Locale.ENGLISH, "%.1f", res.ureaKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.ureaBags)} बोरी)",
+                    "डीएपी: ${String.format(Locale.ENGLISH, "%.1f", res.dapKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.dapBags)} बोरी)",
+                    "एमओपी: ${String.format(Locale.ENGLISH, "%.1f", res.mopKg)} किग्रा (${String.format(Locale.ENGLISH, "%.1f", res.mopBags)} बोरी) | जिंक: ${String.format(Locale.ENGLISH, "%.1f", res.zincKg)} किग्रा",
+                    "अनुमानित खाद खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}",
+                    "खाद देने का सही समय व शेड्यूल:\n${res.applicationSchedule}"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1750,11 +1894,13 @@ class HomeFragment : Fragment() {
                     directCanalCost = 1500.0
                 )
 
-                binding.tvCalcResultSeed.text = "💧 सिंचाई का तरीका: ${res.method} (${res.numIrrigations} बार सिंचाई)"
-                binding.tvCalcResultUrea.text = "🌊 प्रति सिंचाई पानी की मात्रा: ${String.format(Locale.ENGLISH, "%,.0f", res.waterPerIrrigationLiters)} लीटर"
-                binding.tvCalcResultDap.text = "🌊 कुल सीजन में पानी की मात्रा: ${String.format(Locale.ENGLISH, "%,.0f", res.totalSeasonalWaterLiters)} लीटर"
-                binding.tvCalcResultZinc.text = "💰 अनुमानित सिंचाई खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)"
-                binding.tvCalcResultNote.text = "💡 फसल में पानी की आवश्यकता और पंप चलने के घंटे के अनुसार अनुमान।"
+                displayCalculatorResults(
+                    "सिंचाई का तरीका: ${res.method} (${res.numIrrigations} बार सिंचाई)",
+                    "प्रति सिंचाई पानी की मात्रा: ${String.format(Locale.ENGLISH, "%,.0f", res.waterPerIrrigationLiters)} लीटर",
+                    "कुल सीजन में पानी की मात्रा: ${String.format(Locale.ENGLISH, "%,.0f", res.totalSeasonalWaterLiters)} लीटर",
+                    "अनुमानित सिंचाई खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)",
+                    "फसल में पानी की आवश्यकता और पंप चलने के घंटे के अनुसार अनुमान।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1788,11 +1934,13 @@ class HomeFragment : Fragment() {
                     packageSizeUnits = 500.0
                 )
 
-                binding.tvCalcResultSeed.text = "💊 दवाई / उत्पाद: ${res.productName} (${res.problemCategory})"
-                binding.tvCalcResultUrea.text = "💧 कुल आवश्यक पानी: ${String.format(Locale.ENGLISH, "%.0f", res.waterRequirementLiters)} लीटर | कुल टंकी: ${res.tankLoads} टंकी (${String.format(Locale.ENGLISH, "%.0f", res.tankCapacityLiters)}L टंकी)"
-                binding.tvCalcResultDap.text = "🧪 आवश्यक कुल दवा: ${String.format(Locale.ENGLISH, "%.0f", res.totalProductRequired)} मिली/ग्राम (${String.format(Locale.ENGLISH, "%.1f", res.productPerTank)} मिली/ग्राम प्रति टंकी)"
-                binding.tvCalcResultZinc.text = "💰 अनुमानित दवाई व स्प्रे खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
-                binding.tvCalcResultNote.text = "💡 ${res.labelGuidance}"
+                displayCalculatorResults(
+                    "दवाई / उत्पाद: ${res.productName} (${res.problemCategory})",
+                    "कुल आवश्यक पानी: ${String.format(Locale.ENGLISH, "%.0f", res.waterRequirementLiters)} लीटर | कुल टंकी: ${res.tankLoads} टंकी (${String.format(Locale.ENGLISH, "%.0f", res.tankCapacityLiters)}L टंकी)",
+                    "आवश्यक कुल दवा: ${String.format(Locale.ENGLISH, "%.0f", res.totalProductRequired)} मिली/ग्राम (${String.format(Locale.ENGLISH, "%.1f", res.productPerTank)} मिली/ग्राम प्रति टंकी)",
+                    "अनुमानित दवाई व स्प्रे खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}",
+                    "${res.labelGuidance}"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1823,11 +1971,13 @@ class HomeFragment : Fragment() {
                     wageRate = wage
                 )
 
-                binding.tvCalcResultSeed.text = "👨‍🌾 कार्य का प्रकार: ${res.workType}"
-                binding.tvCalcResultUrea.text = "👥 कुल मजदूर: ${res.numWorkers} मजदूर (${String.format(Locale.ENGLISH, "%.1f", res.duration)} दिन/घंटे)"
-                binding.tvCalcResultDap.text = "💵 मजदूरी दर: ₹${String.format(Locale.ENGLISH, "%.0f", res.wageRate)} / मजदूर / दिन"
-                binding.tvCalcResultZinc.text = "💰 कुल मजदूरी खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalLabourCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)"
-                binding.tvCalcResultNote.text = "💡 फसल चक्र के दौरान मजदूरी का अनुमानित खर्च।"
+                displayCalculatorResults(
+                    "कार्य का प्रकार: ${res.workType}",
+                    "कुल मजदूर: ${res.numWorkers} मजदूर (${String.format(Locale.ENGLISH, "%.1f", res.duration)} दिन/घंटे)",
+                    "मजदूरी दर: ₹${String.format(Locale.ENGLISH, "%.0f", res.wageRate)} / मजदूर / दिन",
+                    "कुल मजदूरी खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalLabourCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)",
+                    "फसल चक्र के दौरान मजदूरी का अनुमानित खर्च।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1860,11 +2010,13 @@ class HomeFragment : Fragment() {
                     hoursPerAcre = 1.0
                 )
 
-                binding.tvCalcResultSeed.text = "🌾 कटाई का तरीका: ${res.method}"
-                binding.tvCalcResultUrea.text = "📋 विवरण: ${res.detailsText}"
-                binding.tvCalcResultDap.text = "📐 कुल ज़मीन: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़"
-                binding.tvCalcResultZinc.text = "💰 कुल कटाई खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)"
-                binding.tvCalcResultNote.text = "💡 फसल कटाई और गहाई (थ्रेशिंग) का अनुमानित खर्च।"
+                displayCalculatorResults(
+                    "कटाई का तरीका: ${res.method}",
+                    "विवरण: ${res.detailsText}",
+                    "कुल ज़मीन: ${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़",
+                    "कुल कटाई खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (₹${String.format(Locale.ENGLISH, "%,.0f", res.costPerAcre)}/एकड़)",
+                    "फसल कटाई और गहाई (थ्रेशिंग) का अनुमानित खर्च।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1896,11 +2048,13 @@ class HomeFragment : Fragment() {
                     storageRatePerQPerMonth = if (qty > 0) storage / qty else 0.0
                 )
 
-                binding.tvCalcResultSeed.text = "📦 कुल उपज: ${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} क्विंटल"
-                binding.tvCalcResultUrea.text = "🚚 गाड़ी भाड़ा: ₹${String.format(Locale.ENGLISH, "%,.0f", res.transportCost)}"
-                binding.tvCalcResultDap.text = "🏗️ हमाली व लोडिंग: ₹${String.format(Locale.ENGLISH, "%,.0f", res.loadingCost)} | गोदाम/भंडारण: ₹${String.format(Locale.ENGLISH, "%,.0f", res.storageCost)}"
-                binding.tvCalcResultZinc.text = "💰 कुल कटाई-बाद व भाड़ा खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}"
-                binding.tvCalcResultNote.text = "💡 उपज ले जाने, लादने-उतारने और गोदाम में रखने का खर्च।"
+                displayCalculatorResults(
+                    "कुल उपज: ${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} क्विंटल",
+                    "गाड़ी भाड़ा: ₹${String.format(Locale.ENGLISH, "%,.0f", res.transportCost)}",
+                    "हमाली व लोडिंग: ₹${String.format(Locale.ENGLISH, "%,.0f", res.loadingCost)} | गोदाम/भंडारण: ₹${String.format(Locale.ENGLISH, "%,.0f", res.storageCost)}",
+                    "कुल कटाई-बाद व भाड़ा खर्च: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)}",
+                    "उपज ले जाने, लादने-उतारने और गोदाम में रखने का खर्च।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1931,11 +2085,13 @@ class HomeFragment : Fragment() {
                     otherDeduction = deductions
                 )
 
-                binding.tvCalcResultSeed.text = "🏪 फसल बिक्री: ${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} क्विंटल @ ₹${String.format(Locale.ENGLISH, "%,.0f", res.mandiPricePerQ)}/क्विंटल)"
-                binding.tvCalcResultUrea.text = "💵 कुल बिक्री राशि (Gross Income): ₹${String.format(Locale.ENGLISH, "%,.0f", res.grossSale)}"
-                binding.tvCalcResultDap.text = "➖ कुल कटौती (भाड़ा + मंडी टैक्स): - ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalDeductions)}"
-                binding.tvCalcResultZinc.text = "💰 अनुमानित शुद्ध मंडी आय (Net Income): ₹${String.format(Locale.ENGLISH, "%,.0f", res.netSale)}"
-                binding.tvCalcResultNote.text = "💡 इस मंडी बिक्री आय को अपनी किसान डायरी में सेव करने के लिए नीचे बटन दबाएं!"
+                displayCalculatorResults(
+                    "फसल बिक्री: ${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.quantityQuintals)} क्विंटल @ ₹${String.format(Locale.ENGLISH, "%,.0f", res.mandiPricePerQ)}/क्विंटल)",
+                    "कुल बिक्री राशि (Gross Income): ₹${String.format(Locale.ENGLISH, "%,.0f", res.grossSale)}",
+                    "कुल कटौती (भाड़ा + मंडी टैक्स): - ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalDeductions)}",
+                    "अनुमानित शुद्ध मंडी आय (Net Income): ₹${String.format(Locale.ENGLISH, "%,.0f", res.netSale)}",
+                    "इस मंडी बिक्री आय को अपनी किसान डायरी में सेव करने के लिए नीचे बटन दबाएं!"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -1980,13 +2136,16 @@ class HomeFragment : Fragment() {
                     postHarvestCost = postHarvestCost
                 )
 
-                binding.tvCalcResultSeed.text = "🌾 ${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़) | कुल उत्पादन: ${String.format(Locale.ENGLISH, "%.1f", res.totalYieldQuintals)} क्विंटल"
-                binding.tvCalcResultUrea.text = "💵 अनुमानित कुल बिक्री (Gross Revenue): ₹${String.format(Locale.ENGLISH, "%,.0f", res.expectedRevenue)}"
-                binding.tvCalcResultDap.text = "📊 कुल उत्पादन लागत: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (लागत मूल्य: ₹${String.format(Locale.ENGLISH, "%,.0f", res.breakEvenPricePerQuintal)}/क्विंटल)"
                 binding.tvCalcResultDap.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
                 binding.tvCalcResultDap.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
-                binding.tvCalcResultZinc.text = "🚀 अनुमानित शुद्ध मुनाफा (NET PROFIT): ₹${String.format(Locale.ENGLISH, "%,.0f", res.netProfit)} (मुनाफा/एकड़: ₹${String.format(Locale.ENGLISH, "%,.0f", res.profitPerAcre)} | ROI: ${String.format(Locale.ENGLISH, "%.0f", res.roiPercent)}%)"
-                binding.tvCalcResultNote.text = "💡 पूरी फसल का लागत विवरण: बीज, जुताई, खाद, सिंचाई, स्प्रे, मजदूरी, कटाई और भाड़ा शामिल।"
+
+                displayCalculatorResults(
+                    "${res.cropName} (${String.format(Locale.ENGLISH, "%.1f", res.areaInAcres)} एकड़) | कुल उत्पादन: ${String.format(Locale.ENGLISH, "%.1f", res.totalYieldQuintals)} क्विंटल",
+                    "अनुमानित कुल बिक्री (Gross Revenue): ₹${String.format(Locale.ENGLISH, "%,.0f", res.expectedRevenue)}",
+                    "कुल उत्पादन लागत: ₹${String.format(Locale.ENGLISH, "%,.0f", res.totalCost)} (लागत मूल्य: ₹${String.format(Locale.ENGLISH, "%.0f", res.breakEvenPricePerQuintal)}/क्विंटल)",
+                    "अनुमानित शुद्ध मुनाफा (NET PROFIT): ₹${String.format(Locale.ENGLISH, "%,.0f", res.netProfit)} (मुनाफा/एकड़: ₹${String.format(Locale.ENGLISH, "%,.0f", res.profitPerAcre)} | ROI: ${String.format(Locale.ENGLISH, "%.0f", res.roiPercent)}%)",
+                    "पूरी फसल का लागत विवरण: बीज, जुताई, खाद, सिंचाई, स्प्रे, मजदूरी, कटाई और भाड़ा शामिल।"
+                )
 
                 lastCalculatedItem = KhataItem(
                     id = "calc_${System.currentTimeMillis()}",
@@ -2197,20 +2356,20 @@ class HomeFragment : Fragment() {
         } else {
             // Open synthesized rich-text article guide for this scheme
             val guideDesc = """
-                ### 📌 Overview & Scheme Details
+                ### Overview & Scheme Details
                 ${scheme.overview}
 
-                ### 🎁 Key Financial Benefits
+                ### Key Financial Benefits
                 • **Benefit Amount:** ${scheme.benefitAmount}
                 • **Coverage Area / State:** ${scheme.state}
 
-                ### 📋 Eligibility Criteria
+                ### Eligibility Criteria
                 ${scheme.eligibility}
 
-                ### 📄 Required Documents
+                ### Required Documents
                 ${scheme.requiredDocuments}
 
-                ### 📝 How to Apply
+                ### How to Apply
                 1. Visit the official government portal: [${scheme.title} Portal](${scheme.officialPortalUrl})
                 2. Register using your Aadhaar Card and Land Records (Khatauni).
                 3. Enter your active bank account details for Direct Benefit Transfer (DBT).

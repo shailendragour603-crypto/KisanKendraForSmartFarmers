@@ -71,7 +71,7 @@
                         android:background="@drawable/bg_input_pill"
                         android:gravity="center_vertical"
                         android:paddingHorizontal="14dp"
-                        android:text="Write Your post..."
+                        android:text="@string/forum_post_hint"
                         android:textColor="@color/farmer_green_title"
                         android:textSize="13.5sp"
                         android:textStyle="bold" />

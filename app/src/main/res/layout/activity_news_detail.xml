@@ -246,7 +246,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:text="📌 Related News"
+                        android:text="Related News"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -304,7 +304,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:text="🔥 Latest News"
+                        android:text="Latest News"
                         android:textColor="@color/farmer_green_dark"
                         android:textSize="18sp"
                         android:textStyle="bold" />

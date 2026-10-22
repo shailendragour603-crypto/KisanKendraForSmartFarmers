@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_compact_popup"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:padding="14dp">
 
     <!-- Header Title -->
     <LinearLayout
@@ -13,22 +13,22 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:layout_marginBottom="4dp">
+        android:layout_marginBottom="2dp">
 
         <TextView
             android:id="@+id/tvSeasonFilterTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Select Seasons (Max 4)"
+            android:text="Select Seasons"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/btnCloseSeasonDialog"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Close Dialog"
             android:src="@drawable/ic_close"
@@ -39,17 +39,19 @@
         android:id="@+id/tvSeasonFilterSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Select up to 4 seasons to filter your Kisan Diary"
+        android:layout_marginBottom="10dp"
+        android:text="Select seasons to filter your Kisan Diary"
         android:textColor="#A0A0A5"
-        android:textSize="12sp" />
+        android:textSize="11.5sp" />
 
-    <!-- Options Container -->
+    <!-- Options Scroll Container (Scrolls smoothly when many crop cycles are added) -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxHeight="320dp"
-        android:overScrollMode="never">
+        android:scrollbars="vertical"
+        android:scrollbarStyle="insideOverlay"
+        android:fadeScrollbars="false"
+        android:overScrollMode="ifContentScrolls">
 
         <LinearLayout
             android:id="@+id/containerSeasonChoices"
@@ -62,19 +64,20 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Clear All Button (Only visible when at least 1 season is selected) -->
+        <!-- Clear All Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearAllSeasons"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="38dp"
+            android:paddingHorizontal="8dp"
             android:text="Clear All"
             android:textColor="#FF6B6B"
-            android:textSize="13sp"
+            android:textSize="12.5sp"
             android:textStyle="bold"
             android:visibility="gone" />
 
@@ -88,24 +91,26 @@
             android:id="@+id/btnAddSeasonInDialog"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="38dp"
+            android:paddingHorizontal="8dp"
             android:text="+ Add Season"
             android:textColor="#81C784"
-            android:textSize="13sp"
+            android:textSize="12.5sp"
             android:textStyle="bold" />
 
         <!-- Apply Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApplySeasonFilter"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
             android:backgroundTint="@color/farmer_green_primary"
+            android:paddingHorizontal="16dp"
             android:text="Apply"
             android:textColor="#FFFFFF"
-            android:textSize="13.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="10dp" />
 
     </LinearLayout>
 

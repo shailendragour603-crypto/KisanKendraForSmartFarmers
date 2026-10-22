@@ -17,6 +17,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -477,49 +478,184 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
         )
     }
 
+    private var selectedDashboardCropCycleIds = mutableSetOf<String>()
+
     private fun updateSeasonFilterDropdown() {
-        val activeLang = LocaleHelper.getPersistedLanguage(this)
-        val defaultAllTime = if (activeLang == "hi") "सभी समय" else "All-Time"
+        if (selectedDashboardCropCycleIds.isEmpty() && localCropCycles.isNotEmpty()) {
+            val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
 
-        val rawFilterOptions = mutableListOf("All-Time")
-        val currentYearStr = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date())
+            val currentYearCycles = localCropCycles.filter { cycle ->
+                val cycleCal = java.util.Calendar.getInstance().apply { timeInMillis = cycle.timestamp }
+                val cycleYear = cycleCal.get(java.util.Calendar.YEAR)
+                cycleYear == currentYear ||
+                cycle.seasonName.contains(currentYear.toString()) ||
+                cycle.startDateStr.contains(currentYear.toString())
+            }.take(10)
 
-        for (cycle in localCropCycles) {
-            val option = cycle.seasonName.ifBlank { "Season" }
-            if (!rawFilterOptions.contains(option)) {
-                rawFilterOptions.add(option)
-            }
-        }
-
-        if ((selectedSeasonFilter == "All-Time" || selectedSeasonFilter == "सभी समय") && rawFilterOptions.size > 1) {
-            val currentYearSeason = rawFilterOptions.firstOrNull { it.contains(currentYearStr, ignoreCase = true) }
-            selectedSeasonFilter = currentYearSeason ?: rawFilterOptions[1]
-        } else if (selectedSeasonFilter !in rawFilterOptions && rawFilterOptions.isNotEmpty()) {
-            selectedSeasonFilter = rawFilterOptions[0]
-        }
-
-        val displayOptions = rawFilterOptions.map { opt ->
-            if (opt.equals("All-Time", ignoreCase = true) || opt.equals("सभी समय", ignoreCase = true)) {
-                defaultAllTime
+            if (currentYearCycles.isNotEmpty()) {
+                selectedDashboardCropCycleIds.addAll(currentYearCycles.map { it.id })
             } else {
-                TranslationHelper.getTranslatedSeasonName(opt, activeLang, this)
+                selectedDashboardCropCycleIds.add(localCropCycles.first().id)
             }
         }
 
-        val currentDisplaySelection = if (selectedSeasonFilter.equals("All-Time", ignoreCase = true) || selectedSeasonFilter.equals("सभी समय", ignoreCase = true)) {
-            defaultAllTime
+        updateDashboardCropSelectorText()
+
+        actvDashboardSeasonFilter.setOnClickListener {
+            showMultiSelectDashboardSeasonDialog()
+        }
+        actvDashboardSeasonFilter.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                showMultiSelectDashboardSeasonDialog()
+            }
+        }
+    }
+
+    private fun updateDashboardCropSelectorText() {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+
+        if (selectedDashboardCropCycleIds.isEmpty()) {
+            val placeholder = if (activeLang == "hi") "सभी सीजन" else "All Seasons"
+            actvDashboardSeasonFilter.setText(placeholder, false)
+        } else if (selectedDashboardCropCycleIds.size == 1) {
+            val cycle = localCropCycles.firstOrNull { it.id == selectedDashboardCropCycleIds.first() }
+            if (cycle != null) {
+                val cropTrans = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, this)
+                val seasonTrans = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, this)
+                actvDashboardSeasonFilter.setText("$cropTrans ($seasonTrans)", false)
+            } else {
+                val text = if (activeLang == "hi") "1 सीजन चुना गया" else "1 Season Selected"
+                actvDashboardSeasonFilter.setText(text, false)
+            }
+        } else if (selectedDashboardCropCycleIds.size == localCropCycles.size && localCropCycles.isNotEmpty()) {
+            val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+            val label = if (activeLang == "hi") "सभी सीजन ($currentYear)" else "All Seasons ($currentYear)"
+            actvDashboardSeasonFilter.setText(label, false)
         } else {
-            TranslationHelper.getTranslatedSeasonName(selectedSeasonFilter, activeLang, this)
+            val count = selectedDashboardCropCycleIds.size
+            val text = if (activeLang == "hi") "$count सीजन चुने गए" else "$count Seasons Selected"
+            actvDashboardSeasonFilter.setText(text, false)
+        }
+    }
+
+    private fun showMultiSelectDashboardSeasonDialog() {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+
+        if (localCropCycles.isEmpty()) {
+            return
         }
 
-        val adapter = ArrayAdapter(this, R.layout.item_compact_dropdown_single, displayOptions)
-        actvDashboardSeasonFilter.setAdapter(adapter)
-        actvDashboardSeasonFilter.setText(currentDisplaySelection, false)
+        val checkedItems = BooleanArray(localCropCycles.size) { index ->
+            selectedDashboardCropCycleIds.contains(localCropCycles[index].id)
+        }
 
-        actvDashboardSeasonFilter.setOnItemClickListener { _, _, position, _ ->
-            selectedSeasonFilter = rawFilterOptions.getOrElse(position) { "All-Time" }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_season_filter_multiselect, null)
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvSeasonFilterTitle)
+        val tvSubtitle = dialogView.findViewById<TextView>(R.id.tvSeasonFilterSubtitle)
+        val btnClose = dialogView.findViewById<android.widget.ImageButton>(R.id.btnCloseSeasonDialog)
+        val containerChoices = dialogView.findViewById<LinearLayout>(R.id.containerSeasonChoices)
+        val btnClearAll = dialogView.findViewById<MaterialButton>(R.id.btnClearAllSeasons)
+        val btnAddSeason = dialogView.findViewById<MaterialButton>(R.id.btnAddSeasonInDialog)
+        val btnApply = dialogView.findViewById<MaterialButton>(R.id.btnApplySeasonFilter)
+
+        btnAddSeason.visibility = View.GONE
+
+        val transTitle = TranslationHelper.getDirectTranslation("Select Seasons", activeLang) ?: if (activeLang == "hi") "सीजन चुनें" else "Select Seasons"
+        val transSubtitle = TranslationHelper.getDirectTranslation("Select seasons for your report", activeLang) ?: if (activeLang == "hi") "अपनी रिपोर्ट के लिए सीजन चुनें" else "Select seasons for your report"
+        val transBtnApply = TranslationHelper.getDirectTranslation("Apply", activeLang) ?: if (activeLang == "hi") "लागू करें" else "Apply"
+        val transBtnClear = TranslationHelper.getDirectTranslation("Clear All", activeLang) ?: if (activeLang == "hi") "सभी साफ़ करें" else "Clear All"
+        val maxLimitMsg = if (activeLang == "hi") "आप अधिकतम 10 सीजन चुन सकते हैं" else "You can select up to 10 seasons"
+
+        tvTitle.text = transTitle
+        tvSubtitle.text = transSubtitle
+        btnApply.text = transBtnApply
+        btnClearAll.text = transBtnClear
+
+        fun updateClearAllVisibility() {
+            val checkedCount = checkedItems.count { it }
+            btnClearAll.visibility = if (checkedCount > 0) View.VISIBLE else View.GONE
+        }
+
+        updateClearAllVisibility()
+
+        fun updateRowVisualState(card: MaterialCardView, cbCheck: com.google.android.material.checkbox.MaterialCheckBox, isChecked: Boolean) {
+            cbCheck.isChecked = isChecked
+            if (isChecked) {
+                card.setCardBackgroundColor(Color.parseColor("#153A21"))
+                card.strokeColor = Color.parseColor("#2E7D32")
+            } else {
+                card.setCardBackgroundColor(Color.parseColor("#1E293B"))
+                card.strokeColor = Color.parseColor("#334155")
+            }
+        }
+
+        val rowEntries = mutableListOf<Pair<MaterialCardView, com.google.android.material.checkbox.MaterialCheckBox>>()
+
+        containerChoices.removeAllViews()
+        for (index in localCropCycles.indices) {
+            val cycle = localCropCycles[index]
+            val rowView = LayoutInflater.from(this).inflate(R.layout.item_season_filter_choice, containerChoices, false)
+            val card = rowView.findViewById<MaterialCardView>(R.id.cardSeasonChoice)
+            val tvLabel = rowView.findViewById<TextView>(R.id.tvSeasonLabel)
+            val cbCheck = rowView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSeasonCheck)
+
+            val cropTrans = TranslationHelper.getTranslatedCropName(cycle.cropName, activeLang, this)
+            val seasonTrans = TranslationHelper.getTranslatedSeasonName(cycle.seasonName, activeLang, this)
+            tvLabel.text = "$cropTrans ($seasonTrans)"
+
+            updateRowVisualState(card, cbCheck, checkedItems[index])
+
+            card.setOnClickListener {
+                val isCurrentlyChecked = checkedItems[index]
+                if (!isCurrentlyChecked) {
+                    val count = checkedItems.count { it }
+                    if (count >= 10) {
+                        Toast.makeText(this, maxLimitMsg, Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    checkedItems[index] = true
+                } else {
+                    checkedItems[index] = false
+                }
+                updateRowVisualState(card, cbCheck, checkedItems[index])
+                updateClearAllVisibility()
+            }
+
+            rowEntries.add(Pair(card, cbCheck))
+            containerChoices.addView(rowView)
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+
+        btnClearAll.setOnClickListener {
+            for (i in checkedItems.indices) {
+                checkedItems[i] = false
+            }
+            rowEntries.forEachIndexed { _, (card, cb) ->
+                updateRowVisualState(card, cb, false)
+            }
+            updateClearAllVisibility()
+        }
+
+        btnApply.setOnClickListener {
+            selectedDashboardCropCycleIds.clear()
+            for (i in localCropCycles.indices) {
+                if (checkedItems[i]) {
+                    selectedDashboardCropCycleIds.add(localCropCycles[i].id)
+                }
+            }
+            updateDashboardCropSelectorText()
             calculateAndRenderDashboard()
+            dialog.dismiss()
         }
+
+        dialog.show()
     }
 
     private fun loadBannerAds() {
@@ -634,17 +770,17 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
             layoutEmpty?.visibility = View.GONE
         }
 
-        val filteredCycles = if (selectedSeasonFilter == "All-Time") {
-            localCropCycles
+        val filteredCycles = if (selectedDashboardCropCycleIds.isEmpty()) {
+            localCropCycles.take(10)
         } else {
-            localCropCycles.filter { it.seasonName.equals(selectedSeasonFilter, ignoreCase = true) }
+            localCropCycles.filter { selectedDashboardCropCycleIds.contains(it.id) }.take(10)
         }
 
         val filteredCycleIds = filteredCycles.map { it.id }.toSet()
-        val filteredKhataItems = if (selectedSeasonFilter == "All-Time") {
+        val filteredKhataItems = if (selectedDashboardCropCycleIds.isEmpty()) {
             localKhataItems
         } else {
-            localKhataItems.filter { it.cropCycleId in filteredCycleIds || it.cropName.contains(selectedSeasonFilter.substringBefore(" "), ignoreCase = true) }
+            localKhataItems.filter { it.cropCycleId in filteredCycleIds || (it.cropCycleId.isBlank() && filteredCycles.any { cycle -> it.cropName.contains(cycle.cropName, ignoreCase = true) }) }
         }
 
         val inrLocale = Locale.Builder().setLanguage("en").setRegion("IN").build()
@@ -942,9 +1078,9 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
                 val formatter = NumberFormat.getCurrencyInstance(inrLocale).apply { maximumFractionDigits = 0 }
 
                 // Data Aggregations
-                val filteredCycles = if (selectedSeasonFilter == "All-Time") localCropCycles else localCropCycles.filter { it.seasonName.equals(selectedSeasonFilter, ignoreCase = true) }
+                val filteredCycles = if (selectedDashboardCropCycleIds.isEmpty()) localCropCycles.take(10) else localCropCycles.filter { selectedDashboardCropCycleIds.contains(it.id) }.take(10)
                 val filteredCycleIds = filteredCycles.map { it.id }.toSet()
-                val filteredKhataItems = if (selectedSeasonFilter == "All-Time") localKhataItems else localKhataItems.filter { it.cropCycleId in filteredCycleIds || it.cropName.contains(selectedSeasonFilter.substringBefore(" "), ignoreCase = true) }
+                val filteredKhataItems = if (selectedDashboardCropCycleIds.isEmpty()) localKhataItems else localKhataItems.filter { it.cropCycleId in filteredCycleIds || (it.cropCycleId.isBlank() && filteredCycles.any { cycle -> it.cropName.contains(cycle.cropName, ignoreCase = true) }) }
 
                 val totalAreaAcres = filteredCycles.sumOf { it.areaAcres }
                 val expenseEntries = filteredKhataItems.filter { !it.isIncome }

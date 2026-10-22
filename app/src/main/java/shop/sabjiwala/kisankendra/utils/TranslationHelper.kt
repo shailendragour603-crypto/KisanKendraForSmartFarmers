@@ -19,25 +19,82 @@ object TranslationHelper {
 
     private val translationCache = ConcurrentHashMap<String, String>()
     private val masterDictCache = ConcurrentHashMap<String, ConcurrentHashMap<String, String>>()
+    private var appContext: Context? = null
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+        val currentLang = LocaleHelper.getPersistedLanguage(appContext!!)
+        getOrLoadLangCache(appContext, currentLang)
+        getOrLoadLangCache(appContext, "hi")
+        getOrLoadLangCache(appContext, "en")
+    }
+
+    fun extractMapEntries(map: Map<*, *>, targetMap: MutableMap<String, String>, prefix: String = "") {
+        for ((k, v) in map) {
+            if (k == null || v == null) continue
+            val keyStr = if (prefix.isEmpty()) k.toString() else "$prefix.$k"
+            if (v is Map<*, *>) {
+                extractMapEntries(v, targetMap, keyStr)
+            } else {
+                targetMap[keyStr] = v.toString()
+            }
+        }
+    }
+
+    fun getOrLoadLangCache(context: Context? = null, langCode: String): ConcurrentHashMap<String, String> {
+        if (context != null && appContext == null) {
+            appContext = context.applicationContext
+        }
+        val langCache = masterDictCache.getOrPut(langCode) { ConcurrentHashMap() }
+        if (langCache.isEmpty()) {
+            val ctx = context?.applicationContext ?: appContext
+            if (ctx != null) {
+                try {
+                    val prefs = ctx.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
+                    val cachedJson = prefs.getString("dict_$langCode", null)
+                    if (!cachedJson.isNullOrBlank()) {
+                        val type = object : TypeToken<Map<String, String>>() {}.type
+                        val map: Map<String, String>? = Gson().fromJson(cachedJson, type)
+                        if (!map.isNullOrEmpty()) {
+                            for ((k, v) in map) {
+                                if (!v.contains("महिलाओं", ignoreCase = true) && !v.contains("उंगलियां", ignoreCase = true)) {
+                                    val lKey = k.lowercase().trim()
+                                    langCache[lKey] = v
+                                    langCache[k] = v
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        return langCache
+    }
 
     val DEFAULT_HINDI_CROPS_LIST = listOf(
         "✍️ कोई अन्य फसल लिखें...",
         "--- 🌾 फसलें व अनाज ---",
-        "गेहूँ", "धान / चावल", "सोयाबीन", "कपास", "सरसों", "चना", "मक्का", "गन्ना", "बाजरा", "ज्वार", "जौ", "अरहर / तुअर", "मूंग", "उड़द", "मूंगफली", "तिल", "सूरजमुखी",
+        "गेहूँ", "धान / चावल", "सोयाबीन", "कपास", "सरसों", "चना", "मक्का", "गन्ना", "बाजरा", "ज्वार", "जौ", "अरहर / तुअर", "मूंग", "उड़द", "मूंगफली", "तिल", "सूरजमुखी", "कुसुम", "अरंडी", "अलसी", "रामतिल", "ग्वार", "मसूर", "मटर", "राजमा", "लोबिया", "मोठ", "रागी", "कांगनी", "कोदो", "कुटकी", "सांवा", "कुट्टू", "राजगिरा", "तंबाकू", "जूट",
         "--- 🥬 सब्जियाँ ---",
-        "प्याज़", "आलू", "लहसुन", "टमाटर", "हरी मिर्च", "बैंगन", "भिंडी", "फूलगोभी", "पत्तागोभी", "हरी मटर", "गाजर", "मूली", "पालक", "करेला", "लौकी", "तोरई", "कद्दू", "खीरा", "शिमला मिर्च", "धनिया", "अदरक", "हल्दी", "शकरकंद", "चुकंदर", "अरबी",
+        "प्याज़", "आलू", "लहसुन", "टमाटर", "हरी मिर्च", "बैंगन", "भिंडी", "फूलगोभी", "पत्तागोभी", "हरी मटर", "गाजर", "मूली", "पालक", "करेला", "लौकी", "तोरई", "गिलकी", "चिचिंडा", "कद्दू", "खीरा", "शिमला मिर्च", "धनिया", "अदरक", "हल्दी", "शकरकंद", "चुकंदर", "अरबी", "जिमीकंद / सूरन", "सहजन / मुनगा", "मेथी साग", "सरसों साग", "चौलाई", "बथुआ", "ग्वार फली", "फ्रेंच बीन्स", "बरबटी", "परवल", "कुंदरू", "कच्चा केला", "कच्चा पपीता", "मशरूम", "बेबी कॉर्न", "ब्रोकली", "ज़ुकीनी",
         "--- 🍎 फल ---",
-        "आम", "केला", "सेब", "पपीता", "अमरूद", "अनार", "तरबूज", "खरबूजा", "संतरा", "नींबू", "अंगूर", "ड्रैगन फ्रूट", "स्ट्रॉबेरी", "कटहल", "लीची", "चीकू"
+        "आम", "केला", "सेब", "पपीता", "अमरूद", "अनार", "तरबूज", "खरबूजा", "संतरा", "मौसंबी", "नींबू", "अंगूर", "ड्रैगन फ्रूट", "स्ट्रॉबेरी", "कटहल", "लीची", "चीकू", "अनानास", "सीताफल", "अंजीर", "खजूर", "आलू बुखारा", "आड़ू", "नाशपाती", "चेरी", "कीवी", "एवोकाडो", "आँवला", "बेल", "इमली", "जामुन", "सिंघाड़ा", "शहतूत", "बेर", "करौंदा",
+        "--- 🌶️ मसाले व नगदी फसलें ---",
+        "जीरा", "सौंफ", "मेथी दाना", "धनिया साबुत", "अजवायन", "काली मिर्च", "इलायची", "दालचीनी", "लौंग", "लाल मिर्च", "सोंठ", "हींग", "जायफल", "जावित्री", "तेजपत्ता", "राई", "कलौंजी", "खसखस", "सुपारी", "पान का पत्ता", "केसर", "काजू", "बादाम", "अखरोट", "पिस्ता", "नारियल", "रबर", "चाय पत्ती", "कॉफी",
+        "--- 🌸 फूल व अन्य ---",
+        "गेंदा", "गुलाब", "चमेली / मोगरा", "रजनीगंधा", "ग्लेडियोलस", "जरबेरा", "कार्नेशन", "कमल", "ऑर्किड", "सेवंती", "हरा चारा", "भूसा / कड़बी", "शहद", "गुड़"
     )
 
     private var cachedLocalizedDict: Map<String, Map<String, String>>? = null
 
     fun getLocalizedDictionary(context: Context?): Map<String, Map<String, String>> {
         if (cachedLocalizedDict != null) return cachedLocalizedDict!!
-        if (context == null) return emptyMap()
+        val ctx = context?.applicationContext ?: appContext ?: return emptyMap()
 
         return try {
-            val jsonStr = context.assets.open("local_translation_dictionary.json").bufferedReader().use { it.readText() }
+            val jsonStr = ctx.assets.open("local_translation_dictionary.json").bufferedReader().use { it.readText() }
             val type = object : TypeToken<Map<String, Map<String, String>>>() {}.type
             val map: Map<String, Map<String, String>>? = Gson().fromJson(jsonStr, type)
             if (map != null) {
@@ -52,23 +109,10 @@ object TranslationHelper {
 
     suspend fun syncMasterDictionaryFromFirestore(context: Context, langCode: String = "hi") = withContext(Dispatchers.IO) {
         try {
-            val langCache = masterDictCache.getOrPut(langCode) { ConcurrentHashMap() }
-            val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
-            val cachedJson = prefs.getString("dict_$langCode", null)
-
-            if (!cachedJson.isNullOrBlank()) {
-                val type = object : TypeToken<Map<String, String>>() {}.type
-                val map: Map<String, String>? = Gson().fromJson(cachedJson, type)
-                if (!map.isNullOrEmpty()) {
-                    for ((k, v) in map) {
-                        if (!v.contains("महिलाओं", ignoreCase = true) && !v.contains("उंगलियां", ignoreCase = true)) {
-                            val lKey = k.lowercase().trim()
-                            langCache[lKey] = v
-                            langCache[k] = v
-                        }
-                    }
-                }
+            if (appContext == null) {
+                appContext = context.applicationContext
             }
+            val langCache = getOrLoadLangCache(context, langCode)
 
             val doc = FirebaseFirestore.getInstance()
                 .collection("app_translations")
@@ -77,50 +121,33 @@ object TranslationHelper {
                 .await()
 
             if (doc.exists()) {
-                val remoteMap = (doc.get("dictionary") as? Map<String, String>)?.toMutableMap() ?: mutableMapOf()
+                val remoteMap = mutableMapOf<String, String>()
+
+                // Extract entries defensively from "dictionary" map (handles sub-maps or non-string values)
+                val rawDict = doc.get("dictionary") as? Map<*, *>
+                if (rawDict != null) {
+                    extractMapEntries(rawDict, remoteMap)
+                }
 
                 // Recover any top-level "dictionary.xyz" fields from legacy buggy saves
                 val docData = doc.data
                 var legacyRootFieldsFound = false
                 if (docData != null) {
                     for ((fKey, fVal) in docData) {
-                        if (fKey.startsWith("dictionary.") && fVal is String) {
+                        if (fKey.startsWith("dictionary.") && fVal != null) {
                             val cleanKey = fKey.removePrefix("dictionary.")
                             if (cleanKey.isNotBlank()) {
-                                remoteMap[cleanKey] = fVal
+                                remoteMap[cleanKey] = fVal.toString()
                                 legacyRootFieldsFound = true
                             }
                         }
                     }
                 }
 
-                val keysToCheck = listOf(
-                    "ladies finger", "lady finger", "ladies-finger", "lady-finger",
-                    "ladies_finger", "lady_finger", "lady's finger", "ladies' finger",
-                    "lady's fingers", "ladies' fingers", "bhindi", "okra"
-                )
-
-                var needsUpdate = false
-
                 val badKeys = remoteMap.filter { it.value.contains("महिलाओं", ignoreCase = true) || it.value.contains("उंगलियां", ignoreCase = true) }.keys
+                val needsUpdate = badKeys.isNotEmpty()
                 for (bk in badKeys) {
                     remoteMap.remove(bk)
-                    needsUpdate = true
-                }
-
-                for (k in keysToCheck) {
-                    if (remoteMap.containsKey(k)) {
-                        val currentVal = remoteMap[k].orEmpty()
-                        if (currentVal.contains("महिलाओं", ignoreCase = true) || currentVal.contains("उंगलियां", ignoreCase = true)) {
-                            val correctVal = if (langCode == "hi") "भिंडी" else "Ladies Finger"
-                            remoteMap[k] = correctVal
-                            needsUpdate = true
-                        }
-                    } else {
-                        val correctVal = if (langCode == "hi") "भिंडी" else "Ladies Finger"
-                        remoteMap[k] = correctVal
-                        needsUpdate = true
-                    }
                 }
 
                 if (needsUpdate || legacyRootFieldsFound) {
@@ -156,6 +183,7 @@ object TranslationHelper {
                         langCache[lKey] = v
                         langCache[k] = v
                     }
+                    val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
                     val json = Gson().toJson(remoteMap)
                     prefs.edit().putString("dict_$langCode", json).apply()
                 }
@@ -187,6 +215,7 @@ object TranslationHelper {
 
     fun updateMasterCacheAndPrefs(context: Context, key: String, value: String, langCode: String = "hi") {
         if (key.isBlank() || value.isBlank()) return
+        if (appContext == null) appContext = context.applicationContext
         updateMasterCache(key, value, langCode)
         try {
             val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
@@ -207,6 +236,7 @@ object TranslationHelper {
 
     fun removeMasterCacheAndPrefs(context: Context, key: String, langCode: String = "hi") {
         if (key.isBlank()) return
+        if (appContext == null) appContext = context.applicationContext
         removeFromMasterCache(key, langCode)
         try {
             val prefs = context.getSharedPreferences("master_dict_prefs", Context.MODE_PRIVATE)
@@ -231,8 +261,8 @@ object TranslationHelper {
         val cleanKey = cleanText.lowercase()
 
         // 1. Check Language-Specific Master Remote Dictionary Cache from Firebase
-        val langCache = masterDictCache[targetLangCode]
-        if (langCache != null) {
+        val langCache = getOrLoadLangCache(context, targetLangCode)
+        if (langCache.isNotEmpty()) {
             langCache[cleanKey]?.let { return it }
             langCache[cleanText]?.let { return it }
             if (cleanKey.contains("ladies")) {
@@ -244,8 +274,9 @@ object TranslationHelper {
         }
 
         // 2. Check Localized Asset Dictionary
-        if (context != null) {
-            val dict = getLocalizedDictionary(context)
+        val ctx = context?.applicationContext ?: appContext
+        if (ctx != null) {
+            val dict = getLocalizedDictionary(ctx)
             val langDict = dict[targetLangCode]
             if (langDict != null) {
                 langDict[cleanText]?.let { return it }

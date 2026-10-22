@@ -11,7 +11,7 @@
     <string name="nav_forum">फोरम</string>
 
     <!-- News Categories -->
-    <string name="cat_all">📰 सभी न्यूज़</string>
+    <string name="cat_all">📰 सभी</string>
     <string name="cat_yojana">🏛 सरकारी योजनाएं</string>
     <string name="cat_gyan">💡 कृषि ज्ञान</string>
     <string name="cat_mandi">🌾 बाजार अपडेट</string>
@@ -56,6 +56,9 @@
     <string name="feedback_submit">फीडबैक भेजें</string>
     <string name="feedback_login_required">फीडबैक भेजने के लिए कृपया साइन इन करें।</string>
     <string name="feedback_success">धन्यवाद! आपका फीडबैक भेज दिया गया है। 🙏</string>
+
+    <!-- Forum Strings -->
+    <string name="forum_post_hint">कृपया यहाँ लिखें...</string>
 
     <!-- Native Info Titles -->
     <string name="about_title">हमारे बारे में</string>

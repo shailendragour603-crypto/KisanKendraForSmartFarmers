@@ -13,7 +13,7 @@
     <string name="nav_forum">Forum</string>
 
     <!-- News Categories -->
-    <string name="cat_all">📰 All News</string>
+    <string name="cat_all">📰 All</string>
     <string name="cat_yojana">🏛 Government Schemes</string>
     <string name="cat_gyan">💡 Agri Knowledge</string>
     <string name="cat_mandi">🌾 Market Updates</string>
@@ -60,6 +60,9 @@
     <string name="feedback_submit" translatable="false">Submit Feedback</string>
     <string name="feedback_login_required" translatable="false">Please sign in to submit feedback.</string>
     <string name="feedback_success" translatable="false">Thank you! Your feedback has been sent. 🙏</string>
+
+    <!-- Forum Strings -->
+    <string name="forum_post_hint">कृपया यहाँ लिखें...</string>
 
     <!-- Native Info Titles -->
     <string name="about_title">About Us</string>

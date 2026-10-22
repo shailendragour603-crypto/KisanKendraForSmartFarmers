@@ -131,15 +131,22 @@ class MandiFragment : Fragment() {
         val savedM = prefs.getString("session_market", null)
         val manualS = prefs.getBoolean("session_manual_state", false)
 
-        if (!savedS.isNullOrBlank()) {
-            selectedStateName = savedS
-            isUserStateManuallySelected = manualS
-        }
-        if (!savedD.isNullOrBlank()) {
-            selectedDistrictName = savedD
-        }
-        if (!savedM.isNullOrBlank()) {
-            selectedMarketName = savedM
+        val userLocationState = LocationHelper.getSavedState(ctx)
+        val userLocationDistrict = LocationHelper.getSavedDistrict(ctx)
+
+        if (manualS) {
+            isUserStateManuallySelected = true
+            if (!savedS.isNullOrBlank()) selectedStateName = savedS
+            if (!savedD.isNullOrBlank()) selectedDistrictName = savedD
+            if (!savedM.isNullOrBlank()) selectedMarketName = savedM
+        } else {
+            isUserStateManuallySelected = false
+            if (!userLocationState.isNullOrBlank()) {
+                selectedStateName = userLocationState
+            }
+            if (!userLocationDistrict.isNullOrBlank()) {
+                selectedDistrictName = userLocationDistrict
+            }
         }
     }
 
@@ -232,10 +239,11 @@ class MandiFragment : Fragment() {
         binding.swipeRefreshMandi.setOnRefreshListener {
             MandiRepository.clearCache()
             val ctx = context
-            if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
-                viewModel.loadMandiRatesByState(selectedStateName, ctx, forceRefresh = true)
+            val prefState = if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
+            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "⭐ Saved") {
+                viewModel.loadMandiRatesByState(prefState, ctx, forceRefresh = true)
             } else {
-                viewModel.loadMandiRates(forceRefresh = true, context = ctx)
+                viewModel.loadMandiRates(preferredStateName = prefState, forceRefresh = true, context = ctx)
             }
         }
 
@@ -243,10 +251,11 @@ class MandiFragment : Fragment() {
             binding.swipeRefreshMandi.isRefreshing = true
             MandiRepository.clearCache()
             val ctx = context
-            if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
-                viewModel.loadMandiRatesByState(selectedStateName, ctx, forceRefresh = true)
+            val prefState = if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
+            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "⭐ Saved") {
+                viewModel.loadMandiRatesByState(prefState, ctx, forceRefresh = true)
             } else {
-                viewModel.loadMandiRates(forceRefresh = true, context = ctx)
+                viewModel.loadMandiRates(preferredStateName = prefState, forceRefresh = true, context = ctx)
             }
             Toast.makeText(requireContext(), "Refreshing Mandi Rates...", Toast.LENGTH_SHORT).show()
         }
@@ -298,33 +307,27 @@ class MandiFragment : Fragment() {
 
             restoreMandiSessionState()
 
-            // Apply saved location filter ONLY on initial load if no state selected
             val ctx = context
-            if (ctx != null && !isUserStateManuallySelected && (selectedStateName == "All States" || selectedStateName == "⭐ Saved" || selectedStateName.isBlank())) {
+            if (ctx != null && !isUserStateManuallySelected) {
                 val savedState = LocationHelper.getSavedState(ctx)
                 val savedDistrict = LocationHelper.getSavedDistrict(ctx)
                 if (!savedState.isNullOrBlank()) {
                     selectedStateName = savedState
-                    if (!savedDistrict.isNullOrBlank()) {
-                        selectedDistrictName = savedDistrict
-                    }
-                    if (records.size < 50) {
-                        viewModel.loadMandiRatesByState(savedState, ctx)
-                        return@observe
-                    }
+                }
+                if (!savedDistrict.isNullOrBlank()) {
+                    selectedDistrictName = savedDistrict
                 }
             }
 
-            // Only build state chips once on initial load
             if (binding.chipGroupStates.childCount == 0) {
                 setupStateChips()
+            } else {
+                setupDistrictSpinner()
             }
 
-            setupDistrictSpinner()
             filterData()
             updateBackPressState()
 
-            // Non-blocking location update in background
             requestLocationPermissionAndFetch()
         }
 
@@ -363,9 +366,23 @@ class MandiFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        if (viewModel.mandiData.value.isNullOrEmpty()) {
-            val ctx = context
-            val savedState = if (ctx != null) LocationHelper.getSavedState(ctx) else null
+        val ctx = context
+        val savedState = if (ctx != null) LocationHelper.getSavedState(ctx) else null
+        val savedDistrict = if (ctx != null) LocationHelper.getSavedDistrict(ctx) else null
+
+        if (!isUserStateManuallySelected) {
+            if (!savedState.isNullOrBlank() && (selectedStateName == "⭐ Saved" || selectedStateName == "All States" || selectedStateName.isBlank())) {
+                selectedStateName = savedState
+            }
+            if (!savedDistrict.isNullOrBlank() && (selectedDistrictName == "All Districts" || selectedDistrictName.isBlank())) {
+                selectedDistrictName = savedDistrict
+            }
+        }
+
+        val targetStateToLoad = if (selectedStateName != "⭐ Saved" && selectedStateName != "All States") selectedStateName else savedState
+        if (!targetStateToLoad.isNullOrBlank()) {
+            viewModel.loadMandiRatesByState(targetStateToLoad, ctx)
+        } else {
             viewModel.loadMandiRates(preferredStateName = savedState, context = ctx)
         }
 
@@ -383,19 +400,26 @@ class MandiFragment : Fragment() {
             LocationHelper.getUserLocationDetails(safeCtx) { district, state, _ ->
                 if (!isAdded || _binding == null) return@getUserLocationDetails
 
-                // Do NOT override if the user has manually selected a state chip!
-                if (!isUserStateManuallySelected && (selectedStateName == "All States" || selectedStateName == "⭐ Saved" || selectedStateName.isBlank())) {
-                    if (!state.isNullOrBlank()) {
+                if (!isUserStateManuallySelected) {
+                    var locationUpdated = false
+                    if (!state.isNullOrBlank() && selectedStateName != state) {
                         selectedStateName = state
+                        locationUpdated = true
                     }
-                    if (!district.isNullOrBlank()) {
+                    if (!district.isNullOrBlank() && selectedDistrictName != district) {
                         selectedDistrictName = district
+                        locationUpdated = true
                     }
-                    if (binding.chipGroupStates.childCount == 0) {
-                        setupStateChips()
+                    if (locationUpdated) {
+                        LocationHelper.saveUserLocation(safeCtx, selectedStateName, selectedDistrictName)
+                        if (binding.chipGroupStates.childCount == 0) {
+                            setupStateChips()
+                        } else {
+                            setupDistrictSpinner()
+                        }
+                        filterData()
+                        updateBackPressState()
                     }
-                    filterData()
-                    updateBackPressState()
                 }
             }
         } else {
@@ -507,7 +531,10 @@ class MandiFragment : Fragment() {
                 if (isChecked) {
                     isUserStateManuallySelected = true
                     selectedStateName = stateName
-                    selectedDistrictName = "All Districts"
+                    val ctx = context
+                    val savedD = if (ctx != null) LocationHelper.getSavedDistrict(ctx) else null
+                    val savedS = if (ctx != null) LocationHelper.getSavedState(ctx) else null
+                    selectedDistrictName = if (!savedD.isNullOrBlank() && (stateName.equals(savedS, ignoreCase = true) || stateName == "⭐ Saved" || stateName == "All States")) savedD else "All Districts"
                     selectedMarketName = "All Markets"
                     if (stateName != "All States" && stateName != "⭐ Saved") {
                         viewModel.loadMandiRatesByState(stateName)
@@ -544,15 +571,43 @@ class MandiFragment : Fragment() {
         val adapterDistricts = ArrayAdapter(requireContext(), R.layout.item_compact_dropdown_single, displayDistricts)
         binding.spinnerState.setAdapter(adapterDistricts)
 
-        val currentTransSelected = TranslationHelper.getTranslatedMarketName(selectedDistrictName, activeLang)
-        val matchedDistrict = displayDistricts.find {
-            it.equals(currentTransSelected, ignoreCase = true) || it.equals(selectedDistrictName, ignoreCase = true)
+        val userSavedDistrict = LocationHelper.getSavedDistrict(ctx)
+        val targetDistrict = if (!isUserStateManuallySelected && !userSavedDistrict.isNullOrBlank()) {
+            userSavedDistrict
+        } else if (selectedDistrictName != "All Districts" && selectedDistrictName.isNotBlank()) {
+            selectedDistrictName
+        } else if (!userSavedDistrict.isNullOrBlank()) {
+            userSavedDistrict
+        } else {
+            "All Districts"
         }
-        val initialDistrict = matchedDistrict ?: defaultDistText
-        binding.spinnerState.setText(initialDistrict, false)
+
+        val cleanSelDist = LocationHelper.cleanDistrictName(targetDistrict).orEmpty().lowercase()
+        val matchedIndex = rawDistricts.indexOfFirst { raw ->
+            val cleanRaw = LocationHelper.cleanDistrictName(raw).orEmpty().lowercase()
+            cleanRaw.isNotBlank() && cleanSelDist.isNotBlank() &&
+            (raw.equals(targetDistrict, ignoreCase = true) || cleanRaw == cleanSelDist || cleanRaw.contains(cleanSelDist) || cleanSelDist.contains(cleanRaw))
+        }
+
+        val initialDistrictText: String
+        if (matchedIndex != -1) {
+            selectedDistrictName = rawDistricts[matchedIndex]
+            initialDistrictText = displayDistricts.getOrNull(matchedIndex + 1) ?: selectedDistrictName
+        } else {
+            if (targetDistrict == "All Districts" || selectedDistrictName == "All Districts") {
+                selectedDistrictName = "All Districts"
+                initialDistrictText = defaultDistText
+            } else {
+                selectedDistrictName = targetDistrict
+                initialDistrictText = TranslationHelper.getTranslatedMarketName(targetDistrict, activeLang)
+            }
+        }
+
+        binding.spinnerState.setText(initialDistrictText, false)
 
         binding.spinnerState.setOnItemClickListener { parent, _, position, _ ->
             val chosenDistrict = parent.getItemAtPosition(position).toString()
+            isUserStateManuallySelected = true
             selectedDistrictName = if (position == 0) "All Districts" else rawDistricts.getOrNull(position - 1) ?: chosenDistrict
             selectedMarketName = "All Markets"
             setupMarketChips()
@@ -591,11 +646,19 @@ class MandiFragment : Fragment() {
         chipGroup.removeAllViews()
 
         var filteredForMarkets = allRecords
-        if (selectedStateName != "All States") {
+        if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
             filteredForMarkets = filteredForMarkets.filter { it.state.orEmpty().equals(selectedStateName, ignoreCase = true) }
         }
         if (selectedDistrictName != "All Districts") {
-            filteredForMarkets = filteredForMarkets.filter { it.district.orEmpty().contains(selectedDistrictName, ignoreCase = true) || selectedDistrictName.contains(it.district.orEmpty(), ignoreCase = true) }
+            val cleanSelDist = LocationHelper.cleanDistrictName(selectedDistrictName).orEmpty().lowercase()
+            filteredForMarkets = filteredForMarkets.filter { item ->
+                val cleanItemDist = LocationHelper.cleanDistrictName(item.district).orEmpty().lowercase()
+                val cleanItemMkt = TranslationHelper.getCleanMarketName(item.market.orEmpty()).lowercase()
+                item.district.orEmpty().contains(selectedDistrictName, ignoreCase = true) ||
+                selectedDistrictName.contains(item.district.orEmpty(), ignoreCase = true) ||
+                (cleanSelDist.isNotBlank() && cleanItemDist.isNotBlank() && (cleanItemDist.contains(cleanSelDist) || cleanSelDist.contains(cleanItemDist))) ||
+                (cleanSelDist.isNotBlank() && cleanItemMkt.isNotBlank() && cleanItemMkt.contains(cleanSelDist))
+            }
         }
 
         val rawMarkets = filteredForMarkets.mapNotNull { it.market?.trim() }.filter { it.isNotBlank() }.distinct().sorted()

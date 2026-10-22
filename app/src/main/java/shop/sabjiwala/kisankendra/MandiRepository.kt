@@ -78,6 +78,9 @@ class MandiRepository {
     suspend fun fetchMandiRatesFromFirestore(context: Context? = null, forceRefresh: Boolean = false): List<MandiRecord> = withContext(Dispatchers.IO) {
         if (forceRefresh) {
             memoryCache = null
+            if (context != null) {
+                MandiCacheHelper.clearMandiStateCache(context, "latest_cache")
+            }
         } else if (context != null) {
             val local = MandiCacheHelper.getLocalMandiState(context, "latest_cache")
             if (!local.isNullOrEmpty()) {
@@ -201,7 +204,11 @@ class MandiRepository {
         }
         val cleanStateKey = getCleanStateKey(stateName)
 
-        if (!forceRefresh && context != null) {
+        if (forceRefresh) {
+            if (context != null) {
+                MandiCacheHelper.clearMandiStateCache(context, cleanStateKey)
+            }
+        } else if (context != null) {
             val local = MandiCacheHelper.getLocalMandiState(context, cleanStateKey)
             if (!local.isNullOrEmpty()) {
                 return@withContext local
@@ -227,9 +234,9 @@ class MandiRepository {
             e.printStackTrace()
         }
 
-        // 2. Automatic Fail-Safe: If state doc doesn't exist in Firestore yet, filter from existing cached records instead of calling external API
+        // 2. Automatic Fail-Safe: If state doc doesn't exist in Firestore yet, filter from existing cached records
         try {
-            val cachedList = fetchMandiRatesFromFirestore(context, forceRefresh = false)
+            val cachedList = fetchMandiRatesFromFirestore(context, forceRefresh = forceRefresh)
             if (cachedList.isNotEmpty()) {
                 val stateRecords = cachedList.filter { 
                     getCleanStateKey(it.state) == cleanStateKey || 

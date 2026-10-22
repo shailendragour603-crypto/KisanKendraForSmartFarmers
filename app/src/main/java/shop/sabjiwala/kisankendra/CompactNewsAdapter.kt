@@ -33,8 +33,15 @@ class CompactNewsAdapter(
         val context = holder.itemView.context
         val binding = holder.binding
 
+        val activeLang = LocaleHelper.getPersistedLanguage(context)
+
         binding.tvCompactNewsTitle.text = item.title
-        binding.tvCompactNewsCategory.text = item.category.ifBlank { "Agriculture" }
+        val rawCategory = item.category.ifBlank { "Agriculture" }
+        val transCategory = TranslationHelper.getDirectTranslation(rawCategory, activeLang, context)
+            ?: TranslationHelper.getDirectTranslation(rawCategory.trim(), activeLang, context)
+            ?: rawCategory
+
+        binding.tvCompactNewsCategory.text = transCategory
 
         val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
         val formattedDate = item.timestamp?.toDate()?.let { dateFormat.format(it) } ?: "Today"
@@ -51,11 +58,15 @@ class CompactNewsAdapter(
             binding.ivCompactNewsImage.visibility = View.GONE
         }
 
-        val activeLang = LocaleHelper.getPersistedLanguage(context)
-        if (activeLang != "hi") {
-            CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
+            if (activeLang != "en") {
                 val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
                 binding.tvCompactNewsTitle.text = translatedTitle
+            }
+
+            val asyncCat = TranslationHelper.translateText(context, rawCategory, activeLang)
+            if (asyncCat.isNotBlank()) {
+                binding.tvCompactNewsCategory.text = asyncCat
             }
         }
 

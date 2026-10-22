@@ -481,22 +481,21 @@ class WeatherFragment : Fragment() {
                 binding.tvIrrigationAdvisory.text = "🌾 Adequate Soil Moisture: Normal irrigation schedule recommended for $displayLocation fields."
             }
 
-            if (activeLang != "en") {
-                val ctx = requireContext()
-                lifecycleScope.launch(Dispatchers.Main) {
-                    binding.tvTodayCondition.text = TranslationHelper.translateText(ctx, data.conditionStr, activeLang)
-                    binding.tvTodayLabel.text = TranslationHelper.translateText(ctx, "Current Weather", activeLang)
-                    binding.tvSprayAdvisory.text = TranslationHelper.translateText(ctx, binding.tvSprayAdvisory.text.toString(), activeLang)
-                    binding.tvIrrigationAdvisory.text = TranslationHelper.translateText(ctx, binding.tvIrrigationAdvisory.text.toString(), activeLang)
-                    binding.tvRainHeader.text = "🌧️ " + TranslationHelper.translateText(ctx, "Rain", activeLang)
-                    binding.tvHumidityHeader.text = "💧 " + TranslationHelper.translateText(ctx, "Humidity", activeLang)
-                    binding.tvWindHeader.text = "💨 " + TranslationHelper.translateText(ctx, "Wind", activeLang)
-                    binding.tvUvHeader.text = "☀️ " + TranslationHelper.translateText(ctx, "UV Index", activeLang)
-                    binding.tvAdvisorySectionHeader.text = "🌾 " + TranslationHelper.translateText(ctx, "Agricultural Weather Advisory", activeLang)
-                    binding.tvSprayAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Pesticide Spray Advisory", activeLang)
-                    binding.tvIrrigationAdvisoryHeader.text = TranslationHelper.translateText(ctx, "Crop Irrigation Advisory", activeLang)
-                    binding.tvForecastSectionHeader.text = "📅 " + TranslationHelper.translateText(ctx, "Upcoming 6-Day Weather Forecast", activeLang)
-                }
+            val ctx = context ?: return
+            lifecycleScope.launch(Dispatchers.Main) {
+                if (_binding == null || !isAdded) return@launch
+                binding.tvTodayCondition.text = TranslationHelper.getDirectTranslation(data.conditionStr, activeLang, ctx) ?: TranslationHelper.translateText(ctx, data.conditionStr, activeLang)
+                binding.tvTodayLabel.text = TranslationHelper.getDirectTranslation("Current Weather", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Current Weather", activeLang)
+                binding.tvSprayAdvisory.text = TranslationHelper.getDirectTranslation(binding.tvSprayAdvisory.text.toString(), activeLang, ctx) ?: TranslationHelper.translateText(ctx, binding.tvSprayAdvisory.text.toString(), activeLang)
+                binding.tvIrrigationAdvisory.text = TranslationHelper.getDirectTranslation(binding.tvIrrigationAdvisory.text.toString(), activeLang, ctx) ?: TranslationHelper.translateText(ctx, binding.tvIrrigationAdvisory.text.toString(), activeLang)
+                binding.tvRainHeader.text = "🌧️ " + (TranslationHelper.getDirectTranslation("Rain", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Rain", activeLang))
+                binding.tvHumidityHeader.text = "💧 " + (TranslationHelper.getDirectTranslation("Humidity", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Humidity", activeLang))
+                binding.tvWindHeader.text = "💨 " + (TranslationHelper.getDirectTranslation("Wind", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Wind", activeLang))
+                binding.tvUvHeader.text = "☀️ " + (TranslationHelper.getDirectTranslation("UV Index", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "UV Index", activeLang))
+                binding.tvAdvisorySectionHeader.text = "🌾 " + (TranslationHelper.getDirectTranslation("Agricultural Weather Advisory", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Agricultural Weather Advisory", activeLang))
+                binding.tvSprayAdvisoryHeader.text = TranslationHelper.getDirectTranslation("Pesticide Spray Advisory", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Pesticide Spray Advisory", activeLang)
+                binding.tvIrrigationAdvisoryHeader.text = TranslationHelper.getDirectTranslation("Crop Irrigation Advisory", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Crop Irrigation Advisory", activeLang)
+                binding.tvForecastSectionHeader.text = "📅 " + (TranslationHelper.getDirectTranslation("Upcoming 6-Day Weather Forecast", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Upcoming 6-Day Weather Forecast", activeLang))
             }
         }
 

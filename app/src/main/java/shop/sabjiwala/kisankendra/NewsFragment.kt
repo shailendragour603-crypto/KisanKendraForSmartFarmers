@@ -371,10 +371,27 @@ class NewsFragment : Fragment() {
     }
 
     private fun setupCategoryChips() {
+        val ctx = context
+        if (ctx != null) {
+            val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    TranslationHelper.syncMasterDictionaryFromFirestore(ctx, activeLang)
+                    withContext(Dispatchers.Main) {
+                        if (_binding != null && isAdded) {
+                            translateNewsUiElements()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
         translateNewsUiElements()
         restoreNewsSessionState()
         binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
-            val checkedId = checkedIds.firstOrNull() ?: R.id.chipNews
+            val checkedId = checkedIds.firstOrNull() ?: R.id.chipAll
             saveNewsSessionState(checkedId)
             filterNewsByCategory(checkedId)
         }
@@ -383,36 +400,67 @@ class NewsFragment : Fragment() {
     private fun translateNewsUiElements() {
         lifecycleScope.launch(Dispatchers.Main) {
             if (_binding == null || !isAdded) return@launch
+            val ctx = context ?: return@launch
+            val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+
+            val transAll = TranslationHelper.getDirectTranslation("All", activeLang, ctx) 
+                ?: TranslationHelper.getDirectTranslation("All News", activeLang, ctx)
+                ?: TranslationHelper.translateText(ctx, "All", activeLang)
+
+            val transNews = TranslationHelper.getDirectTranslation("News", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "News", activeLang)
+
+            val transGovtScheme = TranslationHelper.getDirectTranslation("Govt Scheme", activeLang, ctx) 
+                ?: TranslationHelper.getDirectTranslation("Govt Schemes", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Govt Scheme", activeLang)
+
+            val transAgriMarket = TranslationHelper.getDirectTranslation("Agri Market", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Agri Market", activeLang)
+
+            val transAgriGyan = TranslationHelper.getDirectTranslation("Agri Gyan", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Agri Gyan", activeLang)
+
+            val transCropProtection = TranslationHelper.getDirectTranslation("Crop Protection", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Crop Protection", activeLang)
+
+            val transTechnology = TranslationHelper.getDirectTranslation("Technology", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Technology", activeLang)
+
+            val transSuccessStories = TranslationHelper.getDirectTranslation("Success Stories", activeLang, ctx) 
+                ?: TranslationHelper.translateText(ctx, "Success Stories", activeLang)
 
             if (_binding != null && isAdded) {
-                binding.chipNews.text = "📰 All News"
-                binding.chipGovtScheme.text = "🏛 Govt Scheme"
-                binding.chipAgriMarket.text = "🌾 Agri Market"
-                binding.chipAgriGyan.text = "💡 Agri Gyan"
-                binding.chipCropProtection.text = "🛡 Crop Protection"
-                binding.chipTechnology.text = "🚜 Technology"
-                binding.chipSuccessStories.text = "⭐ Success Stories"
+                binding.chipAll.text = transAll
+                binding.chipNews.text = transNews
+                binding.chipGovtScheme.text = transGovtScheme
+                binding.chipAgriMarket.text = transAgriMarket
+                binding.chipAgriGyan.text = transAgriGyan
+                binding.chipCropProtection.text = transCropProtection
+                binding.chipTechnology.text = transTechnology
+                binding.chipSuccessStories.text = transSuccessStories
             }
         }
     }
 
     private fun filterNewsByCategory(checkedId: Int? = binding.chipGroupCategories.checkedChipId) {
         val selectedCategory = when (checkedId) {
+            R.id.chipNews -> "News"
             R.id.chipGovtScheme -> "Govt Scheme"
             R.id.chipAgriMarket -> "Agri Market"
             R.id.chipAgriGyan -> "Agri Gyan"
             R.id.chipCropProtection -> "Crop Protection"
             R.id.chipTechnology -> "Technology"
             R.id.chipSuccessStories -> "Success Stories"
-            else -> "News"
+            else -> "All"
         }
 
-        val filtered = if (selectedCategory == "News") {
+        val filtered = if (selectedCategory == "All") {
             allNewsList
         } else {
             allNewsList.filter { item ->
                 val cat = item.category.trim()
                 cat.equals(selectedCategory, ignoreCase = true) ||
+                (selectedCategory == "News" && (cat.contains("News", ignoreCase = true) || cat.contains("Samachar", ignoreCase = true) || cat.contains("Khabar", ignoreCase = true))) ||
                 (selectedCategory == "Govt Scheme" && (cat.contains("Yojana", ignoreCase = true) || cat.contains("Scheme", ignoreCase = true))) ||
                 (selectedCategory == "Agri Market" && (cat.contains("Market", ignoreCase = true) || cat.contains("Updates", ignoreCase = true))) ||
                 (selectedCategory == "Agri Gyan" && (cat.contains("Gyan", ignoreCase = true) || cat.contains("Krishi", ignoreCase = true)))

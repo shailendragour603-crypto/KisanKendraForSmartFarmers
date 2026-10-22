@@ -43,19 +43,25 @@ class CropCareAdapter(
         fun bind(item: CropCareItem, adapterPos: Int, realIndex: Int) {
             val context = binding.root.context
             val activeLang = LocaleHelper.getPersistedLanguage(context)
-
             val isExpanded = expandedPositions.contains(realIndex)
+            val rawCategory = item.category.ifBlank { "सामान्य" }
+            val transCategory = TranslationHelper.getDirectTranslation(rawCategory, activeLang, context)
+                ?: TranslationHelper.getDirectTranslation(rawCategory.trim(), activeLang, context)
+                ?: rawCategory
 
-            binding.tvCategoryBadge.text = item.category.ifBlank { "सामान्य" }
+            binding.tvCategoryBadge.text = transCategory
             binding.tvProblemTitle.text = item.title
             binding.tvProblemDesc.text = item.problem
             binding.tvSolutionText.text = item.solution
-            binding.tvSolutionHeader.text = "समाधान"
-            binding.tvExpandToggleText.text = if (isExpanded) "समाधान छुपाये" else "समाधान देखे "
+            binding.tvSolutionHeader.text = TranslationHelper.getDirectTranslation("समाधान", activeLang, context) ?: "समाधान"
+            binding.tvExpandToggleText.text = if (isExpanded) 
+                (TranslationHelper.getDirectTranslation("समाधान छुपाये", activeLang, context) ?: "समाधान छुपाये") 
+            else 
+                (TranslationHelper.getDirectTranslation("समाधान देखे ", activeLang, context) ?: "समाधान देखे ")
 
             if (activeLang != "hi") {
                 CoroutineScope(Dispatchers.Main).launch {
-                    val catDeferred = async(Dispatchers.IO) { TranslationHelper.translateText(context, item.category.ifBlank { "सामान्य" }, activeLang) }
+                    val catDeferred = async(Dispatchers.IO) { TranslationHelper.translateText(context, rawCategory, activeLang) }
                     val titleDeferred = async(Dispatchers.IO) { TranslationHelper.translateText(context, item.title, activeLang) }
                     val probDeferred = async(Dispatchers.IO) { TranslationHelper.translateText(context, item.problem, activeLang) }
                     val solDeferred = async(Dispatchers.IO) { TranslationHelper.translateText(context, item.solution, activeLang) }

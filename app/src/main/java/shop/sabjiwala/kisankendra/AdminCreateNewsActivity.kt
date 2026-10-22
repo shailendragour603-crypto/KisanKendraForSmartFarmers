@@ -47,6 +47,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
     private var editNewsId: String? = null
 
     private val categories = listOf(
+        "News",
         "Govt Scheme",
         "Agri Market",
         "Agri Gyan",
@@ -294,7 +295,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                     Format your response PRECISELY as a JSON object with the following fields:
                     {
                       "title": "किसान भाइयों के लिए एक आकर्षक और स्पष्ट शीर्षक हिंदी में",
-                      "category": "Govt Scheme OR Agri Market OR Agri Gyan OR Crop Protection OR Technology OR Success Stories",
+                      "category": "News OR Govt Scheme OR Agri Market OR Agri Gyan OR Crop Protection OR Technology OR Success Stories",
                       "description": "एक विस्तृत, आकर्षक और समृद्ध लेख (rich-text article) जो सरल और बोलचाल की हिंदी में हो, जिसमें ### उपशीर्षक (subtitles) और पैराग्राफ शामिल हों। कोई भी बाहरी लिंक या वेबसाइट का यूआरएल शामिल न करें।",
                       "suggestedImageKeyword": "yojana OR mandi OR gyan"
                     }
@@ -355,7 +356,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                     if (title.isNotBlank()) binding.etNewsTitle.setText(title)
                     if (description.isNotBlank()) binding.etNewsDescription.setText(description)
 
-                    val matchedCategory = categories.firstOrNull { it.equals(category, ignoreCase = true) } ?: "Sarkari Yojana"
+                    val matchedCategory = categories.firstOrNull { it.equals(category, ignoreCase = true) } ?: "News"
                     binding.actvCategory.setText(matchedCategory, false)
 
                     // Auto select image preset based on keyword

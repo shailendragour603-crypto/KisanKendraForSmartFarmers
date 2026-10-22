@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import shop.sabjiwala.kisankendra.AdminCreateNewsActivity
@@ -53,6 +54,7 @@ class NewsDetailActivity : AppCompatActivity() {
     private var articleDesc: String = ""
     private var articleImageUrl: String = ""
     private var articleIsPinned: Boolean = false
+    private var translationJob: Job? = null
 
     companion object {
         const val EXTRA_ID = "extra_id"
@@ -113,6 +115,8 @@ class NewsDetailActivity : AppCompatActivity() {
         super.onResume()
         if (articleId.isNotBlank()) {
             fetchArticleFromFirestore()
+        } else {
+            applyArticleContent(articleTitle, articleDesc, articleCategory)
         }
     }
 
@@ -126,9 +130,7 @@ class NewsDetailActivity : AppCompatActivity() {
                     articleImageUrl = doc.getString("imageUrl").orEmpty()
                     articleIsPinned = doc.getBoolean("isPinned") ?: false
 
-                    binding.tvDetailTitle.text = articleTitle
-                    displayDescription(articleDesc)
-                    binding.tvDetailCategory.text = articleCategory.ifBlank { "Agriculture" }
+                    applyArticleContent(articleTitle, articleDesc, articleCategory)
 
                     if (articleImageUrl.isNotBlank()) {
                         binding.ivDetailImage.visibility = View.VISIBLE
@@ -340,6 +342,49 @@ class NewsDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyArticleContent(title: String, desc: String, category: String) {
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+
+        translationJob?.cancel()
+
+        val rawCategory = category.ifBlank { "Agriculture" }
+        val transCategory = TranslationHelper.getDirectTranslation(rawCategory, activeLang, this)
+            ?: TranslationHelper.getDirectTranslation(rawCategory.trim(), activeLang, this)
+            ?: rawCategory
+
+        binding.tvDetailTitle.text = title
+        displayDescription(desc)
+        binding.tvDetailCategory.text = transCategory
+
+        val defaultRelHeader = TranslationHelper.getDirectTranslation("संबंधित खबरें", activeLang, this) ?: if (activeLang == "hi") "संबंधित खबरें" else "Related News"
+        val defaultLatHeader = TranslationHelper.getDirectTranslation("ताज़ा ख़बरें", activeLang, this) ?: if (activeLang == "hi") "ताज़ा ख़बरें" else "Latest News"
+        binding.tvRelatedNewsHeader.text = defaultRelHeader
+        binding.tvLatestNewsHeader.text = defaultLatHeader
+
+        translationJob = lifecycleScope.launch(Dispatchers.Main) {
+            if (title.isNotBlank() && activeLang != "en") {
+                val translatedTitle = TranslationHelper.translateText(this@NewsDetailActivity, title, activeLang)
+                binding.tvDetailTitle.text = translatedTitle
+            }
+
+            if (desc.isNotBlank() && activeLang != "en") {
+                val translatedDesc = TranslationHelper.translateText(this@NewsDetailActivity, desc, activeLang)
+                displayDescription(translatedDesc)
+            }
+
+            if (rawCategory.isNotBlank()) {
+                val translatedCategory = TranslationHelper.translateText(this@NewsDetailActivity, rawCategory, activeLang)
+                binding.tvDetailCategory.text = translatedCategory
+            }
+
+            val translatedRel = TranslationHelper.translateText(this@NewsDetailActivity, "संबंधित खबरें", activeLang)
+            binding.tvRelatedNewsHeader.text = translatedRel
+
+            val translatedLat = TranslationHelper.translateText(this@NewsDetailActivity, "ताज़ा ख़बरें", activeLang)
+            binding.tvLatestNewsHeader.text = translatedLat
+        }
+    }
+
     private fun bindArticleData() {
         articleId = intent.getStringExtra(EXTRA_ID).orEmpty()
         articleTitle = intent.getStringExtra(EXTRA_TITLE).orEmpty()
@@ -349,35 +394,9 @@ class NewsDetailActivity : AppCompatActivity() {
         articleIsPinned = intent.getBooleanExtra(EXTRA_IS_PINNED, false)
         val date = intent.getStringExtra(EXTRA_DATE).orEmpty()
 
-        binding.tvDetailTitle.text = articleTitle
-        displayDescription(articleDesc)
-        binding.tvDetailCategory.text = articleCategory.ifBlank { "Agriculture" }
-        binding.tvDetailDate.text = if (date.isNotBlank()) "📅 $date" else "📅 Today"
+        binding.tvDetailDate.text = if (date.isNotBlank()) date else "Today"
 
-        val activeLang = LocaleHelper.getPersistedLanguage(this)
-        if (activeLang != "hi") {
-            lifecycleScope.launch(Dispatchers.Main) {
-                if (articleTitle.isNotBlank()) {
-                    val translatedTitle = TranslationHelper.translateText(this@NewsDetailActivity, articleTitle, activeLang)
-                    binding.tvDetailTitle.text = translatedTitle
-                }
-
-                if (articleDesc.isNotBlank()) {
-                    val translatedDesc = TranslationHelper.translateText(this@NewsDetailActivity, articleDesc, activeLang)
-                    displayDescription(translatedDesc)
-                }
-
-                if (articleCategory.isNotBlank()) {
-                    binding.tvDetailCategory.text = articleCategory
-                }
-
-                val translatedRel = TranslationHelper.translateText(this@NewsDetailActivity, "📌 संबंधित खबरें", activeLang)
-                binding.tvRelatedNewsHeader.text = translatedRel
-
-                val translatedLat = TranslationHelper.translateText(this@NewsDetailActivity, "🔥 ताज़ा ख़बरें", activeLang)
-                binding.tvLatestNewsHeader.text = translatedLat
-            }
-        }
+        applyArticleContent(articleTitle, articleDesc, articleCategory)
 
         if (articleImageUrl.isNotBlank()) {
             binding.ivDetailImage.visibility = View.VISIBLE

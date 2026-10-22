@@ -73,9 +73,10 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvAnalyticsExpenseLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💸 Expense"
+                    android:text="Expense"
                     android:textColor="@color/price_min_text"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -99,9 +100,10 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvAnalyticsIncomeLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💰 Income"
+                    android:text="Income"
                     android:textColor="@color/price_modal_text"
                     android:textSize="13sp"
                     android:textStyle="bold" />

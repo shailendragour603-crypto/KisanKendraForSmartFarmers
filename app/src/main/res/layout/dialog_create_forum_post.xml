@@ -68,7 +68,7 @@
             android:gravity="top|start"
             android:background="@drawable/bg_input_pill"
             android:padding="12dp"
-            android:hint="Write your question or details here..."
+            android:hint="@string/forum_post_hint"
             android:textColor="?android:attr/textColorPrimary"
             android:textColorHint="?android:attr/textColorSecondary"
             android:textSize="14sp"

@@ -96,8 +96,14 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
 
     fun loadMandiRates(preferredStateName: String? = null, forceRefresh: Boolean = false, context: Context? = null) {
         if (!forceRefresh && !_mandiData.value.isNullOrEmpty()) {
-            _isLoading.value = false
-            return
+            val latestDate = getLatestArrivalDate(_mandiData.value!!)
+            val expectedDisplayDate = getDisplayDate()
+            val formattedLatestDate = if (!latestDate.isNullOrBlank()) parseAndFormatDate(latestDate) else null
+
+            if (formattedLatestDate == expectedDisplayDate) {
+                _isLoading.value = false
+                return
+            }
         }
 
         viewModelScope.launch {
@@ -105,9 +111,8 @@ class MandiViewModel(private val repository: MandiRepository) : ViewModel() {
             if (forceRefresh && context != null) {
                 if (!preferredStateName.isNullOrBlank() && preferredStateName != "All States" && preferredStateName != "⭐ Saved") {
                     MandiCacheHelper.clearMandiStateCache(context, MandiRepository.getCleanStateKey(preferredStateName))
-                } else {
-                    MandiCacheHelper.clearMandiStateCache(context, "latest_cache")
                 }
+                MandiCacheHelper.clearMandiStateCache(context, "latest_cache")
             }
 
             // Load preferred user state document directly (<0.1s) for 100% complete rates and markets

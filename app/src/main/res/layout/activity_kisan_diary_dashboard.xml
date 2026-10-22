@@ -174,10 +174,10 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                                app:boxCornerRadiusTopStart="12dp"
-                                app:boxCornerRadiusTopEnd="12dp"
-                                app:boxCornerRadiusBottomStart="12dp"
-                                app:boxCornerRadiusBottomEnd="12dp"
+                                app:boxCornerRadiusTopStart="8dp"
+                                app:boxCornerRadiusTopEnd="8dp"
+                                app:boxCornerRadiusBottomStart="8dp"
+                                app:boxCornerRadiusBottomEnd="8dp"
                                 app:boxStrokeColor="#1B5E20"
                                 app:hintTextColor="#1B5E20">
 
@@ -186,8 +186,9 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:inputType="none"
+                                    android:paddingVertical="8dp"
                                     android:text="सभी समय"
-                                    android:textSize="14sp"
+                                    android:textSize="13sp"
                                     android:textStyle="bold"
                                     android:hint="ऋतु / वर्ष चुनें" />
 
@@ -198,7 +199,7 @@
                                 android:id="@+id/btnExportPdfReport"
                                 style="@style/Widget.Material3.Button.OutlinedButton"
                                 android:layout_width="wrap_content"
-                                android:layout_height="48dp"
+                                android:layout_height="40dp"
                                 android:layout_marginStart="8dp"
                                 android:insetTop="0dp"
                                 android:insetBottom="0dp"

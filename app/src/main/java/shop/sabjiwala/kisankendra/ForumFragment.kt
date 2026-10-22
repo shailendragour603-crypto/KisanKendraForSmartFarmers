@@ -435,18 +435,23 @@ class ForumFragment : Fragment() {
         val ctx = context ?: return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
 
-        val baseHint = "Write Your post..."
-
-        if (activeLang != "en") {
-            lifecycleScope.launch(Dispatchers.Main) {
-                val prompt = TranslationHelper.translateText(ctx, baseHint, activeLang)
-                if (_binding != null && isAdded) {
-                    binding.tvCreatePostHint.text = prompt
+        fun applyCreatePostHint() {
+            if (_binding == null || !isAdded) return
+            if (activeLang == "hi") {
+                binding.tvCreatePostHint.text = "कृपया यहाँ लिखें..."
+            } else if (activeLang == "en") {
+                binding.tvCreatePostHint.text = "Please write here..."
+            } else {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val prompt = TranslationHelper.translateText(ctx, "Please write here...", activeLang)
+                    if (_binding != null && isAdded) {
+                        binding.tvCreatePostHint.text = if (prompt.isNotBlank()) prompt else "कृपया यहाँ लिखें..."
+                    }
                 }
             }
-        } else {
-            binding.tvCreatePostHint.text = baseHint
         }
+
+        applyCreatePostHint()
 
         val photoUrl = user?.photoUrl?.toString().orEmpty()
         if (photoUrl.isNotBlank()) {
@@ -461,16 +466,7 @@ class ForumFragment : Fragment() {
                 .addOnSuccessListener { doc ->
                     if (_binding == null) return@addOnSuccessListener
                     val dbPhoto = doc.getString("photoUrl").orEmpty()
-                    if (activeLang != "en") {
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            val prompt = TranslationHelper.translateText(ctx, baseHint, activeLang)
-                            if (_binding != null && isAdded) {
-                                binding.tvCreatePostHint.text = prompt
-                            }
-                        }
-                    } else {
-                        binding.tvCreatePostHint.text = baseHint
-                    }
+                    applyCreatePostHint()
                     if (dbPhoto.isNotBlank()) {
                         Glide.with(this)
                             .load(dbPhoto)
@@ -708,19 +704,46 @@ class ForumFragment : Fragment() {
         val ctx = context ?: return
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
 
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                TranslationHelper.syncMasterDictionaryFromFirestore(ctx, activeLang)
+                withContext(Dispatchers.Main) {
+                    if (_binding != null && isAdded) {
+                        applyForumChipTranslations(ctx, activeLang)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        applyForumChipTranslations(ctx, activeLang)
+    }
+
+    private fun applyForumChipTranslations(ctx: Context, activeLang: String) {
         lifecycleScope.launch(Dispatchers.Main) {
             if (_binding == null || !isAdded) return@launch
 
+            val tAll = TranslationHelper.getDirectTranslation("All Topics", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "All Topics", activeLang)
+            val tDiseases = TranslationHelper.getDirectTranslation("Crop Diseases", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Crop Diseases", activeLang)
+            val tFert = TranslationHelper.getDirectTranslation("Fertilizers", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Fertilizers", activeLang)
+            val tMandi = TranslationHelper.getDirectTranslation("Mandi Advice", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Mandi Advice", activeLang)
+            val tSchemes = TranslationHelper.getDirectTranslation("Govt Schemes", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Govt Schemes", activeLang)
+            val tCrops = TranslationHelper.getDirectTranslation("Seeds & Varieties", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Seeds & Varieties", activeLang)
+            val tWeather = TranslationHelper.getDirectTranslation("Weather", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Weather", activeLang)
+            val tDairy = TranslationHelper.getDirectTranslation("Dairy Farming", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Dairy Farming", activeLang)
+            val tMachinery = TranslationHelper.getDirectTranslation("Machinery & Tractors", activeLang, ctx) ?: TranslationHelper.translateText(ctx, "Machinery & Tractors", activeLang)
+
             if (_binding != null && isAdded) {
-                binding.chipForumAll.text = TranslationHelper.translateText(ctx, "All Topics", activeLang)
-                binding.chipForumDiseases.text = TranslationHelper.translateText(ctx, "Crop Diseases", activeLang)
-                binding.chipForumFertilizer.text = TranslationHelper.translateText(ctx, "Fertilizers", activeLang)
-                binding.chipForumMandi.text = TranslationHelper.translateText(ctx, "Mandi Advice", activeLang)
-                binding.chipForumYojana.text = TranslationHelper.translateText(ctx, "Govt Schemes", activeLang)
-                binding.chipForumCrops.text = TranslationHelper.translateText(ctx, "Seeds & Varieties", activeLang)
-                binding.chipForumWeather.text = TranslationHelper.translateText(ctx, "Weather", activeLang)
-                binding.chipForumDairy.text = TranslationHelper.translateText(ctx, "Dairy Farming", activeLang)
-                binding.chipForumMachinery.text = TranslationHelper.translateText(ctx, "Machinery & Tractors", activeLang)
+                binding.chipForumAll.text = tAll
+                binding.chipForumDiseases.text = tDiseases
+                binding.chipForumFertilizer.text = tFert
+                binding.chipForumMandi.text = tMandi
+                binding.chipForumYojana.text = tSchemes
+                binding.chipForumCrops.text = tCrops
+                binding.chipForumWeather.text = tWeather
+                binding.chipForumDairy.text = tDairy
+                binding.chipForumMachinery.text = tMachinery
             }
         }
     }
@@ -1637,7 +1660,14 @@ class ForumFragment : Fragment() {
                 tvMediaHeader.text = (if (activeLang == "hi") "पोस्ट में मीडिया जोड़ें" else TranslationHelper.translateText(ctx, "Add Media to post", activeLang)) + ":"
             }
 
-            etDesc.hint = (if (activeLang == "hi") "अपनी समस्या या प्रश्न यहाँ लिखें" else TranslationHelper.translateText(ctx, "Write your question or thoughts here", activeLang)) + "..."
+            if (activeLang == "hi") {
+                etDesc.hint = "कृपया यहाँ लिखें..."
+            } else if (activeLang == "en") {
+                etDesc.hint = "Please write here..."
+            } else {
+                val transHint = TranslationHelper.translateText(ctx, "Please write here...", activeLang)
+                etDesc.hint = if (transHint.isNotBlank()) transHint else "कृपया यहाँ लिखें..."
+            }
 
             btnCamera.text = if (activeLang == "hi") "लाइव फोटो" else TranslationHelper.translateText(ctx, "Live Photo", activeLang)
             btnVideo.text = if (activeLang == "hi") "वीडियो रिकॉर्ड करें" else TranslationHelper.translateText(ctx, "Record Video", activeLang)

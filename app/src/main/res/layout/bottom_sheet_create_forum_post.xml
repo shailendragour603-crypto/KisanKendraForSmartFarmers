@@ -179,7 +179,7 @@
         android:gravity="top|start"
         android:background="@drawable/bg_input_pill"
         android:padding="14dp"
-        android:hint="अपने फसल का सवाल या जानकारी लिखें..."
+        android:hint="@string/forum_post_hint"
         android:textColor="?android:attr/textColorPrimary"
         android:textColorHint="?android:attr/textColorSecondary"
         android:textSize="15sp"

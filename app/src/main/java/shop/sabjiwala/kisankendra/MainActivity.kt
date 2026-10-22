@@ -99,6 +99,9 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
+        // Pre-initialize TranslationHelper cache synchronously on main thread start
+        TranslationHelper.init(applicationContext)
+
         // 🔹 First-Time Launch Auth Check
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null && !SignInActivity.isGuestUser(this)) {

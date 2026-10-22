@@ -15,3 +15,5 @@
 local.properties
 
 serviceAccountKey.json
+__pycache__/
+*.pyc

@@ -25,38 +25,64 @@ object CategoryUtils {
         "कपास (Cotton)",
         "मक्का (Maize)",
         "गन्ना (Sugarcane)",
+        "जीरा (Cumin / Jeera)",
         "हरी मिर्च (Green Chilli)",
         "बैंगन (Brinjal)",
         "भिंडी (Okra / Bhindi)",
+        "फूलगोभी (Cauliflower)",
+        "पत्तागोभी (Cabbage)",
+        "हरी मटर (Green Peas)",
+        "गाजर (Carrot)",
+        "मूली (Radish)",
+        "पालक (Spinach)",
+        "करेला (Bitter Gourd)",
+        "लौकी (Bottle Gourd)",
+        "तोरई (Ridge Gourd)",
+        "कद्दू (Pumpkin)",
+        "खीरा (Cucumber)",
+        "शिमला मिर्च (Capsicum)",
+        "धनिया (Coriander)",
+        "अदरक (Ginger)",
+        "हल्दी (Turmeric)",
         "आम (Mango)",
         "केला (Banana)",
-        "सेब (Apple)"
+        "सेब (Apple)",
+        "पपीता (Papaya)",
+        "अमरूद (Guava)",
+        "अनार (Pomegranate)",
+        "तरबूज (Watermelon)",
+        "संतरा (Orange)",
+        "मौसंबी (Mosambi)",
+        "नींबू (Lemon)",
+        "अंगूर (Grapes)"
     )
 
     val CATEGORIES = MAJOR_CATEGORIES
 
     private val VEGETABLES = setOf(
         "potato", "onion", "pyaz", "pyaaz", "kanda", "tomato", "brinjal", "cabbage", "cauliflower", "carrot", "radish", "spinach",
-        "bitter gourd", "bottle gourd", "ridge gourd", "capsicum", "green chilli", "cucumber", "peas",
+        "bitter gourd", "bottle gourd", "ridge gourd", "sponge gourd", "capsicum", "green chilli", "cucumber", "peas",
         "pumpkin", "lady finger", "bhindi", "coriander", "ginger", "turmeric", "sweet potato", "beetroot", "arbi", "taro",
+        "yam", "jimikand", "moringa", "drumstick", "french beans", "parwal", "kundru", "mushroom", "broccoli", "zucchini",
         "आलू", "प्याज़", "प्याज", "कांदा", "टमाटर", "बैंगन", "पत्तागोभी", "फूलगोभी", "गाजर", "मूली", "पालक",
-        "करेला", "लौकी", "तोरई", "शिमला मिर्च", "हरी मिर्च", "खीरा", "मटर",
-        "कद्दू", "भिंडी", "धनिया", "अदरक", "हल्दी", "शकरकंद", "चुकंदर", "अरबी"
+        "करेला", "लौकी", "तोरई", "गिलकी", "शिमला मिर्च", "हरी मिर्च", "खीरा", "मटर",
+        "कद्दू", "भिंडी", "धनिया", "अदरक", "हल्दी", "शकरकंद", "चुकंदर", "अरबी", "सूरन", "जिमीकंद", "मुनगा", "सहजन", "परवल", "कुंदरू", "मशरूम", "ब्रोकली"
     )
 
     private val FRUITS = setOf(
         "apple", "banana", "mango", "orange", "grapes", "papaya", "pomegranate", "watermelon", "muskmelon",
-        "guava", "pineapple", "lemon", "mousambi", "dragon fruit", "strawberry", "jackfruit", "litchi", "chikoo", "sapodilla",
+        "guava", "pineapple", "lemon", "mousambi", "mosambi", "dragon fruit", "strawberry", "jackfruit", "litchi", "chikoo", "sapodilla",
+        "custard apple", "sitaphal", "fig", "anjeer", "dates", "khajur", "plum", "peach", "pear", "cherry", "kiwi", "avocado", "amla", "jamun", "ber",
         "सेब", "केला", "आम", "संतरा", "अंगूर", "पपीता", "अनार", "तरबूज", "खरबूजा",
-        "अमरूद", "अनानास", "नींबू", "मौसंबी", "ड्रैगन फ्रूट", "स्ट्रॉबेरी", "कटहल", "लीची", "चीकू"
+        "अमरूद", "अनानास", "नींबू", "मौसंबी", "ड्रैगन फ्रूट", "स्ट्रॉबेरी", "कटहल", "लीची", "चीकू", "सीताफल", "शरीफा", "अंजीर", "खजूर", "नाशपाती", "जामुन", "बेर", "आँवला"
     )
 
     private val CROPS = setOf(
         "wheat", "paddy", "rice", "maize", "barley", "jowar", "bajra", "mustard", "soyabean", "soybean",
         "chana", "gram", "chickpea", "arhar", "tur", "pigeon pea", "moong", "urad", "cotton", "sugarcane",
-        "groundnut", "peanut", "til", "sesame", "sunflower",
+        "groundnut", "peanut", "til", "sesame", "sunflower", "safflower", "castor", "linseed", "flaxseed", "guar", "masoor", "rajma", "lobia", "ragi",
         "गेहूँ", "धान", "चावल", "मक्का", "जौ", "ज्वार", "बाजरा", "सरसों", "सोयाबीन",
-        "चना", "अरहर", "तुअर", "मूंग", "उड़द", "कपास", "गन्ना", "मूंगफली", "तिल", "सूरजमुखी"
+        "चना", "अरहर", "तुअर", "मूंग", "उड़द", "कपास", "गन्ना", "मूंगफली", "तिल", "सूरजमुखी", "अलसी", "अरंडी", "मसूर", "राजमा", "लोबिया", "रागी"
     )
 
     private val SPICES = setOf(

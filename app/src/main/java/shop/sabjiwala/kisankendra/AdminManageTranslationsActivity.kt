@@ -127,17 +127,22 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
                 allEntries.clear()
 
                 if (doc.exists()) {
-                    val dict = (doc.get("dictionary") as? Map<String, String>)?.toMutableMap() ?: mutableMapOf()
+                    val dict = mutableMapOf<String, String>()
+
+                    val rawDict = doc.get("dictionary") as? Map<*, *>
+                    if (rawDict != null) {
+                        shop.sabjiwala.kisankendra.utils.TranslationHelper.extractMapEntries(rawDict, dict)
+                    }
 
                     // Check for legacy root-level "dictionary.xyz" fields from previous buggy saves
                     val docData = doc.data
                     var legacyFieldsFound = false
                     if (docData != null) {
                         for ((fKey, fVal) in docData) {
-                            if (fKey.startsWith("dictionary.") && fVal is String) {
+                            if (fKey.startsWith("dictionary.") && fVal != null) {
                                 val cleanKey = fKey.removePrefix("dictionary.")
                                 if (cleanKey.isNotBlank()) {
-                                    dict[cleanKey] = fVal
+                                    dict[cleanKey] = fVal.toString()
                                     legacyFieldsFound = true
                                 }
                             }
@@ -254,15 +259,21 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
             try {
                 val docRef = firestore.collection("app_translations").document(currentLangCode)
 
-                // 1. Save as nested field inside dictionary map using dot notation to prevent overwriting
-                val updateMap = hashMapOf<String, Any>(
-                    "updatedAt" to Timestamp.now(),
-                    "dictionary.$key" to value
-                )
-                // Use update() instead of set() to safely append the nested field
-                docRef.update(updateMap).await()
+                // Save using FieldPath so keys with dots (e.g. "a.p.m.c.") are not split into nested maps
+                val dictPath = com.google.firebase.firestore.FieldPath.of("dictionary", key)
+                val updatedPath = com.google.firebase.firestore.FieldPath.of("updatedAt")
 
-                // 3. Update memory cache and SharedPreferences for current selected language
+                try {
+                    docRef.update(dictPath, value, updatedPath, Timestamp.now()).await()
+                } catch (_: Exception) {
+                    val initialMap = hashMapOf<String, Any>(
+                        "updatedAt" to Timestamp.now(),
+                        "dictionary" to hashMapOf(key to value)
+                    )
+                    docRef.set(initialMap, SetOptions.merge()).await()
+                }
+
+                // Update memory cache and SharedPreferences for current selected language
                 shop.sabjiwala.kisankendra.utils.TranslationHelper.updateMasterCacheAndPrefs(
                     this@AdminManageTranslationsActivity,
                     key,
@@ -276,32 +287,10 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
                     loadMasterDictionaryFromFirestore()
                 }
             } catch (e: Exception) {
-                // If update fails because the document doesn't exist yet, we create it
-                if (e.message?.contains("NOT_FOUND") == true) {
-                    try {
-                        val docRef = firestore.collection("app_translations").document(currentLangCode)
-                        val initialMap = hashMapOf<String, Any>(
-                            "updatedAt" to Timestamp.now(),
-                            "dictionary" to hashMapOf(key to value)
-                        )
-                        docRef.set(initialMap).await()
-                        withContext(Dispatchers.Main) {
-                            binding.pbAdminTranslations.visibility = View.GONE
-                            Toast.makeText(this@AdminManageTranslationsActivity, "✅ Translation saved successfully!", Toast.LENGTH_SHORT).show()
-                            loadMasterDictionaryFromFirestore()
-                        }
-                    } catch (innerE: Exception) {
-                         withContext(Dispatchers.Main) {
-                            binding.pbAdminTranslations.visibility = View.GONE
-                            Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${innerE.localizedMessage}", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    e.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        binding.pbAdminTranslations.visibility = View.GONE
-                        Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                    }
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    binding.pbAdminTranslations.visibility = View.GONE
+                    Toast.makeText(this@AdminManageTranslationsActivity, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -313,12 +302,11 @@ class AdminManageTranslationsActivity : AppCompatActivity() {
             try {
                 val docRef = firestore.collection("app_translations").document(currentLangCode)
 
-                // Delete key from nested dictionary map
-                val updates = hashMapOf<String, Any>(
-                    "dictionary.$key" to com.google.firebase.firestore.FieldValue.delete(),
-                    "updatedAt" to Timestamp.now()
-                )
-                docRef.update(updates).await()
+                // Delete key from dictionary map using FieldPath
+                val dictPath = com.google.firebase.firestore.FieldPath.of("dictionary", key)
+                val updatedPath = com.google.firebase.firestore.FieldPath.of("updatedAt")
+
+                docRef.update(dictPath, com.google.firebase.firestore.FieldValue.delete(), updatedPath, Timestamp.now()).await()
 
                 // Also attempt deleting legacy root-level field if it existed
                 try {
