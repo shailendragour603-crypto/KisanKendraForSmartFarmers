@@ -105,7 +105,13 @@ def fetch_all_mandi_records_from_api() -> list:
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "application/json"
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
+        "Referer": "https://data.gov.in/",
+        "Origin": "https://data.gov.in",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site"
     }
 
     print("⚡ Starting Mandi API Paginated Fetch from data.gov.in...")
@@ -395,7 +401,10 @@ def main():
     if records:
         save_records_to_firestore(records)
     else:
-        print("⚠️ API returned 0 records. Firestore was not modified.")
+        msg = "⚠️ API returned 0 records. Firestore was not modified."
+        print(msg)
+        if os.getenv("GITHUB_ACTIONS") == "true":
+            raise RuntimeError(msg)
 
     print("=== Mandi Auto-Sync Finished ===")
 
