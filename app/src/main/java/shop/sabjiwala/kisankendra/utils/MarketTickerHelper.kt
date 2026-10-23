@@ -4,6 +4,8 @@ import android.content.Context
 import android.text.Html
 import android.text.Spanned
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import shop.sabjiwala.kisankendra.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -80,7 +82,25 @@ object MarketTickerHelper {
         }
     }
 
-    fun buildTickerHtml(items: List<MarketTickerItem> = getDefaultMarketItems()): Spanned {
+    private fun getItemDisplayName(item: MarketTickerItem, langCode: String): String {
+        if (langCode == "hi") {
+            return when (item.symbol) {
+                "GOLD" -> "सोना 24K (10g)"
+                "SILVER" -> "चांदी (1kg)"
+                "USDINR" -> "डॉलर / रुपया"
+                "NIFTY" -> "निफ्टी 50"
+                "SENSEX" -> "सेंसेक्स"
+                else -> item.name
+            }
+        }
+        return item.name
+    }
+
+    fun buildTickerHtml(
+        items: List<MarketTickerItem> = getDefaultMarketItems(),
+        context: Context? = null
+    ): Spanned {
+        val langCode = context?.let { LocaleHelper.getPersistedLanguage(it) } ?: "hi"
         val sb = StringBuilder()
         val repeatedList = items + items
 
@@ -96,16 +116,18 @@ object MarketTickerHelper {
                 String.format(Locale.ENGLISH, "%,.0f", Math.abs(item.change))
             }
 
-            val icon = when (item.symbol) {
-                "GOLD" -> "🥇"
-                "SILVER" -> "🥈"
-                "USDINR" -> "💵"
-                "NIFTY" -> "📈"
-                "SENSEX" -> "📊"
-                else -> "💰"
+            val imgSrc = when (item.symbol) {
+                "GOLD" -> "gold_brick"
+                "SILVER" -> "silver_brick"
+                "USDINR" -> "usd_icon"
+                "NIFTY" -> "chart_icon"
+                "SENSEX" -> "chart_icon"
+                else -> "chart_icon"
             }
 
-            sb.append("<b>$icon ${item.name}</b>: ${item.price} ")
+            val displayName = getItemDisplayName(item, langCode)
+
+            sb.append("<img src='$imgSrc'/>&nbsp;<b>$displayName</b>: ${item.price} ")
             sb.append("<font color='$changeColor'><b>$sign$formattedChangePercent%</b> ($sign₹$formattedChangeVal)</font>")
 
             if (index < repeatedList.size - 1) {
@@ -113,7 +135,30 @@ object MarketTickerHelper {
             }
         }
 
-        return Html.fromHtml(sb.toString(), Html.FROM_HTML_MODE_LEGACY)
+        val imageGetter = if (context != null) {
+            Html.ImageGetter { source ->
+                val resId = when (source) {
+                    "gold_brick" -> R.drawable.ic_gold_brick
+                    "silver_brick" -> R.drawable.ic_silver_brick
+                    "chart_icon" -> R.drawable.ic_chart_ticker
+                    "usd_icon" -> R.drawable.ic_usd_ticker
+                    else -> 0
+                }
+                if (resId != 0) {
+                    val drawable = ContextCompat.getDrawable(context, resId)?.mutate()
+                    if (drawable != null) {
+                        val density = context.resources.displayMetrics.density
+                        val widthPx = (18 * density).toInt()
+                        val heightPx = (18 * density).toInt()
+                        drawable.setBounds(0, 0, widthPx, heightPx)
+                        return@ImageGetter drawable
+                    }
+                }
+                null
+            }
+        } else null
+
+        return Html.fromHtml(sb.toString(), Html.FROM_HTML_MODE_LEGACY, imageGetter, null)
     }
 
     private fun fetchYahooChartQuote(symbol: String): Pair<Double, Double>? {

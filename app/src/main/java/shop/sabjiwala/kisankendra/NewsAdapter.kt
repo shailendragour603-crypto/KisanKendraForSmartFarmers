@@ -118,11 +118,13 @@ class NewsAdapter(
 
         // Dynamic AI translation for categories, title, and description
         CoroutineScope(Dispatchers.Main).launch {
-            if (activeLang != "en") {
-                val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
+            val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
+            if (translatedTitle.isNotBlank()) {
                 binding.tvNewsTitle.text = translatedTitle
+            }
 
-                val translatedDesc = TranslationHelper.translateText(context, descriptionExcerpt, activeLang)
+            val translatedDesc = TranslationHelper.translateText(context, descriptionExcerpt, activeLang)
+            if (translatedDesc.isNotBlank()) {
                 val cleanTranslatedDesc = RichTextHelper.getExcerptWithoutFirstSubtitle(translatedDesc)
                 binding.tvNewsDescription.text = RichTextHelper.formatRichText(cleanTranslatedDesc)
             }

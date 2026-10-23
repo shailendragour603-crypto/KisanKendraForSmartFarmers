@@ -199,6 +199,14 @@ class MandiFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Trigger In-App Mandi Rates Auto-Sync (12:30 PM to 9:00 PM IST every 30 mins)
+        context?.let { ctx ->
+            shop.sabjiwala.kisankendra.utils.MandiAutoSyncManager.schedulePeriodicSync(ctx)
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                shop.sabjiwala.kisankendra.utils.MandiAutoSyncManager.performAutoSyncIfEligible(ctx)
+            }
+        }
+
         setupBackPressHandler()
         alertListenerRegistration = ScreenAlertHelper.setupScreenAlert(requireContext(), "mandi_screen", binding.alertBanner)
 

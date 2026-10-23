@@ -213,6 +213,14 @@
             android:exported="false"
             android:theme="@style/Theme_KisanKendra_NoActionBar" />
 
+        <activity
+            android:name=".SportsActivity"
+            android:exported="false"
+            android:label="Sports &amp; Cricket"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme_KisanKendra_NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- FileProvider for camera capture -->
         <provider
             android:name="androidx.core.content.FileProvider"

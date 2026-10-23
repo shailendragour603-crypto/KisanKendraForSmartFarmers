@@ -109,6 +109,7 @@ class HomeFragment : Fragment() {
 
         setupSwipeToRefresh()
         setupWelcomeBanner()
+
         setupToolTabs()
         setupKhataSection()
         setupCalculatorSection()
@@ -187,7 +188,9 @@ class HomeFragment : Fragment() {
                     adUnitId = "ca-app-pub-3054731531860427/9592937417"
                     val displayMetrics = ctx.resources.displayMetrics
                     val density = displayMetrics.density
-                    val adWidth = (displayMetrics.widthPixels / density).toInt()
+                    val containerWidthPx = container.width.takeIf { it > 0 }
+                        ?: (displayMetrics.widthPixels - (32 * density).toInt())
+                    val adWidth = (containerWidthPx / density).toInt().coerceAtLeast(300)
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, adWidth))
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {
@@ -297,16 +300,10 @@ class HomeFragment : Fragment() {
                 binding.chipToolWeather.text = transWeather
             }
 
-            val transBestHeader = TranslationHelper.getDirectTranslation("Most Profitable Crop", activeLang, safeCtx)
-                ?: TranslationHelper.translateText(safeCtx, "Most Profitable Crop", activeLang)
-            val transCostlyHeader = TranslationHelper.getDirectTranslation("Highest Expense Crop", activeLang, safeCtx)
-                ?: TranslationHelper.translateText(safeCtx, "Highest Expense Crop", activeLang)
             val transComparisonHeader = TranslationHelper.getDirectTranslation("Crop Performance Comparison:", activeLang, safeCtx)
                 ?: TranslationHelper.translateText(safeCtx, "Crop Performance Comparison:", activeLang)
 
             if (_binding != null && isAdded) {
-                binding.tvHeaderMostProfitable.text = "🚀 $transBestHeader"
-                binding.tvHeaderHighestExpense.text = "💸 $transCostlyHeader"
                 binding.tvHeaderCropComparison.text = transComparisonHeader
                 binding.tvHeaderCropComparison.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
                 binding.tvHeaderCropComparison.compoundDrawablePadding = (6 * requireContext().resources.displayMetrics.density).toInt()
@@ -751,37 +748,6 @@ class HomeFragment : Fragment() {
 
         binding.containerDashboardAnalytics.visibility = View.VISIBLE
         cropAnalyticsAdapter?.updateData(activeCycles, khataItems)
-
-        // Calculate Net Profit and Expense per cycle
-        val cycleProfits = activeCycles.map { cycle ->
-            val items = khataItems.filter { it.cropCycleId == cycle.id || (it.cropCycleId.isBlank() && it.cropName.equals(cycle.cropName, ignoreCase = true)) }
-            val exp = items.filter { !it.isIncome }.sumOf { it.amount }
-            val inc = items.filter { it.isIncome }.sumOf { it.amount }
-            val net = inc - exp
-            Triple(cycle, exp, net)
-        }
-
-        val best = cycleProfits.maxByOrNull { it.third }
-        val costly = cycleProfits.maxByOrNull { it.second }
-
-        val safeCtx = context ?: return
-        if (best != null && best.third > 0) {
-            val transCrop = TranslationHelper.getTranslatedCropName(best.first.cropName, activeLang, safeCtx)
-            binding.tvDashboardBestCrop.text = "$transCrop (+${numberFormat.format(best.third)})"
-        } else {
-            val noProfitMsg = TranslationHelper.getDirectTranslation("No Profit Recorded", activeLang)
-                ?: if (activeLang == "hi") "कोई लाभ दर्ज नहीं" else "No Profit Recorded"
-            binding.tvDashboardBestCrop.text = noProfitMsg
-        }
-
-        if (costly != null && costly.second > 0) {
-            val transCrop = TranslationHelper.getTranslatedCropName(costly.first.cropName, activeLang, safeCtx)
-            binding.tvDashboardCostlyCrop.text = "$transCrop (-${numberFormat.format(costly.second)})"
-        } else {
-            val noExpMsg = TranslationHelper.getDirectTranslation("No Expense Recorded", activeLang)
-                ?: if (activeLang == "hi") "कोई खर्च दर्ज नहीं" else "No Expense Recorded"
-            binding.tvDashboardCostlyCrop.text = noExpMsg
-        }
     }
 
     private fun showAddCropCycleDialog() {

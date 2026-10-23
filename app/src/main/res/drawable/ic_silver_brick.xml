@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Shadow Base -->
+    <path
+        android:fillColor="#40000000"
+        android:pathData="M2,18.5 L22,18.5 L20,20.5 L4,20.5 Z" />
+    <!-- Front Face Gradient -->
+    <path
+        android:pathData="M3,12 L21,12 L19,18 L5,18 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="3"
+                android:startY="12"
+                android:endX="21"
+                android:endY="18"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#E0E0E0" />
+                <item android:offset="0.5" android:color="#BDBDBD" />
+                <item android:offset="1.0" android:color="#757575" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Top Bevel Face Gradient -->
+    <path
+        android:pathData="M5,6 L19,6 L21,12 L3,12 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="5"
+                android:startY="6"
+                android:endX="21"
+                android:endY="12"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="0.6" android:color="#F5F5F5" />
+                <item android:offset="1.0" android:color="#E0E0E0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Inner Metallic Highlight Ring -->
+    <path
+        android:pathData="M7,8 L17,8 L18,10.5 L6,10.5 Z"
+        android:fillColor="#60FFFFFF" />
+</vector>

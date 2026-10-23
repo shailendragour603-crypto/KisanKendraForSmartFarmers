@@ -18,7 +18,7 @@
 
     <item
         android:id="@+id/nav_crop_care"
-        android:icon="@drawable/ic_color_graphs"
+        android:icon="@drawable/ic_crop_care"
         android:title="@string/nav_crop_care" />
 
     <item

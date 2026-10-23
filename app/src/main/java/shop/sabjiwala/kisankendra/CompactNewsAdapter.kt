@@ -59,8 +59,8 @@ class CompactNewsAdapter(
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            if (activeLang != "en") {
-                val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
+            val translatedTitle = TranslationHelper.translateText(context, item.title, activeLang)
+            if (translatedTitle.isNotBlank()) {
                 binding.tvCompactNewsTitle.text = translatedTitle
             }
 

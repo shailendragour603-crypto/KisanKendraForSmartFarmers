@@ -39,14 +39,21 @@ class MandiRepository {
     }
 
     private val api: MandiApiService by lazy {
+        val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+
         Retrofit.Builder()
             .baseUrl("https://api.data.gov.in/")
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(MandiApiService::class.java)
     }
 
-    suspend fun fetchMandiRatesFromApi(apiKey: String, limit: Int = 1000): List<MandiRecord> = withContext(Dispatchers.IO) {
+    suspend fun fetchMandiRatesFromApi(apiKey: String, limit: Int = 2500): List<MandiRecord> = withContext(Dispatchers.IO) {
         val allRecords = mutableListOf<MandiRecord>()
         var currentOffset = 0
         val maxPages = 50 // Up to 50 pages x 1,000 = 50,000 records max to capture expanding datasets

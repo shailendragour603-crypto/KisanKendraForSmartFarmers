@@ -71,6 +71,8 @@
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
 
+
+
         <!-- 4 Tool Selector Chips (Scrollable like News categories) -->
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -342,89 +344,7 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="8dp">
 
-                <!-- Highlights Row: Best Crop & Costly Crop -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="3dp"
-                        app:cardBackgroundColor="@color/card_surface_bg"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/card_stroke_color"
-                        app:strokeWidth="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="10dp">
-
-                            <TextView
-                                android:id="@+id/tvHeaderMostProfitable"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🚀 Most Profitable Crop"
-                                android:textColor="@color/price_modal_text"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvDashboardBestCrop"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Wheat (+₹34,250)"
-                                android:textColor="@color/price_modal_text"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="3dp"
-                        app:cardBackgroundColor="@color/card_surface_bg"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/card_stroke_color"
-                        app:strokeWidth="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="10dp">
-
-                            <TextView
-                                android:id="@+id/tvHeaderHighestExpense"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="💸 Highest Expense Crop"
-                                android:textColor="@color/price_min_text"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvDashboardCostlyCrop"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Tomato (-₹12,400)"
-                                android:textColor="@color/price_min_text"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvHeaderCropComparison"

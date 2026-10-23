@@ -30,9 +30,11 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.content.Context
+import android.graphics.drawable.AnimatedVectorDrawable
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
@@ -117,6 +119,12 @@ class MainActivity : AppCompatActivity() {
 
         // 🔹 Silently sync central Gemini API key from Cloud
         shop.sabjiwala.kisankendra.utils.GeminiConfigHelper.fetchRemoteApiKey(this)
+
+        // 🔹 Schedule & Perform In-App Mandi Rates Auto-Sync (12:30 PM to 9:00 PM IST every 30 mins)
+        shop.sabjiwala.kisankendra.utils.MandiAutoSyncManager.schedulePeriodicSync(this)
+        lifecycleScope.launch(Dispatchers.IO) {
+            shop.sabjiwala.kisankendra.utils.MandiAutoSyncManager.performAutoSyncIfEligible(applicationContext)
+        }
 
         // 🔹 2. Start Animated Extended Splash Screen
         val skipSplash = intent.getBooleanExtra("skip_splash", false)
@@ -220,6 +228,12 @@ class MainActivity : AppCompatActivity() {
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        binding.btnSportsTopBar.setOnClickListener {
+            startActivity(Intent(this, SportsActivity::class.java))
+        }
+        setupSportsAnimation()
+        listenForSportsConfig()
 
         subscribeToNotificationTopics()
         listenForLivePushNotifications()
@@ -371,10 +385,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupSportsAnimation() {
+        val pulse = ObjectAnimator.ofPropertyValuesHolder(
+            binding.btnSportsTopBar,
+            PropertyValuesHolder.ofFloat("scaleX", 1.0f, 1.12f),
+            PropertyValuesHolder.ofFloat("scaleY", 1.0f, 1.12f),
+            PropertyValuesHolder.ofFloat("alpha", 0.85f, 1.0f)
+        ).apply {
+            duration = 750
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+        }
+        pulse.start()
+    }
+
+    private fun listenForSportsConfig() {
+        FirebaseFirestore.getInstance()
+            .collection("app_config")
+            .document("sports_config")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    binding.btnSportsTopBar.visibility = View.VISIBLE
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val showSports = snapshot.getBoolean("show_sports_button") ?: true
+                    binding.btnSportsTopBar.visibility = if (showSports) View.VISIBLE else View.GONE
+                } else {
+                    binding.btnSportsTopBar.visibility = View.VISIBLE
+                }
+            }
+    }
+
     private fun updateLanguageDropdownText() {
         val currentCode = LocaleHelper.getPersistedLanguage(this)
         val isEnglish = currentCode == "en"
-        binding.btnLanguageDropdown.text = if (isEnglish) "English ⇄" else "हिंदी ⇄"
+        binding.btnLanguageDropdown.text = if (isEnglish) "अ" else "A"
     }
 
     private fun setupBottomNavigation() {

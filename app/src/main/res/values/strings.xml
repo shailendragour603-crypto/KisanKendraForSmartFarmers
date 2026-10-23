@@ -70,4 +70,9 @@
     <string name="privacy_title">Privacy Policy</string>
     <!-- Google Web Client ID -->
     <string name="default_web_client_id" translatable="false">425108111333-4aokaf8qrmhhei03li3gt49n1f1oe1t4.apps.googleusercontent.com</string>
+
+    <!-- Sports Screen String -->
+    <string name="sports_screen_title">Sports &amp; Cricket</string>
+    <string name="language_toggle">Language Toggle</string>
+    <string name="lang_toggle_display">अ</string>
 </resources>

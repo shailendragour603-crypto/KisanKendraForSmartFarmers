@@ -679,7 +679,10 @@ class KisanDiaryDashboardActivity : AppCompatActivity() {
                 val adView = AdView(this).apply {
                     adUnitId = "ca-app-pub-3054731531860427/9592937417"
                     val displayMetrics = resources.displayMetrics
-                    val adWidth = (displayMetrics.widthPixels / displayMetrics.density).toInt().coerceAtLeast(300)
+                    val density = displayMetrics.density
+                    val containerWidthPx = container.width.takeIf { it > 0 }
+                        ?: (displayMetrics.widthPixels - (40 * density).toInt())
+                    val adWidth = (containerWidthPx / density).toInt().coerceAtLeast(300)
                     val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@KisanDiaryDashboardActivity, adWidth)
                     setAdSize(adSize)
                     adListener = object : AdListener() {

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainSports"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_farmer_surface">
+
+    <!-- Top Action Bar -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/card_surface_bg"
+        app:strokeWidth="0dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:paddingHorizontal="12dp">
+
+            <ImageButton
+                android:id="@+id/btnBackSports"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_close"
+                app:tint="@color/farmer_green_dark" />
+
+            <ImageButton
+                android:id="@+id/btnRefreshSports"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Refresh"
+                android:src="@drawable/ic_refresh"
+                app:tint="@color/farmer_green_dark" />
+
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- WebView Container (No SwipeRefresh interfere with internal scrolling) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/webViewSports"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ProgressBar
+            android:id="@+id/progressBarSports"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/farmer_green_primary" />
+
+    </FrameLayout>
+
+    <!-- Bottom Banner Ad Container -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardAdSports"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/card_surface_bg"
+        app:strokeWidth="0dp">
+
+        <FrameLayout
+            android:id="@+id/adContainerSports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingVertical="4dp" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

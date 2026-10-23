@@ -111,15 +111,13 @@ class CropAnalyticsAdapter(
             holder.tvNetProfit.setTextColor(ContextCompat.getColor(context, R.color.price_max_text))
             holder.tvNetProfitLabel.text = transNetProfitDirect
             holder.tvNetProfitLabel.setTextColor(ContextCompat.getColor(context, R.color.price_max_text))
-            holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_color_graphs, 0, 0, 0)
-            holder.tvNetProfitLabel.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
+            holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         } else {
             holder.tvNetProfit.text = "- ${numberFormat.format(-netProfit)}"
             holder.tvNetProfit.setTextColor(ContextCompat.getColor(context, R.color.price_min_text))
             holder.tvNetProfitLabel.text = transNetLossDirect
             holder.tvNetProfitLabel.setTextColor(ContextCompat.getColor(context, R.color.price_min_text))
-            holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_chart, 0, 0, 0)
-            holder.tvNetProfitLabel.compoundDrawablePadding = (6 * context.resources.displayMetrics.density).toInt()
+            holder.tvNetProfitLabel.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         }
 
         val profitPerAcre = if (cycle.areaAcres > 0) netProfit / cycle.areaAcres else netProfit

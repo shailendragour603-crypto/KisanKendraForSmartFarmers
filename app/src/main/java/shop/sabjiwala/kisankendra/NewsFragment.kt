@@ -130,11 +130,14 @@ class NewsFragment : Fragment() {
         if (_binding == null) return
         val ctx = context ?: return
 
+        val activeLang = LocaleHelper.getPersistedLanguage(ctx)
+        binding.tvMarketBadgeLabel.text = if (activeLang == "hi") "बाज़ार" else "MARKETS"
+
         // 1. Immediately set up cached market items (<1ms)
         val cachedItems = MarketTickerHelper.getCachedMarketItems(ctx)
         MarketTickerHelper.setupTickerTextView(
             binding.tvMarketTicker,
-            MarketTickerHelper.buildTickerHtml(cachedItems)
+            MarketTickerHelper.buildTickerHtml(cachedItems, ctx)
         )
 
         // Pulse live red badge dot
@@ -144,7 +147,7 @@ class NewsFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.IO) {
             val safeCtx = context ?: return@launch
             val liveItems = MarketTickerHelper.fetchLiveMarketTicker(safeCtx)
-            val html = MarketTickerHelper.buildTickerHtml(liveItems)
+            val html = MarketTickerHelper.buildTickerHtml(liveItems, safeCtx)
             withContext(Dispatchers.Main) {
                 if (_binding != null && isAdded) {
                     MarketTickerHelper.setupTickerTextView(binding.tvMarketTicker, html)
@@ -806,8 +809,8 @@ class NewsFragment : Fragment() {
         val activeLang = LocaleHelper.getPersistedLanguage(ctx)
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val title = if (activeLang != "en") TranslationHelper.translateText(ctx, item.title, activeLang) else item.title
-            val desc = if (activeLang != "en") TranslationHelper.translateText(ctx, item.description, activeLang) else item.description
+            val title = TranslationHelper.translateText(ctx, item.title, activeLang)
+            val desc = TranslationHelper.translateText(ctx, item.description, activeLang)
 
             val message = RichTextHelper.buildTruncatedNewsShareText(title, desc)
 

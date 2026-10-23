@@ -318,7 +318,9 @@ class KisanAiChatBottomSheet : BottomSheetDialogFragment() {
                     adUnitId = "ca-app-pub-3054731531860427/9592937417"
                     val displayMetrics = ctx.resources.displayMetrics
                     val density = displayMetrics.density
-                    val adWidth = (displayMetrics.widthPixels / density).toInt().coerceAtLeast(300)
+                    val containerWidthPx = binding.adContainerChatBanner.width.takeIf { it > 0 }
+                        ?: (displayMetrics.widthPixels - (32 * density).toInt())
+                    val adWidth = (containerWidthPx / density).toInt().coerceAtLeast(300)
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, adWidth))
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {

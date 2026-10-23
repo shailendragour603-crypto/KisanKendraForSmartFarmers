@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorSurface"
-        app:title="🛡️ Admin Dashboard"
+        app:title="🛡️ Admin Control Panel"
         app:titleTextColor="?android:attr/textColorPrimary" />
 
     <ScrollView
@@ -22,507 +22,588 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:isScrollContainer="true"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Card 1: User Feedback -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageFeedback"
+            <!-- ================================================================= -->
+            <!-- SECTION 1: MANDI & CONTENT TOOLS -->
+            <!-- ================================================================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="📊 Mandi Rates &amp; Content Management"
+                android:textColor="@color/farmer_green_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- Row 1: Emergency Sync & Mandi JSON Upload -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
+                android:layout_marginBottom="10dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Feedback Icon"
-                        android:src="@drawable/ic_feedback"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 1: Emergency Sync -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEmergencySyncMandi"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Sync Icon"
+                            android:src="@android:drawable/ic_popup_sync"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="View User Feedback &amp; Bugs"
+                            android:layout_marginTop="8dp"
+                            android:text="⚡ Live Mandi Sync"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Review user ratings, issues, and support tickets"
+                            android:text="Force API call &amp; update Firebase"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvMandiSyncTimestamp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="🔄 Checking Sync..."
+                            android:textColor="@color/farmer_green_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 2: Manage Reported Forum Posts -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageReportedPosts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Reported Forum Icon"
-                        android:src="@drawable/ic_forum"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 2: Upload Mandi JSON -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardUploadMandiJson"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Upload Icon"
+                            android:src="@android:drawable/ic_menu_upload"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Manage Reported Forum Posts"
+                            android:layout_marginTop="8dp"
+                            android:text="📄 Upload Rates JSON"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Review flagged posts, delete inappropriate content, or dismiss false reports"
+                            android:text="Upload backup rates JSON file"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Card 2: Post News Article -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardPostNews"
+            <!-- Row 2: Post News Article & Edit Master Translations -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="News Icon"
-                        android:src="@drawable/ic_feed_share"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 3: Post News -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardPostNews"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="News Icon"
+                            android:src="@drawable/ic_feed_share"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Post / Create News Article"
+                            android:layout_marginTop="8dp"
+                            android:text="📰 Post News Article"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Publish daily advisory and agri news for farmers"
+                            android:text="Publish advisory &amp; agri news"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 3: Live API Emergency Sync -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardEmergencySyncMandi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Sync Icon"
-                        android:src="@android:drawable/ic_popup_sync"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 4: Manage Translations -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageTranslations"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Translations Icon"
+                            android:src="@android:drawable/ic_menu_sort_alphabetically"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⚡ Emergency Sync Mandi Rates (Live API)"
+                            android:layout_marginTop="8dp"
+                            android:text="🔤 Edit Translations"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Force live API call to data.gov.in &amp; update all states in Firebase"
+                            android:text="Correct Hindi/English terms"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Card 4: Mandi Rates JSON Backup Upload -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardUploadMandiJson"
+            <!-- ================================================================= -->
+            <!-- SECTION 2: COMMUNITY & NOTIFICATIONS -->
+            <!-- ================================================================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="📣 Community &amp; Broadcast Alerts"
+                android:textColor="@color/farmer_green_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- Row 3: User Feedback & Reported Forum Posts -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
+                android:layout_marginBottom="10dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Upload Icon"
-                        android:src="@android:drawable/ic_menu_upload"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 5: Feedback -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageFeedback"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Feedback Icon"
+                            android:src="@drawable/ic_feedback"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Upload Mandi Rates Backup (JSON)"
+                            android:layout_marginTop="8dp"
+                            android:text="💬 User Feedback"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Select a backup .json file from device to update rates"
+                            android:text="Ratings, issues &amp; support"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 5: Review & Edit Master Translations -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageTranslations"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Translations Icon"
-                        android:src="@android:drawable/ic_menu_sort_alphabetically"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 6: Reported Posts -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageReportedPosts"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Reported Forum Icon"
+                            android:src="@drawable/ic_forum"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🔤 Review &amp; Edit Master Translations"
+                            android:layout_marginTop="8dp"
+                            android:text="🚩 Reported Posts"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Search, review, or correct auto-generated translations in Firebase"
+                            android:text="Moderate flagged content"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Card 6: Manage Screen Alerts & Notices -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageScreenAlerts"
+            <!-- Row 4: Send Push Notifications & Screen Alerts -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Alert Icon"
-                        android:src="@android:drawable/ic_dialog_info"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 7: Send Notifications -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageNotifications"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Notification Icon"
+                            android:src="@drawable/ic_notification"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Manage Screen Alerts &amp; Maintenance Notices"
+                            android:layout_marginTop="8dp"
+                            android:text="🔔 Push Notifications"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Set delay notices or warning alerts per screen (Mandi, Weather, Khata, etc.)"
+                            android:text="Broadcast FCM alerts to all"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 5: Manage Push Notifications -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageNotifications"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Notification Icon"
-                        android:src="@drawable/ic_notification"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 8: Screen Alerts -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageScreenAlerts"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Alert Icon"
+                            android:src="@android:drawable/ic_dialog_info"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Send Broadcast Notifications"
+                            android:layout_marginTop="8dp"
+                            android:text="⚠️ Screen Alerts"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Create and broadcast FCM topic notifications for Mandi rates, news, &amp; advisories"
+                            android:text="Set per-screen notice banners"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Card 9: Manage Gemini AI API Key -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardManageGeminiApiKey"
+            <!-- ================================================================= -->
+            <!-- SECTION 3: SYSTEM CONFIG & AI SETTINGS -->
+            <!-- ================================================================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="⚙️ App Configuration &amp; AI Settings"
+                android:textColor="@color/farmer_green_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- Row 5: Gemini AI Key & Sports Header Button -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_surface_bg"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/green_primary"
-                app:strokeWidth="1dp">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Gemini Key Icon"
-                        android:src="@drawable/ic_kisan_ai_logo"
-                        app:tint="@color/farmer_green_primary" />
+                <!-- Card 9: Gemini AI API Key -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageGeminiApiKey"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Gemini Key Icon"
+                            android:src="@drawable/ic_kisan_ai_logo"
+                            app:tint="@color/farmer_green_primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🔑 Manage Gemini AI API Key"
+                            android:layout_marginTop="8dp"
+                            android:text="🔑 Gemini AI Key"
                             android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Centralized Cloud API Key for News AI &amp; Kisan Chatbot. Changes apply instantly without app updates."
+                            android:text="Central AI key for Chatbot"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Card 10: Toggle Sports Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManageSportsButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/card_surface_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/green_primary"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Sports Icon"
+                            android:src="@drawable/ic_sports_live_sticker" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="🏏 Sports Button"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Toggle Live Sports icon"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

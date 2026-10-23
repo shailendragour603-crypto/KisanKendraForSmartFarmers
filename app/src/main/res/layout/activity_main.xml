@@ -28,23 +28,37 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- 🌐 Language Selection Dropdown Pill -->
+            <!-- 🏏 Sports Quick Action Button with Animated LIVE Image -->
+            <ImageButton
+                android:id="@+id/btnSportsTopBar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/sports_screen_title"
+                android:padding="2dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_sports_live_sticker" />
+
+            <!-- 🌐 Language Selection Toggle -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLanguageDropdown"
                 style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="wrap_content"
+                android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginEnd="6dp"
                 android:backgroundTint="#2E7D32"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="0dp"
-                android:text="English ▾"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:text="@string/lang_toggle_display"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 app:cornerRadius="18dp"
-                app:strokeColor="@color/green_light"
-                app:strokeWidth="1dp" />
+                app:strokeWidth="0dp" />
 
             <ImageButton
                 android:id="@+id/btnSettings"

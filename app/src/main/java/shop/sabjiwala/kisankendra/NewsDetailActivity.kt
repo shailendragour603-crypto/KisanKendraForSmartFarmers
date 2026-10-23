@@ -292,9 +292,6 @@ class NewsDetailActivity : AppCompatActivity() {
     }
 
     private fun loadAllArticleAds() {
-        binding.btnCloseTopAd.setOnClickListener {
-            binding.cardTopArticleAd.visibility = View.GONE
-        }
         loadNativeAdIntoContainer(binding.adTopArticleTemplate, binding.cardTopArticleAd)
         loadNativeAdIntoContainer(binding.adInArticleTemplate, binding.adInArticleTemplate.parent?.parent as? View)
         loadNativeAdIntoContainer(binding.adMidArticleTemplate, binding.cardMidArticleAd)
@@ -362,26 +359,36 @@ class NewsDetailActivity : AppCompatActivity() {
         binding.tvLatestNewsHeader.text = defaultLatHeader
 
         translationJob = lifecycleScope.launch(Dispatchers.Main) {
-            if (title.isNotBlank() && activeLang != "en") {
+            if (title.isNotBlank()) {
                 val translatedTitle = TranslationHelper.translateText(this@NewsDetailActivity, title, activeLang)
-                binding.tvDetailTitle.text = translatedTitle
+                if (translatedTitle.isNotBlank()) {
+                    binding.tvDetailTitle.text = translatedTitle
+                }
             }
 
-            if (desc.isNotBlank() && activeLang != "en") {
+            if (desc.isNotBlank()) {
                 val translatedDesc = TranslationHelper.translateText(this@NewsDetailActivity, desc, activeLang)
-                displayDescription(translatedDesc)
+                if (translatedDesc.isNotBlank()) {
+                    displayDescription(translatedDesc)
+                }
             }
 
             if (rawCategory.isNotBlank()) {
                 val translatedCategory = TranslationHelper.translateText(this@NewsDetailActivity, rawCategory, activeLang)
-                binding.tvDetailCategory.text = translatedCategory
+                if (translatedCategory.isNotBlank()) {
+                    binding.tvDetailCategory.text = translatedCategory
+                }
             }
 
             val translatedRel = TranslationHelper.translateText(this@NewsDetailActivity, "संबंधित खबरें", activeLang)
-            binding.tvRelatedNewsHeader.text = translatedRel
+            if (translatedRel.isNotBlank()) {
+                binding.tvRelatedNewsHeader.text = translatedRel
+            }
 
             val translatedLat = TranslationHelper.translateText(this@NewsDetailActivity, "ताज़ा ख़बरें", activeLang)
-            binding.tvLatestNewsHeader.text = translatedLat
+            if (translatedLat.isNotBlank()) {
+                binding.tvLatestNewsHeader.text = translatedLat
+            }
         }
     }
 
