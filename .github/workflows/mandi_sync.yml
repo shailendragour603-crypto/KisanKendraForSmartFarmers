@@ -2,8 +2,8 @@ name: Mandi Rates Daily Auto Sync
 
 on:
   schedule:
-    # Runs every hour at :30 past between 08:00 UTC and 15:00 UTC (1:30 PM IST to 8:30 PM IST)
-    - cron: '30 8-15 * * *'
+    # Runs every 30 minutes between 07:00 UTC and 15:30 UTC (12:30 PM IST to 9:00 PM IST)
+    - cron: '0,30 7-15 * * *'
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
 
 jobs:

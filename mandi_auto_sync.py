@@ -25,7 +25,11 @@ def init_firebase():
     service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
     if service_account_json:
         try:
-            cred_dict = json.loads(service_account_json)
+            clean_str = service_account_json.strip()
+            if not clean_str.startswith("{") and clean_str:
+                import base64
+                clean_str = base64.b64decode(clean_str).decode("utf-8")
+            cred_dict = json.loads(clean_str, strict=False)
             cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred)
             print("Initialized Firebase using FIREBASE_SERVICE_ACCOUNT env var")
@@ -41,7 +45,7 @@ def init_firebase():
         print(f"Initialized Firebase using GOOGLE_APPLICATION_CREDENTIALS path: {cred_path}")
         return firestore.client()
 
-    print("Error: No Firebase credentials found!")
+    print("❌ CRITICAL ERROR: No Firebase credentials found! Please configure FIREBASE_SERVICE_ACCOUNT in GitHub Repository Secrets.")
     return None
 
 db = init_firebase()
@@ -51,9 +55,9 @@ db = init_firebase()
 # ---------------------------------------------------------------------------
 API_URL = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
 API_KEY = "579b464db66ec23bdd000001f0acdf7b0b4943fe5b9998c1304ba55f"
-PAGE_LIMIT = 10000  # Maximum page limit allowed by data.gov.in
-MAX_PAGES = 10      # Up to 10 x 10,000 = 100,000 records max
-MAX_DOC_RECORDS = 2000 # Keep document payload safely under Firestore 1 MB (1,048,576 bytes) limit
+PAGE_LIMIT = 2500   # Stable page limit to avoid connection drops from data.gov.in
+MAX_PAGES = 20      # Up to 20 x 2,500 = 50,000 records max
+MAX_DOC_RECORDS = 2000 # Keep document payload safely under Firestore 1 MB limit
 
 # Load Hindi Translations (Admin Source of Truth from Firebase)
 HINDI_TRANSLATIONS = {}
@@ -303,7 +307,10 @@ def update_price_history_in_firestore(records: list):
 # ---------------------------------------------------------------------------
 def save_records_to_firestore(records: list):
     if not db:
-        print("Dry run complete (No Firestore database handle available).")
+        msg = "❌ CRITICAL: No Firestore database handle available. If running on GitHub Actions, ensure FIREBASE_SERVICE_ACCOUNT is set in Repository Secrets!"
+        print(msg)
+        if os.getenv("GITHUB_ACTIONS") == "true":
+            raise RuntimeError(msg)
         return
 
     if not records:
