@@ -13,24 +13,32 @@ object SportsConfigHelper {
     private const val PREFS_NAME = "sports_config_prefs"
     private const val KEY_SHOW_SPORTS = "show_sports_button"
     private const val KEY_SPORTS_WEB_URL = "sports_web_url"
+    private const val KEY_IS_SYNCED = "is_sports_config_synced"
 
     const val DEFAULT_WEB_URL = "https://cwidget.crictimes.org/?v=1.1&a=2788d3&c=fafafa&bo=ffffff&b=f2f3f2&sb=181930&lb=732d21&lc=2ca03f&db=1c972a&dc=fafafa&tc=0a0a0a&ti=f2f3f2"
 
     /**
      * Checks if the Sports top bar button should be visible based on local SharedPreferences cache.
-     * Default is true.
+     * Defaults to false until confirmed by Firestore to prevent showing a hidden feature on uninitialized devices.
      */
     fun isSportsButtonVisible(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_SHOW_SPORTS, true)
+        val isSynced = prefs.getBoolean(KEY_IS_SYNCED, false)
+        if (!isSynced) {
+            return false
+        }
+        return prefs.getBoolean(KEY_SHOW_SPORTS, false)
     }
 
     /**
-     * Updates the local cache for sports button visibility.
+     * Updates the local cache for sports button visibility and marks config as synced.
      */
     fun saveSportsButtonVisibilityLocally(context: Context, visible: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_SHOW_SPORTS, visible).apply()
+        prefs.edit()
+            .putBoolean(KEY_SHOW_SPORTS, visible)
+            .putBoolean(KEY_IS_SYNCED, true)
+            .apply()
     }
 
     /**

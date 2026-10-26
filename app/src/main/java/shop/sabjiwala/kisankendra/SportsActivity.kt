@@ -327,7 +327,7 @@ class SportsActivity : AppCompatActivity() {
                     try {
                         var style = doc.createElement('style');
                         style.type = 'text/css';
-                        style.innerHTML = 'header, .header, #header, .site-header, .top-header, .navbar, .nav-bar, nav, .top-nav, .logo-bar, .breadcrumb, .breadcrumbs, iframe[src*="google"], iframe[src*="doubleclick"], iframe[src*="amazon"], iframe[src*="taboola"], div[id*="google_ads"], div[id*="div-gpt-ad"], ins.adsbygoogle, .adsbygoogle, .top-ad, .header-ad, .bottom-ad, .footer-ad, .sponsored, .sponsored-links, #sponsored-links, .discover-more, #discover-more, .taboola, .outbrain, .mgid, [class*="paloalto"], [id*="paloalto"], [class*="smartworld"], [id*="smartworld"], [class*="centurian"], [id*="centurian"], a[href*="tickets"], a[href*="jerseys"], footer, .footer, #footer, .copyright, .crictimes-footer, .sidebar, .right-sidebar, #sidebar, .col-md-4, .crictimes-sidebar, div[class*="sidebar"], .widget-sidebar, .share-btn, .social-share, .share-buttons, .share-box, div[class*="share"], div[class*="social"], .shares-count, div[class*="Shares"], .st-custom-button, .st-btn, #st-1, a[href*="whatsapp.com"], a[href*="facebook.com"], a[href*="twitter.com"], a[href*="telegram"] { display: none !important; visibility: hidden !important; height: 0px !important; width: 0px !important; max-width: 0px !important; opacity: 0 !important; pointer-events: none !important; } .col-md-8, .col-lg-8, .col-sm-8, .main-content, #main-content, div[class*="col-md-8"], div[class*="col-lg-8"], div[class*="col-sm-8"] { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }';
+                        style.innerHTML = 'header:not(.match-header):not(.score-header), .site-header, .top-header:not(.match-header), .navbar, .nav-bar, nav, .top-nav, .logo-bar, .breadcrumb, .breadcrumbs, iframe[src*="doubleclick"], iframe[src*="amazon"], iframe[src*="taboola"], div[id*="google_ads"], div[id*="div-gpt-ad"], ins.adsbygoogle, .adsbygoogle, .top-ad, .header-ad, .bottom-ad, .footer-ad, .sponsored, .sponsored-links, #sponsored-links, .discover-more, #discover-more, .taboola, .outbrain, .mgid, [class*="paloalto"], [id*="paloalto"], [class*="smartworld"], [id*="smartworld"], [class*="centurian"], [id*="centurian"], a[href*="tickets"], a[href*="jerseys"], footer, .footer, #footer, .copyright, .crictimes-footer, .sidebar, .right-sidebar, #sidebar, .col-md-4, .crictimes-sidebar, div[class*="sidebar"], .widget-sidebar, .share-btn, .social-share, .share-buttons, .share-box, div[class*="share"], div[class*="social"], .shares-count, div[class*="Shares"], .st-custom-button, .st-btn, #st-1, a[href*="whatsapp.com"], a[href*="facebook.com"], a[href*="twitter.com"], a[href*="telegram"] { display: none !important; visibility: hidden !important; height: 0px !important; width: 0px !important; max-width: 0px !important; opacity: 0 !important; pointer-events: none !important; } .match-header, .match-status, .match-result, .result, .result-text, .status-bar, .score-status, .match-note, .score-box, .match-info, .score-summary { display: block !important; visibility: visible !important; opacity: 1 !important; height: auto !important; } .col-md-8, .col-lg-8, .col-sm-8, .main-content, #main-content, div[class*="col-md-8"], div[class*="col-lg-8"], div[class*="col-sm-8"] { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }';
                         (doc.head || doc.documentElement).appendChild(style);
                     } catch(e) {}
                 }
@@ -337,7 +337,7 @@ class SportsActivity : AppCompatActivity() {
                     injectAdBlockCss(doc);
                     try {
                         var selectors = [
-                            'header', '.header', '#header', '.site-header', '.top-header', '.navbar', '.nav-bar', 'nav', '.top-nav', '.logo-bar', '.breadcrumb', '.breadcrumbs',
+                            'header:not(.match-header)', '.site-header', '.navbar', '.nav-bar', 'nav', '.top-nav', '.logo-bar', '.breadcrumb', '.breadcrumbs',
                             'ins.adsbygoogle', '.adsbygoogle',
                             'div[class*="ad-"]', 'div[id*="ad-"]',
                             'div[class*="sponsor"]', 'div[id*="sponsor"]',
@@ -373,63 +373,168 @@ class SportsActivity : AppCompatActivity() {
                     if (!doc) return;
                     try {
                         var root = doc.body || doc;
-                        var headers = root.querySelectorAll('th, td, span, div');
+                        var headers = root.querySelectorAll('th, td, span, div, p');
                         for (var i = 0; i < headers.length; i++) {
                             var el = headers[i];
                             if (el.children && el.children.length > 0) continue;
-                            var txt = (el.innerText || el.textContent || '').trim();
-                            if (txt === 'R') {
-                                el.innerText = 'रन';
+                            var origTxt = (el.innerText || el.textContent || '').trim();
+                            var txt = origTxt.toLowerCase().replace(/[^a-z0-9\/]/g, '');
+
+                            if (txt === 'r' || txt === 'runs') {
+                                el.innerText = 'R';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'B') {
-                                el.innerText = 'गेंद';
+                            } else if (txt === 'b' || txt === 'balls') {
+                                el.innerText = 'B';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === '4s') {
-                                el.innerText = 'चौके';
+                            } else if (txt === '4s' || txt === '4') {
+                                if (origTxt.indexOf('4') !== -1) {
+                                    el.innerText = '4s';
+                                    el.classList.add('notranslate');
+                                    el.setAttribute('translate', 'no');
+                                }
+                            } else if (txt === '6s' || txt === '6') {
+                                if (origTxt.indexOf('6') !== -1) {
+                                    el.innerText = '6s';
+                                    el.classList.add('notranslate');
+                                    el.setAttribute('translate', 'no');
+                                }
+                            } else if (txt === 'sr') {
+                                el.innerText = 'SR';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === '6s') {
-                                el.innerText = 'छक्के';
+                            } else if (txt === 'o' || txt === 'over' || txt === 'overs') {
+                                el.innerText = 'O';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'SR') {
-                                el.innerText = 'स्ट्राइक रेट';
+                            } else if (txt === 'm' || txt === 'maiden' || txt === 'maidens') {
+                                el.innerText = 'M';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'O') {
-                                el.innerText = 'ओवर';
+                            } else if (txt === 'w' || txt === 'wickets') {
+                                el.innerText = 'W';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'M') {
-                                el.innerText = 'मेडन';
+                            } else if (txt === 'eco' || txt === 'econ' || txt === 'economy' || txt === 'ec' || txt === 'er') {
+                                el.innerText = 'Eco';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'W') {
-                                el.innerText = 'विकेट';
+                            } else if (txt === 'nb' || txt === 'noball' || txt === 'noballs' || txt === 'n/b') {
+                                el.innerText = 'NB';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'Econ' || txt === 'EC' || txt === 'eco' || txt === 'ECO') {
-                                el.innerText = 'इकोनॉमी';
+                            } else if (txt === 'wd' || txt === 'wide' || txt === 'wides' || txt === 'w/d') {
+                                el.innerText = 'WD';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'NB' || txt === 'nb') {
-                                el.innerText = 'नो बॉल';
+                            } else if (txt === 'extras') {
+                                el.innerText = 'Extras';
                                 el.classList.add('notranslate');
                                 el.setAttribute('translate', 'no');
-                            } else if (txt === 'WD' || txt === 'wd') {
-                                el.innerText = 'वाइड';
-                                el.classList.add('notranslate');
-                                el.setAttribute('translate', 'no');
-                            } else if (txt === 'Extras' || txt === 'extras') {
-                                el.innerText = 'अतिरिक्त';
-                                el.classList.add('notranslate');
-                                el.setAttribute('translate', 'no');
-                            } else if (txt === 'LB' || txt === 'lb') {
-                                el.innerText = 'लेग बाय';
-                                el.classList.add('notranslate');
-                                el.setAttribute('translate', 'no');
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                function translateDismissalText(txt) {
+                    if (!txt || typeof txt !== 'string') return txt;
+                    var s = txt.trim();
+                    if (!s) return s;
+
+                    if (/\bnot\s*out\b|\bnotout\b/i.test(s)) {
+                        return "नाबाद *";
+                    }
+
+                    s = s.replace(/\bc\s*&\s*b\s+([A-Za-z0-9\s.-]+)/gi, "कैच व गेंद $1");
+                    s = s.replace(/\bc\s+([A-Za-z0-9\s.-]+)\s+b\s+([A-Za-z0-9\s.-]+)/gi, "कैच $1 गेंद $2");
+                    s = s.replace(/\blbw\s+(?:b\s+)?([A-Za-z0-9\s.-]+)/gi, "एलबीडब्ल्यू गेंद $1");
+                    s = s.replace(/\bst\s+([A-Za-z0-9\s.-]+)\s+b\s+([A-Za-z0-9\s.-]+)/gi, "स्टंप $1 गेंद $2");
+                    s = s.replace(/\bb\s+([A-Za-z0-9\s.-]+)/gi, "बोल्ड $1");
+                    s = s.replace(/\brun\s*out\s*(?:\(([^)]+)\)|([A-Za-z0-9\s.-]+))?/gi, function(m, p1, p2) {
+                        var who = p1 || p2 || "";
+                        return who ? ("रन आउट (" + who.trim() + ")") : "रन आउट";
+                    });
+                    s = s.replace(/\bhit\s*wicket\s+(?:b\s+)?([A-Za-z0-9\s.-]+)/gi, "हिट विकेट गेंद $1");
+                    s = s.replace(/\bretired\s+hurt\b/gi, "रिटायर्ड हर्ट");
+
+                    return s;
+                }
+
+                function fixBatsmenAndBowlerScorecard(doc) {
+                    if (!doc) return;
+                    try {
+                        var root = doc.body || doc;
+
+                        var statusEls = root.querySelectorAll('.match-header, .score-box, .match-status, .match-result, .result, .result-text, .status-bar, .score-status, .match-note, .match-info, .score-summary, [class*="result"], [class*="status"]');
+                        for (var s = 0; s < statusEls.length; s++) {
+                            var sel = statusEls[s];
+                            if (!sel.classList.contains('adsbygoogle') && !sel.classList.contains('taboola') && !sel.classList.contains('mgid')) {
+                                sel.style.display = 'block';
+                                sel.style.visibility = 'visible';
+                                sel.style.opacity = '1';
+                                sel.style.height = 'auto';
+                                if (sel.classList.contains('match-status') || sel.classList.contains('match-result') || sel.classList.contains('result-text') || sel.classList.contains('status-bar') || sel.classList.contains('match-note')) {
+                                    sel.style.fontSize = '15px';
+                                    sel.style.fontWeight = 'bold';
+                                    sel.style.color = '#1b5e20';
+                                    sel.style.padding = '8px 12px';
+                                    sel.style.margin = '8px 0';
+                                    sel.style.backgroundColor = '#e8f5e9';
+                                    sel.style.borderRadius = '6px';
+                                }
+                            }
+                        }
+
+                        var rows = root.querySelectorAll('tr, .batsman-row, .scorecard-row, div[class*="batsman"]');
+                        for (var r = 0; r < rows.length; r++) {
+                            var row = rows[r];
+                            var cells = row.querySelectorAll('td, th, .cell, div[class*="col"]');
+                            if (cells.length >= 2) {
+                                var nameEl = cells[0];
+                                var dismissEl = cells[1];
+
+                                if (nameEl && dismissEl) {
+                                    var nameTxt = (nameEl.innerText || nameEl.textContent || '').trim();
+                                    var dismissTxt = (dismissEl.innerText || dismissEl.textContent || '').trim();
+
+                                    if (nameTxt && dismissTxt) {
+                                        var isNotOut = /\bnot\s*out\b|\bnotout\b|\bनाबाद\b|\*/i.test(dismissTxt) || /\*/.test(nameTxt);
+
+                                        if (isNotOut) {
+                                            dismissEl.innerText = (activeLang === 'hi') ? 'नाबाद *' : 'not out *';
+                                            dismissEl.style.fontWeight = 'bold';
+                                            dismissEl.style.color = '#1b5e20';
+                                            dismissEl.classList.add('notranslate');
+                                            dismissEl.setAttribute('translate', 'no');
+
+                                            if (!nameTxt.includes('*')) {
+                                                nameEl.innerText = nameTxt + ' *';
+                                            }
+                                            nameEl.style.fontWeight = 'bold';
+                                            nameEl.style.color = '#1b5e20';
+                                            row.style.backgroundColor = '#f1f8e9';
+                                        } else if (dismissTxt && !/^\d+$/.test(dismissTxt) && !/^(runs|balls|4s|6s|sr|r|b|o|m|w|econ|nb|wd)$/i.test(dismissTxt)) {
+                                            if (activeLang === 'hi') {
+                                                var formattedDismissal = translateDismissalText(dismissTxt);
+                                                if (formattedDismissal) {
+                                                    dismissEl.innerText = formattedDismissal;
+                                                }
+                                            }
+                                            dismissEl.style.fontWeight = 'normal';
+                                            dismissEl.style.color = '#555555';
+                                            dismissEl.classList.add('notranslate');
+                                            dismissEl.setAttribute('translate', 'no');
+
+                                            if (nameTxt.includes('*')) {
+                                                nameEl.innerText = nameTxt.replace(/\*/g, '').trim();
+                                            }
+                                            nameEl.style.fontWeight = 'normal';
+                                            nameEl.style.color = '#212121';
+                                            row.style.backgroundColor = 'transparent';
+                                        }
+                                    }
+                                }
                             }
                         }
                     } catch(e) {}
@@ -448,6 +553,18 @@ class SportsActivity : AppCompatActivity() {
                                 el.style.opacity = '1';
                                 el.style.height = 'auto';
                             }
+                        }
+                        var statusEls = root.querySelectorAll('.match-status, .match-result, .result-text, .status-bar, .score-status, .match-note');
+                        for (var j = 0; j < statusEls.length; j++) {
+                            var sel = statusEls[j];
+                            sel.style.fontSize = '16px';
+                            sel.style.fontWeight = 'bold';
+                            sel.style.color = '#1b5e20';
+                            sel.style.padding = '8px 12px';
+                            sel.style.margin = '8px 0';
+                            sel.style.backgroundColor = '#e8f5e9';
+                            sel.style.borderRadius = '6px';
+                            sel.style.display = 'block';
                         }
                     } catch(e) {}
                 }
@@ -505,6 +622,15 @@ class SportsActivity : AppCompatActivity() {
                     s = s.replace(/\bwon\s+the\s+toss\b/gi, "टॉस जीता");
                     s = s.replace(/\bopted\s+to\s+bat\b/gi, "बल्लेबाजी चुनी");
                     s = s.replace(/\bopted\s+to\s+bowl\b/gi, "गेंदबाजी चुनी");
+                    s = s.replace(/\bwon\s+by\s+(\d+)\s+runs?\b/gi, "$1 रन से जीता");
+                    s = s.replace(/\bwon\s+by\s+(\d+)\s+wickets?\b/gi, "$1 विकेट से जीता");
+                    s = s.replace(/\bwon\s+by\s+(\d+)\s+runs?\s+\(DLS\)\b/gi, "$1 रन से जीता (DLS)");
+                    s = s.replace(/\bwon\s+by\s+(\d+)\s+wickets?\s+\(DLS\)\b/gi, "$1 विकेट से जीता (DLS)");
+                    s = s.replace(/\bmatch\s+tied\b/gi, "मैच टाई रहा");
+                    s = s.replace(/\bno\s+result\b/gi, "कोई परिणाम नहीं");
+                    s = s.replace(/\bin\s+progress\b/gi, "जारी है");
+                    s = s.replace(/\bmatch\s+delayed\b/gi, "मैच में देरी");
+                    s = s.replace(/\brain\s+delay\b/gi, "बारिश की वजह से रुकावट");
                     s = s.replace(/\bRecent\b/gi, "हालिया");
                     s = s.replace(/\bLive\b/gi, "लाइव");
                     s = s.replace(/\bUpcoming\b/gi, "आगामी");
@@ -570,9 +696,9 @@ class SportsActivity : AppCompatActivity() {
                     fixMatchHeaderAndScores(document);
                     if (activeLang === 'hi') {
                         fixScorecardHeaders(document);
+                        fixBatsmenAndBowlerScorecard(document);
                         injectGoogleTranslateEngine(document);
                         convertDocTimes(document);
-                        translateTree(document);
                     }
                     try {
                         var iframes = document.getElementsByTagName('iframe');
@@ -584,9 +710,9 @@ class SportsActivity : AppCompatActivity() {
                                     fixMatchHeaderAndScores(fDoc);
                                     if (activeLang === 'hi') {
                                         fixScorecardHeaders(fDoc);
+                                        fixBatsmenAndBowlerScorecard(fDoc);
                                         injectGoogleTranslateEngine(fDoc);
                                         convertDocTimes(fDoc);
-                                        translateTree(fDoc);
                                     }
                                 }
                             } catch(e) {}

@@ -288,7 +288,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                     REQUIRED ARTICLE STRUCTURE & FORMATTING RULES:
                     1. ALWAYS WRITE AND OUTPUT ALL FIELDS (title, category, description) STRICTLY IN CASUAL HINDI ONLY.
                     2. Structure the article with a clear title, subtitle headings starting with ### (e.g. ### 🌾 मुख्य बातें, ### 📋 जरूरी बातें या लाभ), and well-written informative paragraphs.
-                    3. EXCLUDE ALL EXTERNAL LINKS, source URLs, or website references. Do NOT include any website links or web URLs in the text.
+                    3. INCLUDE OFFICIAL GOVERNMENT PORTALS & WEBSITE LINKS WHEN RELEVANT: If the article or scheme involves an official government portal, official website, or online application link (e.g. pmkisan.gov.in, pmfby.gov.in, state portal, or any official URL in the input content), include the relevant official link(s) in markdown format [पोर्टल या वेबसाइट का नाम](https://...) or as clickable URLs so farmers can easily visit the official portal.
                     4. TOKEN EFFICIENCY: Be strictly point-to-point, highly informative, and direct without filler text or unnecessary words.
                     5. CRITICAL: DO NOT OUTPUT ANY PREAMBLE, COMMENTARY, THINKING PROCESS, OR TEXT BEFORE OR AFTER THE JSON. OUTPUT ONLY THE RAW JSON OBJECT STARTING WITH '{' AND ENDING WITH '}'.
 
@@ -296,7 +296,7 @@ class AdminCreateNewsActivity : AppCompatActivity() {
                     {
                       "title": "किसान भाइयों के लिए एक आकर्षक और स्पष्ट शीर्षक हिंदी में",
                       "category": "News OR Govt Scheme OR Agri Market OR Agri Gyan OR Crop Protection OR Technology OR Success Stories",
-                      "description": "एक विस्तृत, आकर्षक और समृद्ध लेख (rich-text article) जो सरल और बोलचाल की हिंदी में हो, जिसमें ### उपशीर्षक (subtitles) और पैराग्राफ शामिल हों। कोई भी बाहरी लिंक या वेबसाइट का यूआरएल शामिल न करें।",
+                      "description": "एक विस्तृत, आकर्षक और समृद्ध लेख (rich-text article) जो सरल और बोलचाल की हिंदी में हो, जिसमें ### उपशीर्षक (subtitles), पैराग्राफ और आवश्यकतानुसार आधिकारिक सरकारी पोर्टल/वेबसाइट के लिंक [Portal Name](https://...) शामिल हों।",
                       "suggestedImageKeyword": "yojana OR mandi OR gyan"
                     }
                 """.trimIndent()
