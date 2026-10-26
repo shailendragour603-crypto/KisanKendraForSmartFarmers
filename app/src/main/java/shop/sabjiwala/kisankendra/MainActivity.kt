@@ -60,7 +60,9 @@ import androidx.core.widget.ImageViewCompat
 import com.google.android.gms.ads.AdListener
 import shop.sabjiwala.kisankendra.databinding.ActivityMainBinding
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.SportsConfigHelper
 import shop.sabjiwala.kisankendra.utils.TranslationHelper
+import com.google.firebase.firestore.ListenerRegistration
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,6 +70,7 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var sportsConfigListener: ListenerRegistration? = null
 
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
@@ -400,21 +403,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun listenForSportsConfig() {
-        FirebaseFirestore.getInstance()
-            .collection("app_config")
-            .document("sports_config")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    binding.btnSportsTopBar.visibility = View.VISIBLE
-                    return@addSnapshotListener
-                }
-                if (snapshot != null && snapshot.exists()) {
-                    val showSports = snapshot.getBoolean("show_sports_button") ?: true
-                    binding.btnSportsTopBar.visibility = if (showSports) View.VISIBLE else View.GONE
-                } else {
-                    binding.btnSportsTopBar.visibility = View.VISIBLE
-                }
-            }
+        sportsConfigListener?.remove()
+        sportsConfigListener = SportsConfigHelper.listenForSportsConfig(this) { showSports, _ ->
+            binding.btnSportsTopBar.visibility = if (showSports) View.VISIBLE else View.GONE
+        }
     }
 
     private fun updateLanguageDropdownText() {
@@ -726,6 +718,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        sportsConfigListener?.remove()
+        sportsConfigListener = null
         stopSplashAnimations()
         super.onDestroy()
     }

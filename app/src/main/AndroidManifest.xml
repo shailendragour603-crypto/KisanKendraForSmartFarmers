@@ -215,7 +215,7 @@
 
         <activity
             android:name=".SportsActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="Sports &amp; Cricket"
             android:parentActivityName=".MainActivity"
             android:theme="@style/Theme_KisanKendra_NoActionBar"

@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import shop.sabjiwala.kisankendra.databinding.ActivitySportsBinding
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.SportsConfigHelper
 import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdListener
@@ -68,15 +69,17 @@ class SportsActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
+        val activeLang = LocaleHelper.getPersistedLanguage(this)
+
         binding.btnRefreshSports.setOnClickListener {
             binding.progressBarSports.visibility = View.VISIBLE
-            binding.webViewSports.reload()
+            SportsConfigHelper.fetchSportsConfigOnce(this) { _, updatedUrl ->
+                setupWebView(activeLang, updatedUrl)
+            }
         }
 
         loadBannerAd()
         loadInterstitialAd()
-
-        val activeLang = LocaleHelper.getPersistedLanguage(this)
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -85,7 +88,8 @@ class SportsActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
             withContext(Dispatchers.Main) {
-                setupWebView(activeLang)
+                val configuredUrl = SportsConfigHelper.getSportsWebUrl(this@SportsActivity)
+                setupWebView(activeLang, configuredUrl)
             }
         }
 
@@ -101,9 +105,20 @@ class SportsActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun setupWebView(activeLang: String) {
+    private fun setupWebView(activeLang: String, sportsUrl: String = "") {
         val translationMap = buildCricketTranslationMap(activeLang)
         val dictJson = Gson().toJson(translationMap)
+
+        val cookieManager = android.webkit.CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(binding.webViewSports, true)
+        if (activeLang == "hi") {
+            cookieManager.setCookie("https://crictimes.org", "googtrans=/en/hi")
+            cookieManager.setCookie("https://cwidget.crictimes.org", "googtrans=/en/hi")
+        } else {
+            cookieManager.setCookie("https://crictimes.org", "googtrans=/en/en")
+            cookieManager.setCookie("https://cwidget.crictimes.org", "googtrans=/en/en")
+        }
 
         binding.webViewSports.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         binding.webViewSports.settings.apply {
@@ -138,15 +153,20 @@ class SportsActivity : AppCompatActivity() {
             }
         }
 
-        val htmlContent = buildWidgetHtml()
+        val activeUrl = if (sportsUrl.isNotBlank()) sportsUrl else SportsConfigHelper.getSportsWebUrl(this)
 
-        binding.webViewSports.loadDataWithBaseURL(
-            "https://cwidget.crictimes.org/",
-            htmlContent,
-            "text/html",
-            "UTF-8",
-            null
-        )
+        if (activeUrl.contains("cwidget.crictimes.org") || activeUrl.contains("widget")) {
+            val htmlContent = buildWidgetHtml(activeUrl)
+            binding.webViewSports.loadDataWithBaseURL(
+                "https://cwidget.crictimes.org/",
+                htmlContent,
+                "text/html",
+                "UTF-8",
+                null
+            )
+        } else {
+            binding.webViewSports.loadUrl(activeUrl)
+        }
     }
 
     private fun injectTranslationScript(view: WebView?, dictJson: String, activeLang: String) {
@@ -301,31 +321,171 @@ class SportsActivity : AppCompatActivity() {
                     } catch(e) {}
                 }
 
-                function hideFooterButtons(doc) {
+                function injectAdBlockCss(doc) {
+                    if (!doc || doc._adBlockCss) return;
+                    doc._adBlockCss = true;
+                    try {
+                        var style = doc.createElement('style');
+                        style.type = 'text/css';
+                        style.innerHTML = 'header, .header, #header, .site-header, .top-header, .navbar, .nav-bar, nav, .top-nav, .logo-bar, .breadcrumb, .breadcrumbs, iframe[src*="google"], iframe[src*="doubleclick"], iframe[src*="amazon"], iframe[src*="taboola"], div[id*="google_ads"], div[id*="div-gpt-ad"], ins.adsbygoogle, .adsbygoogle, .top-ad, .header-ad, .bottom-ad, .footer-ad, .sponsored, .sponsored-links, #sponsored-links, .discover-more, #discover-more, .taboola, .outbrain, .mgid, [class*="paloalto"], [id*="paloalto"], [class*="smartworld"], [id*="smartworld"], [class*="centurian"], [id*="centurian"], a[href*="tickets"], a[href*="jerseys"], footer, .footer, #footer, .copyright, .crictimes-footer, .sidebar, .right-sidebar, #sidebar, .col-md-4, .crictimes-sidebar, div[class*="sidebar"], .widget-sidebar, .share-btn, .social-share, .share-buttons, .share-box, div[class*="share"], div[class*="social"], .shares-count, div[class*="Shares"], .st-custom-button, .st-btn, #st-1, a[href*="whatsapp.com"], a[href*="facebook.com"], a[href*="twitter.com"], a[href*="telegram"] { display: none !important; visibility: hidden !important; height: 0px !important; width: 0px !important; max-width: 0px !important; opacity: 0 !important; pointer-events: none !important; } .col-md-8, .col-lg-8, .col-sm-8, .main-content, #main-content, div[class*="col-md-8"], div[class*="col-lg-8"], div[class*="col-sm-8"] { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }';
+                        (doc.head || doc.documentElement).appendChild(style);
+                    } catch(e) {}
+                }
+
+                function cleanAndRemoveThirdPartyAds(doc) {
+                    if (!doc) return;
+                    injectAdBlockCss(doc);
+                    try {
+                        var selectors = [
+                            'header', '.header', '#header', '.site-header', '.top-header', '.navbar', '.nav-bar', 'nav', '.top-nav', '.logo-bar', '.breadcrumb', '.breadcrumbs',
+                            'ins.adsbygoogle', '.adsbygoogle',
+                            'div[class*="ad-"]', 'div[id*="ad-"]',
+                            'div[class*="sponsor"]', 'div[id*="sponsor"]',
+                            'div[class*="banner"]', 'div[id*="banner"]',
+                            '.sponsored-links', '#sponsored-links', '.sponsored',
+                            '.crictimes-ad', '.taboola', '.outbrain', '.mgid',
+                            'iframe[src*="doubleclick"]', 'iframe[src*="googlesyndication"]',
+                            'iframe[src*="amazon-adsystem"]', 'iframe[src*="taboola"]',
+                            'a[href*="crictimes.org/widgets-for-your-website"]',
+                            'a[href*="crictimes.org/embed"]',
+                            '.discover-more', '[class*="paloalto"]', '[id*="paloalto"]',
+                            '[class*="smartworld"]', '[id*="smartworld"]',
+                            '[class*="centurian"]', '[id*="centurian"]',
+                            'footer', '.footer', '#footer', '.copyright', '.crictimes-footer', '.widget-footer',
+                            '.sidebar', '.right-sidebar', '#sidebar', '.col-md-4', '.crictimes-sidebar', 'div[class*="sidebar"]', '.widget-sidebar',
+                            '.share-btn', '.social-share', '.share-buttons', '.share-box', 'div[class*="share"]', 'div[class*="social"]', '.shares-count', 'div[class*="Shares"]', '.st-custom-button', '.st-btn', '#st-1'
+                        ];
+                        var root = doc.body || doc;
+                        var els = root.querySelectorAll(selectors.join(','));
+                        for (var i = 0; i < els.length; i++) {
+                            try {
+                                els[i].style.display = 'none';
+                                els[i].style.height = '0px';
+                                els[i].style.opacity = '0';
+                                els[i].style.pointerEvents = 'none';
+                                els[i].remove();
+                            } catch(e){}
+                        }
+                    } catch(e) {}
+                }
+
+                function fixScorecardHeaders(doc) {
                     if (!doc) return;
                     try {
                         var root = doc.body || doc;
-                        var footers = root.querySelectorAll('footer, .footer, #footer, .copyright, .crictimes-footer, .widget-footer');
-                        for (var f = 0; f < footers.length; f++) {
-                            footers[f].style.display = 'none';
-                            footers[f].style.height = '0px';
-                            footers[f].style.opacity = '0';
-                        }
-
-                        var elements = root.querySelectorAll('a, button, div, span, p');
-                        for (var i = 0; i < elements.length; i++) {
-                            var el = elements[i];
-                            var txt = (el.innerText || el.textContent || '').trim().toLowerCase();
-                            if (txt === 'crictimes' || txt === 'crictimes.org' || txt === 'embed' || txt === 'get widget' || txt === 'embed code' || txt === 'get code' || txt === 'crictimes cricket scores') {
-                                if (el.children.length <= 1 || el.tagName === 'A' || el.tagName === 'BUTTON') {
-                                    el.style.display = 'none';
-                                    el.style.visibility = 'hidden';
-                                    el.style.height = '0px';
-                                    el.style.opacity = '0';
-                                    el.style.pointerEvents = 'none';
-                                }
+                        var headers = root.querySelectorAll('th, td, span, div');
+                        for (var i = 0; i < headers.length; i++) {
+                            var el = headers[i];
+                            if (el.children && el.children.length > 0) continue;
+                            var txt = (el.innerText || el.textContent || '').trim();
+                            if (txt === 'R') {
+                                el.innerText = 'रन';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'B') {
+                                el.innerText = 'गेंद';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === '4s') {
+                                el.innerText = 'चौके';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === '6s') {
+                                el.innerText = 'छक्के';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'SR') {
+                                el.innerText = 'स्ट्राइक रेट';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'O') {
+                                el.innerText = 'ओवर';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'M') {
+                                el.innerText = 'मेडन';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'W') {
+                                el.innerText = 'विकेट';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'Econ' || txt === 'EC' || txt === 'eco' || txt === 'ECO') {
+                                el.innerText = 'इकोनॉमी';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'NB' || txt === 'nb') {
+                                el.innerText = 'नो बॉल';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'WD' || txt === 'wd') {
+                                el.innerText = 'वाइड';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'Extras' || txt === 'extras') {
+                                el.innerText = 'अतिरिक्त';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
+                            } else if (txt === 'LB' || txt === 'lb') {
+                                el.innerText = 'लेग बाय';
+                                el.classList.add('notranslate');
+                                el.setAttribute('translate', 'no');
                             }
                         }
+                    } catch(e) {}
+                }
+
+                function fixMatchHeaderAndScores(doc) {
+                    if (!doc) return;
+                    try {
+                        var root = doc.body || doc;
+                        var scoreEls = root.querySelectorAll('.match-header, .score-box, .match-status, .match-result, .result, .team-score, .score-summary, .score, [class*="score"], [class*="result"], [class*="status"]');
+                        for (var i = 0; i < scoreEls.length; i++) {
+                            var el = scoreEls[i];
+                            if (!el.classList.contains('adsbygoogle') && !el.classList.contains('taboola') && !el.classList.contains('mgid')) {
+                                el.style.display = 'block';
+                                el.style.visibility = 'visible';
+                                el.style.opacity = '1';
+                                el.style.height = 'auto';
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                function injectGoogleTranslateEngine(doc) {
+                    if (!doc || doc._gtInjected || activeLang !== 'hi') return;
+                    doc._gtInjected = true;
+                    try {
+                        document.cookie = "googtrans=/en/" + activeLang + "; path=/; domain=.crictimes.org";
+                        document.cookie = "googtrans=/en/" + activeLang + "; path=/;";
+
+                        var gtDiv = doc.createElement('div');
+                        gtDiv.id = 'google_translate_element';
+                        gtDiv.style.display = 'none';
+                        (doc.body || doc.documentElement).appendChild(gtDiv);
+
+                        window.googleTranslateInit = function() {
+                            try {
+                                new google.translate.TranslateElement({
+                                    pageLanguage: 'en',
+                                    includedLanguages: activeLang + ',en',
+                                    autoDisplay: false
+                                }, 'google_translate_element');
+
+                                setTimeout(function() {
+                                    var selectEl = doc.querySelector('.goog-te-combo');
+                                    if (selectEl) {
+                                        selectEl.value = activeLang;
+                                        selectEl.dispatchEvent(new Event('change'));
+                                    }
+                                }, 500);
+                            } catch(e) {}
+                        };
+
+                        var gtScript = doc.createElement('script');
+                        gtScript.type = 'text/javascript';
+                        gtScript.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateInit';
+                        (doc.head || doc.documentElement).appendChild(gtScript);
                     } catch(e) {}
                 }
 
@@ -336,17 +496,45 @@ class SportsActivity : AppCompatActivity() {
                     }).join('');
                 }
 
+                function translateCricketPhrases(text) {
+                    if (!text || typeof text !== 'string') return text;
+                    var s = text;
+
+                    s = s.replace(/\b(\d+)(st|nd|rd|th)\s+T20I?\b/gi, "$1वाँ टी20");
+                    s = s.replace(/\btour\s+of\b/gi, "का दौरा");
+                    s = s.replace(/\bwon\s+the\s+toss\b/gi, "टॉस जीता");
+                    s = s.replace(/\bopted\s+to\s+bat\b/gi, "बल्लेबाजी चुनी");
+                    s = s.replace(/\bopted\s+to\s+bowl\b/gi, "गेंदबाजी चुनी");
+                    s = s.replace(/\bRecent\b/gi, "हालिया");
+                    s = s.replace(/\bLive\b/gi, "लाइव");
+                    s = s.replace(/\bUpcoming\b/gi, "आगामी");
+                    s = s.replace(/\bBatsman\b/gi, "बल्लेबाज़");
+                    s = s.replace(/\bBowler\b/gi, "गेंदबाज़");
+                    s = s.replace(/\bOvers?\b/gi, "ओवर");
+                    s = s.replace(/\bRuns?\b/gi, "रन");
+                    s = s.replace(/\bWickets?\b/gi, "विकेट");
+                    s = s.replace(/\bDetails\b/gi, "विवरण");
+                    s = s.replace(/\bScorecard\b/gi, "स्कोरकार्ड");
+                    s = s.replace(/\bCommentary\b/gi, "कमेंट्री");
+                    s = s.replace(/\bPlaying\s+XI\b/gi, "प्लेइंग 11");
+
+                    return s;
+                }
+
                 function translateText(text) {
                     if (!text || activeLang !== 'hi') return text;
                     var str = String(text);
                     var trimmed = str.trim();
                     if (!trimmed) return text;
 
+                    var phrased = translateCricketPhrases(trimmed);
+                    if (translationDict[phrased]) return translationDict[phrased];
                     if (translationDict[trimmed]) return translationDict[trimmed];
-                    var lower = trimmed.toLowerCase();
+
+                    var lower = phrased.toLowerCase();
                     if (translationDict[lower]) return translationDict[lower];
 
-                    var result = str;
+                    var result = phrased;
                     var keys = Object.keys(translationDict).sort(function(a, b) { return b.length - a.length; });
                     for (var i = 0; i < keys.length; i++) {
                         var k = keys[i];
@@ -378,18 +566,28 @@ class SportsActivity : AppCompatActivity() {
                 }
 
                 function processAllDocs() {
-                    hideFooterButtons(document);
-                    convertDocTimes(document);
-                    translateTree(document);
+                    cleanAndRemoveThirdPartyAds(document);
+                    fixMatchHeaderAndScores(document);
+                    if (activeLang === 'hi') {
+                        fixScorecardHeaders(document);
+                        injectGoogleTranslateEngine(document);
+                        convertDocTimes(document);
+                        translateTree(document);
+                    }
                     try {
                         var iframes = document.getElementsByTagName('iframe');
                         for (var i = 0; i < iframes.length; i++) {
                             try {
                                 var fDoc = iframes[i].contentDocument || (iframes[i].contentWindow && iframes[i].contentWindow.document);
                                 if (fDoc) {
-                                    hideFooterButtons(fDoc);
-                                    convertDocTimes(fDoc);
-                                    translateTree(fDoc);
+                                    cleanAndRemoveThirdPartyAds(fDoc);
+                                    fixMatchHeaderAndScores(fDoc);
+                                    if (activeLang === 'hi') {
+                                        fixScorecardHeaders(fDoc);
+                                        injectGoogleTranslateEngine(fDoc);
+                                        convertDocTimes(fDoc);
+                                        translateTree(fDoc);
+                                    }
                                 }
                             } catch(e) {}
                         }
@@ -398,7 +596,7 @@ class SportsActivity : AppCompatActivity() {
 
                 processAllDocs();
                 if (!window._transInterval) {
-                    window._transInterval = setInterval(processAllDocs, 500);
+                    window._transInterval = setInterval(processAllDocs, 400);
                 }
             })();
         """.trimIndent()
@@ -550,7 +748,32 @@ class SportsActivity : AppCompatActivity() {
                 "UTC" to "IST",
                 "Time(GMT)" to "समय (IST)",
                 "Time (GMT)" to "समय (IST)",
-                "Indian Standard Time" to "भारतीय समयानुसार (IST)"
+                "Indian Standard Time" to "भारतीय समयानुसार (IST)",
+
+                // Detail Page & Scorecard Terms
+                "RECENT" to "🔴 हालिया",
+                "UPCOMING" to "आगामी",
+                "DETAILS" to "विवरण",
+                "Details" to "विवरण",
+                "Batsman" to "बल्लेबाज़",
+                "Bowler" to "गेंदबाज़",
+                "Batting" to "बल्लेबाज़ी",
+                "Bowling" to "गेंदबाज़ी",
+                "Score Card" to "स्कोरकार्ड",
+                "Scorecard" to "स्कोरकार्ड",
+                "Commentary" to "कमेंट्री",
+                "Match Info" to "मैच जानकारी",
+                "Playing XI" to "प्लेइंग 11",
+                "Fall of Wickets" to "विकेट पतन",
+                "Yet to bat" to "बल्लेबाज़ी बाकी",
+                "tour of" to "का दौरा",
+                "win by" to "से जीता",
+                "Cricket match tickets" to "मैच टिकट",
+                "cricket jerseys" to "क्रिकेट जर्सी",
+                "Discover more" to "अन्य जानकारी",
+                "Home" to "होम",
+                "Cricket Scores" to "क्रिकेट स्कोर",
+                "LIVE SCORES" to "🔴 लाइव स्कोर"
             )
             dict.putAll(cricketMap)
         }
@@ -558,7 +781,8 @@ class SportsActivity : AppCompatActivity() {
         return dict
     }
 
-    private fun buildWidgetHtml(): String {
+    private fun buildWidgetHtml(widgetUrl: String = ""): String {
+        val iframeSrc = if (widgetUrl.isNotBlank()) widgetUrl else SportsConfigHelper.DEFAULT_WEB_URL
         return """
             <!DOCTYPE html>
             <html>
@@ -609,7 +833,7 @@ class SportsActivity : AppCompatActivity() {
                 <div id="score-frame"></div>
                 <script type="text/javascript">
                     var html = document.getElementById('score-frame');
-                    html.innerHTML = '<iframe src="https://cwidget.crictimes.org/?v=1.1&a=2788d3&c=fafafa&bo=ffffff&b=f2f3f2&sb=181930&lb=732d21&lc=2ca03f&db=1c972a&dc=fafafa&tc=0a0a0a&ti=f2f3f2" style="width:100%;min-height: 520px;" frameborder="0" scrolling="yes"></iframe>';
+                    html.innerHTML = '<iframe src="$iframeSrc" style="width:100%;min-height: 520px;" frameborder="0" scrolling="yes"></iframe>';
                 </script>
             </body>
             </html>

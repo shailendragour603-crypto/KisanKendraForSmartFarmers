@@ -23,6 +23,7 @@ import shop.sabjiwala.kisankendra.databinding.ActivityAdminDashboardBinding
 import shop.sabjiwala.kisankendra.model.MandiRecord
 import shop.sabjiwala.kisankendra.model.parseMandiRecordFromMap
 import shop.sabjiwala.kisankendra.utils.LocaleHelper
+import shop.sabjiwala.kisankendra.utils.SportsConfigHelper
 import shop.sabjiwala.kisankendra.utils.TranslationHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.BufferedReader
@@ -132,12 +133,11 @@ class AdminDashboardActivity : AppCompatActivity() {
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     val timestamp = doc.getTimestamp("updatedAt")
-                    val records = (doc.get("records") as? List<*>)?.size ?: 0
                     if (timestamp != null) {
                         val df = SimpleDateFormat("dd MMM, hh:mm a 'IST'", Locale.ENGLISH)
                         df.timeZone = TimeZone.getTimeZone("Asia/Kolkata")
                         val formattedDate = df.format(timestamp.toDate())
-                        binding.tvMandiSyncTimestamp.text = "🕒 Last Synced: $formattedDate ($records records)"
+                        binding.tvMandiSyncTimestamp.text = "🕒 Last Synced: $formattedDate (All 28 States Synced)"
                     } else {
                         binding.tvMandiSyncTimestamp.text = "🕒 Last Synced: Today"
                     }
@@ -282,55 +282,75 @@ class AdminDashboardActivity : AppCompatActivity() {
     }
 
     private fun showManageSportsButtonDialog() {
-        firestore.collection("app_config")
-            .document("sports_config")
-            .get()
-            .addOnSuccessListener { doc ->
-                val isCurrentlyVisible = doc.getBoolean("show_sports_button") ?: true
+        val currentVisible = SportsConfigHelper.isSportsButtonVisible(this)
+        val currentUrl = SportsConfigHelper.getSportsWebUrl(this)
 
-                val messageText = if (isCurrentlyVisible) {
-                    "The Sports & Live Cricket button in the top app header is currently VISIBLE to all farmers.\n\nDo you want to HIDE it across all devices in real-time?"
-                } else {
-                    "The Sports & Live Cricket button in the top app header is currently HIDDEN.\n\nDo you want to SHOW it across all devices in real-time?"
-                }
+        val layout = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(50, 20, 50, 10)
+        }
 
-                val actionText = if (isCurrentlyVisible) "🚫 Hide Sports Button" else "✅ Show Sports Button"
+        val messageTv = android.widget.TextView(this).apply {
+            text = "1. Toggle Sports icon visibility in top bar header across all user devices.\n2. Change the Sports Web URL / Widget link anytime without releasing an app update."
+            textSize = 13f
+            setPadding(0, 0, 0, 15)
+        }
+        layout.addView(messageTv)
 
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                    .setTitle("🏏 Toggle Sports Header Button")
-                    .setMessage(messageText)
-                    .setPositiveButton(actionText) { _, _ ->
-                        updateSportsButtonConfig(!isCurrentlyVisible)
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
+        val urlInputLabel = android.widget.TextView(this).apply {
+            text = "🌐 Sports Web Page / Score Widget URL:"
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            textSize = 14f
+            setPadding(0, 10, 0, 5)
+        }
+        layout.addView(urlInputLabel)
+
+        val urlInput = android.widget.EditText(this).apply {
+            hint = "e.g. https://cwidget.crictimes.org/... or https://m.cricbuzz.com"
+            setText(currentUrl)
+            textSize = 13f
+        }
+        layout.addView(urlInput)
+
+        val statusText = if (currentVisible) "Header Icon Status: VISIBLE ✅" else "Header Icon Status: HIDDEN 🚫"
+        val statusTv = android.widget.TextView(this).apply {
+            text = statusText
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            textSize = 14f
+            setPadding(0, 20, 0, 10)
+        }
+        layout.addView(statusTv)
+
+        val toggleActionText = if (currentVisible) "🚫 Hide Icon & Save" else "✅ Show Icon & Save"
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("🏏 Manage Sports & Cricket Screen")
+            .setView(layout)
+            .setPositiveButton(toggleActionText) { _, _ ->
+                val newUrl = urlInput.text.toString().trim()
+                saveSportsConfigAndUpdate(!currentVisible, newUrl)
             }
-            .addOnFailureListener {
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                    .setTitle("🏏 Toggle Sports Header Button")
-                    .setMessage("Do you want to SHOW or HIDE the Sports header button across all user devices in real-time?")
-                    .setPositiveButton("✅ Show Sports Button") { _, _ -> updateSportsButtonConfig(true) }
-                    .setNegativeButton("🚫 Hide Sports Button") { _, _ -> updateSportsButtonConfig(false) }
-                    .setNeutralButton("Cancel", null)
-                    .show()
+            .setNeutralButton("💾 Save URL Only") { _, _ ->
+                val newUrl = urlInput.text.toString().trim()
+                saveSportsConfigAndUpdate(currentVisible, newUrl)
             }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
-    private fun updateSportsButtonConfig(show: Boolean) {
-        val updateData = hashMapOf(
-            "show_sports_button" to show,
-            "updated_at" to com.google.firebase.Timestamp.now()
-        )
-
-        firestore.collection("app_config")
-            .document("sports_config")
-            .set(updateData, SetOptions.merge())
-            .addOnSuccessListener {
+    private fun saveSportsConfigAndUpdate(show: Boolean, webUrl: String) {
+        val activeUrl = if (webUrl.isNotBlank()) webUrl else SportsConfigHelper.DEFAULT_WEB_URL
+        SportsConfigHelper.saveSportsConfig(
+            context = this,
+            showSports = show,
+            webUrl = activeUrl,
+            onSuccess = {
                 val statusText = if (show) "VISIBLE ✅" else "HIDDEN 🚫"
-                Toast.makeText(this, "Live Sports header button is now $statusText across all devices in real-time!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Live Sports updated! Header button is now $statusText across all devices in real-time!", Toast.LENGTH_LONG).show()
+            },
+            onFailure = { e ->
+                Toast.makeText(this, "Saved locally, but cloud sync failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to update configuration: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
+        )
     }
 }

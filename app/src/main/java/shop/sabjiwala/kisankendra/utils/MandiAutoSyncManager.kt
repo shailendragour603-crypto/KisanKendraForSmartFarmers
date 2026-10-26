@@ -48,6 +48,13 @@ object MandiAutoSyncManager {
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
+            // 1. Enqueue immediate one-time background worker
+            val oneTimeRequest = androidx.work.OneTimeWorkRequestBuilder<MandiSyncWorker>()
+                .setConstraints(constraints)
+                .build()
+            WorkManager.getInstance(context.applicationContext).enqueue(oneTimeRequest)
+
+            // 2. Enqueue periodic background worker every 30 minutes
             val syncRequest = PeriodicWorkRequestBuilder<MandiSyncWorker>(
                 SYNC_INTERVAL_MINUTES, TimeUnit.MINUTES
             )
@@ -93,7 +100,7 @@ object MandiAutoSyncManager {
                 if (updatedAt != null) {
                     val lastUpdatedMs = updatedAt.toDate().time
                     val diffMinutes = (nowMs - lastUpdatedMs) / (1000 * 60)
-                    if (diffMinutes < 25) { // Updated within last 25-30 minutes, skip to avoid redundant writes
+                    if (diffMinutes in 0..25) { // Only skip if updated within the last 0 to 25 minutes
                         return@withContext false
                     }
                 }

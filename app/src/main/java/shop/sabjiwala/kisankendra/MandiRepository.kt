@@ -148,7 +148,28 @@ class MandiRepository {
                 e.printStackTrace()
             }
 
-            // 1. Group records by standardized clean state key and save to 'mandi_by_state'
+            // 1. Write legacy summary payload (up to 1500 records ~675KB) to 'mandi_cache/latest' FIRST so timestamp updates instantly without exceeding Firestore 1MB doc limit
+            val legacySerialized = records.take(1500).map { record ->
+                hashMapOf(
+                    "state" to record.state,
+                    "district" to record.district,
+                    "market" to record.market,
+                    "commodity" to record.commodity,
+                    "variety" to record.variety,
+                    "minPrice" to record.minPrice,
+                    "maxPrice" to record.maxPrice,
+                    "modalPrice" to record.modalPrice,
+                    "arrivalDate" to record.arrivalDate,
+                    "priceDiff" to record.priceDiff
+                )
+            }
+            val legacyData = hashMapOf(
+                "updatedAt" to Timestamp.now(),
+                "records" to legacySerialized
+            )
+            firestore.collection("mandi_cache").document("latest").set(legacyData, SetOptions.merge()).await()
+
+            // 2. Group records by standardized clean state key and save to 'mandi_by_state'
             val groupedByState = records.groupBy { 
                 getCleanStateKey(it.state) 
             }
@@ -174,30 +195,9 @@ class MandiRepository {
                         "updatedAt" to Timestamp.now(),
                         "records" to serializedStateRecords
                     )
-                    firestore.collection("mandi_by_state").document(stateKey).set(stateData, SetOptions.merge()).await()
+                    firestore.collection("mandi_by_state").document(stateKey).set(stateData, SetOptions.merge())
                 }
             }
-
-            // 2. Also write legacy summary payload (up to 2500) to 'mandi_cache/latest' for backward compatibility
-            val legacySerialized = records.take(2500).map { record ->
-                hashMapOf(
-                    "state" to record.state,
-                    "district" to record.district,
-                    "market" to record.market,
-                    "commodity" to record.commodity,
-                    "variety" to record.variety,
-                    "minPrice" to record.minPrice,
-                    "maxPrice" to record.maxPrice,
-                    "modalPrice" to record.modalPrice,
-                    "arrivalDate" to record.arrivalDate,
-                    "priceDiff" to record.priceDiff
-                )
-            }
-            val legacyData = hashMapOf(
-                "updatedAt" to Timestamp.now(),
-                "records" to legacySerialized
-            )
-            firestore.collection("mandi_cache").document("latest").set(legacyData, SetOptions.merge()).await()
 
             MandiPriceHistoryHelper.saveDailyPricesToFirestore(records)
         } catch (e: Exception) {
@@ -297,8 +297,8 @@ class MandiRepository {
                 }
             }
 
-            // Legacy fallback snapshot
-            val serializedRecords = records.take(2500).map { record ->
+            // Legacy fallback snapshot (take up to 1500 records ~675KB to stay under Firestore 1MB limit)
+            val serializedRecords = records.take(1500).map { record ->
                 hashMapOf(
                     "state" to record.state,
                     "district" to record.district,

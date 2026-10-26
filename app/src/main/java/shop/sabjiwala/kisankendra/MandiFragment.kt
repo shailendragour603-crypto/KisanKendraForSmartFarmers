@@ -69,7 +69,7 @@ class MandiFragment : Fragment() {
     private var adapter: MandiAdapter? = null
     private var currentLoadedLimit = 20
 
-    private var selectedStateName: String = "⭐ Saved"
+    private var selectedStateName: String = "❤️ Liked"
     private var selectedDistrictName: String = "All Districts"
     private var selectedMarketName: String = "All Markets"
     private var isUserStateManuallySelected = false
@@ -81,7 +81,7 @@ class MandiFragment : Fragment() {
     private fun setupBackPressHandler() {
         onBackPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
-                if (selectedStateName == "⭐ Saved") {
+                if (selectedStateName == "❤️ Liked") {
                     resetToDefaultMandiHome()
                 } else if (!binding.etSearch.text.isNullOrEmpty()) {
                     binding.etSearch.setText("")
@@ -96,8 +96,8 @@ class MandiFragment : Fragment() {
     }
 
     private fun getDefaultStateName(): String {
-        val ctx = context ?: return "⭐ Saved"
-        return LocationHelper.getSavedState(ctx) ?: "⭐ Saved"
+        val ctx = context ?: return "❤️ Liked"
+        return LocationHelper.getSavedState(ctx) ?: "❤️ Liked"
     }
 
     private fun isNonDefaultStateSelected(): Boolean {
@@ -106,7 +106,7 @@ class MandiFragment : Fragment() {
     }
 
     private fun updateBackPressState() {
-        val isSavedActive = selectedStateName == "⭐ Saved"
+        val isSavedActive = selectedStateName == "❤️ Liked"
         val isSearchActive = !binding.etSearch.text.isNullOrEmpty()
         val isNonDefaultState = isNonDefaultStateSelected()
         onBackPressedCallback?.isEnabled = isSavedActive || isSearchActive || isNonDefaultState
@@ -133,16 +133,23 @@ class MandiFragment : Fragment() {
 
         val userLocationState = LocationHelper.getSavedState(ctx)
         val userLocationDistrict = LocationHelper.getSavedDistrict(ctx)
+        val favorites = MandiCacheHelper.getFavorites(ctx)
 
         if (manualS) {
             isUserStateManuallySelected = true
             if (!savedS.isNullOrBlank()) selectedStateName = savedS
             if (!savedD.isNullOrBlank()) selectedDistrictName = savedD
             if (!savedM.isNullOrBlank()) selectedMarketName = savedM
+            if (selectedStateName == "❤️ Liked" && favorites.isEmpty()) {
+                selectedStateName = if (!userLocationState.isNullOrBlank()) userLocationState else "Madhya Pradesh"
+                isUserStateManuallySelected = false
+            }
         } else {
             isUserStateManuallySelected = false
             if (!userLocationState.isNullOrBlank()) {
                 selectedStateName = userLocationState
+            } else if (selectedStateName == "❤️ Liked" && favorites.isEmpty()) {
+                selectedStateName = "Madhya Pradesh"
             }
             if (!userLocationDistrict.isNullOrBlank()) {
                 selectedDistrictName = userLocationDistrict
@@ -154,8 +161,9 @@ class MandiFragment : Fragment() {
         val ctx = context ?: return
         val savedState = LocationHelper.getSavedState(ctx)
         val savedDistrict = LocationHelper.getSavedDistrict(ctx)
+        val favorites = MandiCacheHelper.getFavorites(ctx)
 
-        selectedStateName = if (!savedState.isNullOrBlank()) savedState else "⭐ Saved"
+        selectedStateName = if (!savedState.isNullOrBlank()) savedState else if (favorites.isNotEmpty()) "❤️ Liked" else "Madhya Pradesh"
         selectedDistrictName = if (!savedDistrict.isNullOrBlank()) savedDistrict else "All Districts"
         selectedMarketName = "All Markets"
         isUserStateManuallySelected = false
@@ -225,11 +233,11 @@ class MandiFragment : Fragment() {
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                         MandiPriceHistoryHelper.fetchPriceHistory(item, context)
                     }
-                    Toast.makeText(requireContext(), "Saved to Favorites ⭐", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Added to Liked ❤️", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(requireContext(), "Removed from Favorites", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Removed from Liked", Toast.LENGTH_SHORT).show()
                 }
-                if (selectedStateName == "⭐ Saved") {
+                if (selectedStateName == "❤️ Liked") {
                     filterData()
                     updateBackPressState()
                 }
@@ -247,8 +255,8 @@ class MandiFragment : Fragment() {
         binding.swipeRefreshMandi.setOnRefreshListener {
             MandiRepository.clearCache()
             val ctx = context
-            val prefState = if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
-            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "⭐ Saved") {
+            val prefState = if (selectedStateName != "All States" && selectedStateName != "❤️ Liked") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
+            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "❤️ Liked") {
                 viewModel.loadMandiRatesByState(prefState, ctx, forceRefresh = true)
             } else {
                 viewModel.loadMandiRates(preferredStateName = prefState, forceRefresh = true, context = ctx)
@@ -259,8 +267,8 @@ class MandiFragment : Fragment() {
             binding.swipeRefreshMandi.isRefreshing = true
             MandiRepository.clearCache()
             val ctx = context
-            val prefState = if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
-            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "⭐ Saved") {
+            val prefState = if (selectedStateName != "All States" && selectedStateName != "❤️ Liked") selectedStateName else (if (ctx != null) LocationHelper.getSavedState(ctx) else null)
+            if (!prefState.isNullOrBlank() && prefState != "All States" && prefState != "❤️ Liked") {
                 viewModel.loadMandiRatesByState(prefState, ctx, forceRefresh = true)
             } else {
                 viewModel.loadMandiRates(preferredStateName = prefState, forceRefresh = true, context = ctx)
@@ -327,11 +335,22 @@ class MandiFragment : Fragment() {
                 }
             }
 
-            if (binding.chipGroupStates.childCount == 0) {
-                setupStateChips()
-            } else {
-                setupDistrictSpinner()
+            if (allRecords.isNotEmpty() && selectedStateName != "All States" && selectedStateName != "❤️ Liked") {
+                val hasMatchForSelectedState = allRecords.any {
+                    it.state.orEmpty().equals(selectedStateName, ignoreCase = true) ||
+                    MandiRepository.getCleanStateKey(it.state) == MandiRepository.getCleanStateKey(selectedStateName)
+                }
+                if (!hasMatchForSelectedState) {
+                    val availableStateInRecords = allRecords.mapNotNull { it.state?.trim() }.firstOrNull { it.isNotBlank() }
+                    if (!availableStateInRecords.isNullOrBlank()) {
+                        selectedStateName = availableStateInRecords
+                    } else {
+                        selectedStateName = "All States"
+                    }
+                }
             }
+
+            setupStateChips()
 
             filterData()
             updateBackPressState()
@@ -377,22 +396,32 @@ class MandiFragment : Fragment() {
         val ctx = context
         val savedState = if (ctx != null) LocationHelper.getSavedState(ctx) else null
         val savedDistrict = if (ctx != null) LocationHelper.getSavedDistrict(ctx) else null
+        val favorites = if (ctx != null) MandiCacheHelper.getFavorites(ctx) else emptySet()
 
         if (!isUserStateManuallySelected) {
-            if (!savedState.isNullOrBlank() && (selectedStateName == "⭐ Saved" || selectedStateName == "All States" || selectedStateName.isBlank())) {
+            if (!savedState.isNullOrBlank()) {
                 selectedStateName = savedState
+            } else if ((selectedStateName == "❤️ Liked" && favorites.isEmpty()) || selectedStateName == "All States" || selectedStateName.isBlank()) {
+                selectedStateName = "Madhya Pradesh"
             }
             if (!savedDistrict.isNullOrBlank() && (selectedDistrictName == "All Districts" || selectedDistrictName.isBlank())) {
                 selectedDistrictName = savedDistrict
             }
         }
 
-        val targetStateToLoad = if (selectedStateName != "⭐ Saved" && selectedStateName != "All States") selectedStateName else savedState
-        if (!targetStateToLoad.isNullOrBlank()) {
-            viewModel.loadMandiRatesByState(targetStateToLoad, ctx)
+        val targetStateToLoad = if (selectedStateName != "❤️ Liked" && selectedStateName != "All States" && selectedStateName.isNotBlank()) {
+            selectedStateName
+        } else if (!savedState.isNullOrBlank()) {
+            savedState
         } else {
-            viewModel.loadMandiRates(preferredStateName = savedState, context = ctx)
+            "Madhya Pradesh"
         }
+
+        if (selectedStateName == "❤️ Liked" && favorites.isEmpty()) {
+            selectedStateName = targetStateToLoad
+        }
+
+        viewModel.loadMandiRatesByState(targetStateToLoad, ctx)
 
         updateBackPressState()
     }
@@ -490,9 +519,9 @@ class MandiFragment : Fragment() {
             }
         }
 
-        val allStates = mutableListOf("⭐ Saved")
+        val allStates = mutableListOf("❤️ Liked")
 
-        // Prioritize user's saved/location state right after "⭐ Saved"
+        // Prioritize user's saved/location state right after "❤️ Liked"
         if (!defaultState.isNullOrBlank()) {
             val matchedDefault = availableStates.find { it.equals(defaultState.trim(), ignoreCase = true) }
             if (matchedDefault != null) {
@@ -503,8 +532,9 @@ class MandiFragment : Fragment() {
 
         allStates.addAll(availableStates)
 
-        if (selectedStateName == "All States" || selectedStateName.isBlank()) {
-            selectedStateName = if (!defaultState.isNullOrBlank()) defaultState else (allStates.getOrNull(1) ?: "⭐ Saved")
+        val favorites = if (ctx != null) MandiCacheHelper.getFavorites(ctx) else emptySet()
+        if (selectedStateName == "All States" || selectedStateName.isBlank() || (selectedStateName == "❤️ Liked" && favorites.isEmpty())) {
+            selectedStateName = if (!defaultState.isNullOrBlank()) defaultState else (allStates.getOrNull(1) ?: "Madhya Pradesh")
         }
 
         val activeLang = if (ctx != null) LocaleHelper.getPersistedLanguage(ctx) else "en"
@@ -520,7 +550,7 @@ class MandiFragment : Fragment() {
                 chipStrokeWidth = 1.5f
             }
 
-            if (activeLang != "en" && stateName != "⭐ Saved") {
+            if (activeLang != "en" && stateName != "❤️ Liked") {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val transState = TranslationHelper.translateText(requireContext(), stateName, activeLang)
                     chip.text = transState
@@ -542,9 +572,9 @@ class MandiFragment : Fragment() {
                     val ctx = context
                     val savedD = if (ctx != null) LocationHelper.getSavedDistrict(ctx) else null
                     val savedS = if (ctx != null) LocationHelper.getSavedState(ctx) else null
-                    selectedDistrictName = if (!savedD.isNullOrBlank() && (stateName.equals(savedS, ignoreCase = true) || stateName == "⭐ Saved" || stateName == "All States")) savedD else "All Districts"
+                    selectedDistrictName = if (!savedD.isNullOrBlank() && (stateName.equals(savedS, ignoreCase = true) || stateName == "❤️ Liked" || stateName == "All States")) savedD else "All Districts"
                     selectedMarketName = "All Markets"
-                    if (stateName != "All States" && stateName != "⭐ Saved") {
+                    if (stateName != "All States" && stateName != "❤️ Liked") {
                         viewModel.loadMandiRatesByState(stateName)
                     }
                     setupDistrictSpinner()
@@ -654,7 +684,7 @@ class MandiFragment : Fragment() {
         chipGroup.removeAllViews()
 
         var filteredForMarkets = allRecords
-        if (selectedStateName != "All States" && selectedStateName != "⭐ Saved") {
+        if (selectedStateName != "All States" && selectedStateName != "❤️ Liked") {
             filteredForMarkets = filteredForMarkets.filter { it.state.orEmpty().equals(selectedStateName, ignoreCase = true) }
         }
         if (selectedDistrictName != "All Districts") {
@@ -769,7 +799,7 @@ class MandiFragment : Fragment() {
     private fun filterData() {
         val query = binding.etSearch.text?.toString()?.trim().orEmpty()
         val selectedCategory = getSelectedCategory()
-        val isSavedFilter = selectedStateName == "⭐ Saved"
+        val isSavedFilter = selectedStateName == "❤️ Liked"
         val favorites = if (isSavedFilter) MandiCacheHelper.getFavorites(requireContext()) else emptySet()
 
         val cleanSelDist = LocationHelper.cleanDistrictName(selectedDistrictName).orEmpty().lowercase()
@@ -811,6 +841,22 @@ class MandiFragment : Fragment() {
         adapter?.updateData(filteredRecords.take(currentLoadedLimit), filteredRecords.size)
         if (filteredRecords.isEmpty()) {
             binding.tvEmptyMandi.visibility = View.VISIBLE
+            val activeLang = if (context != null) LocaleHelper.getPersistedLanguage(requireContext()) else "en"
+            if (selectedStateName == "❤️ Liked") {
+                val emptySavedMsg = if (activeLang == "hi") {
+                    "❤️ अभी तक कोई भी पसंदीदा मंडी भाव लाइक नहीं है।\n\nकिसी भी मंडी कार्ड पर दिल (❤️) आइकन पर टैप करके उसे यहाँ देखने के लिए लाइक करें!"
+                } else {
+                    "❤️ No Liked Mandi rates yet.\n\nTap the heart (❤️) icon on any Mandi card to save it here for quick access!"
+                }
+                binding.tvEmptyMandi.text = emptySavedMsg
+            } else {
+                val noRatesMsg = if (activeLang == "hi") {
+                    "चयनित फ़िल्टर के लिए कोई मंडी भाव नहीं मिला।"
+                } else {
+                    "No Mandi rates found for the selected filter."
+                }
+                binding.tvEmptyMandi.text = noRatesMsg
+            }
         } else {
             binding.tvEmptyMandi.visibility = View.GONE
         }
